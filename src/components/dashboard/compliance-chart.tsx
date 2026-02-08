@@ -1,8 +1,21 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
 const chartData = [
   { month: "Ene", executed: 65, goal: 80 },
@@ -13,43 +26,63 @@ const chartData = [
   { month: "Jun", executed: 92, goal: 80 },
 ];
 
+const chartConfig = {
+  executed: {
+    label: "Ejecutado",
+    color: "hsl(var(--primary))",
+  },
+  goal: {
+    label: "Meta",
+    color: "hsl(var(--secondary))",
+  },
+} satisfies ChartConfig;
+
 export function ComplianceChart() {
   return (
     <Card className="shadow-sm dark:bg-card">
       <CardHeader>
-        <div className="flex justify-between items-center">
-            <div>
-                <CardTitle>Cumplimiento Plan de Formación</CardTitle>
-                <CardDescription>Ejecución mensual vs programada</CardDescription>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-primary" />
-                    Ejecutado
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-secondary" />
-                    Meta
-                </div>
-            </div>
-        </div>
+        <CardTitle>Cumplimiento Plan de Formación</CardTitle>
+        <CardDescription>Ejecución mensual vs programada</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-              <ChartTooltip 
-                cursor={{ fill: 'hsl(var(--secondary))' }}
-                content={<ChartTooltipContent indicator="dot" />} 
-              />
-              <Bar dataKey="goal" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} name="Meta"/>
-              <Bar dataKey="executed" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Ejecutado"/>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ChartContainer config={chartConfig} className="h-64">
+          <BarChart
+            data={chartData}
+            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis
+              dataKey="month"
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+            />
+            <ChartTooltip
+              cursor={{ fill: "hsl(var(--secondary))" }}
+              content={<ChartTooltipContent indicator="dot" />}
+            />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Bar
+              dataKey="goal"
+              fill="var(--color-goal)"
+              radius={[4, 4, 0, 0]}
+              name="Meta"
+            />
+            <Bar
+              dataKey="executed"
+              fill="var(--color-executed)"
+              radius={[4, 4, 0, 0]}
+              name="Ejecutado"
+            />
+          </BarChart>
+        </ChartContainer>
       </CardContent>
     </Card>
   );
