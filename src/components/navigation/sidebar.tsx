@@ -35,11 +35,11 @@ export function Sidebar() {
     <aside className="hidden md:flex w-64 flex-col justify-between border-r bg-card p-4">
       <div className="flex flex-col gap-4">
         <div className="flex gap-3 items-center px-2">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary">
             <Shield className="w-6 h-6" />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-foreground text-base font-bold leading-normal font-headline">RoadWise 360</h1>
+            <h1 className="text-foreground text-base font-bold leading-normal font-headline">SIG-SV</h1>
             <p className="text-muted-foreground text-xs font-normal leading-normal">Gestión Seguridad Vial</p>
           </div>
         </div>

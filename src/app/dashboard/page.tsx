@@ -9,18 +9,18 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard 
+        <KpiCard
           title="Nivel de Obligatoriedad"
-          value="Avanzado"
+          value="Estándar Avanzado"
           icon={BadgeCheck}
           badge="Cumplimiento"
           badgeVariant="success"
           progress={85}
-          progressText="85% implementado"
-          iconBgColor="bg-blue-100 dark:bg-blue-900/30"
+          progressText="85% implementado (Estratégico)"
+          iconBgColor="bg-blue-50 dark:bg-blue-900/20"
           iconColor="text-primary"
         />
-        <KpiCard 
+        <KpiCard
           title="Tasa de Siniestralidad"
           value="1.2%"
           icon={AlertTriangle}
@@ -28,10 +28,10 @@ export default function DashboardPage() {
           trendIcon={TrendingDown}
           badgeVariant="success"
           progressText="vs mes anterior"
-          iconBgColor="bg-red-100 dark:bg-red-900/30"
-          iconColor="text-red-500"
+          iconBgColor="bg-red-50 dark:bg-red-900/20"
+          iconColor="text-red-600"
         />
-        <KpiCard 
+        <KpiCard
           title="Flota Activa"
           value="45"
           subValue="/50"
@@ -39,18 +39,18 @@ export default function DashboardPage() {
           badge="En ruta"
           badgeVariant="secondary"
           progressText="5 vehículos en mantenimiento"
-          iconBgColor="bg-orange-100 dark:bg-orange-900/30"
-          iconColor="text-orange-500"
+          iconBgColor="bg-orange-50 dark:bg-orange-900/20"
+          iconColor="text-orange-600"
         />
-        <KpiCard 
+        <KpiCard
           title="Conductores Habilitados"
           value="58"
           icon={Users}
           badge="Activos"
           badgeVariant="success"
           progressText="100% con ARL vigente"
-          iconBgColor="bg-purple-100 dark:bg-purple-900/30"
-          iconColor="text-purple-500"
+          iconBgColor="bg-purple-50 dark:bg-purple-900/20"
+          iconColor="text-purple-600"
         />
       </div>
 
