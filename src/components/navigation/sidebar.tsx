@@ -18,7 +18,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
   { label: "Ciclo PHVA", isTitle: true },
-  { href: "#", icon: ClipboardList, label: "Planear" },
+  { href: "/dashboard/diagnostico", icon: ClipboardList, label: "Planear" },
   { href: "#", icon: Truck, label: "Hacer" },
   { href: "#", icon: ClipboardCheck, label: "Verificar" },
   { href: "#", icon: BarChartBig, label: "Actuar" },
