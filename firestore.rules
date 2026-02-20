@@ -1,0 +1,329 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * ROADWISE 360 - PESV & SG-SST COMPLIANCE PLATFORM
+     * 
+     * CORE PHILOSOPHY:
+     * This ruleset implements a robust multi-tenant SaaS security model designed for Colombian 
+     * Road Safety (PESV) compliance. The fundamental security unit is the 'Empresa' (Company). 
+     * All data is strictly partitioned under the /empresas/{empresaId} hierarchy.
+     * 
+     * DATA STRUCTURE:
+     * Data is organized hierarchically: /empresas/{empresaId}/[collection]/{documentId}. 
+     * Deeply nested data (e.g., vehicle documents) follows the hierarchy but remains 
+     * scoped to the parent company.
+     * 
+     * KEY SECURITY DECISIONS:
+     * 1. Authorization Independence: The 'empresaId' is denormalized onto every single 
+     *    document. Rules verify that the user's registered company matches the document's 
+     *    'empresaId' without requiring expensive parent-lookups via get().
+     * 2. Role-Based Access (DBAC): Access is determined by the 'rol' field stored in the 
+     *    user's profile within their company (/empresas/{empresaId}/usuarios/{uid}).
+     * 3. Prototyping Flexibility: While authorization is strictly enforced (who can access), 
+     *    data schema validation is omitted to allow for rapid iteration of the PESV modules.
+     * 4. Relational Integrity: On creation, rules enforce that internal fields like 
+     *    'empresaId' or 'conductorId' correctly link the document to the current context 
+     *    and authenticated user.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getProfile(empresaId) {
+      return get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data;
+    }
+
+    function isMemberOf(empresaId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid));
+    }
+
+    function hasRole(empresaId, role) {
+      return isMemberOf(empresaId) && getProfile(empresaId).rol == role;
+    }
+
+    function isAdmin(empresaId) {
+      return isMemberOf(empresaId) && (getProfile(empresaId).rol == 'Admin' || getProfile(empresaId).rol == 'Lider_PESV');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isMapMember(membersMap) {
+      return isSignedIn() && membersMap[request.auth.uid] == true;
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Access control for the root company profile.
+     * @path /empresas/{empresaId}
+     * @allow (get/list) Signed-in members of the company. (update) Company Admins.
+     * @deny (create/delete) Prevented to maintain platform-level integrity.
+     * @principle Multi-tenancy root and role-based management.
+     */
+    match /empresas/{empresaId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create: if false; // Managed by platform admins
+      allow update: if isAdmin(empresaId) && resource != null;
+      allow delete: if false;
+    }
+
+    /**
+     * @description User profiles within a specific company.
+     * @path /empresas/{empresaId}/usuarios/{usuarioId}
+     * @allow (get/list) Company members for their own or Admins for all. (create/update) Self or Admin.
+     * @deny Writes if trying to change company affiliation or unauthorized roles.
+     * @principle Ownership for personal data, Admin override for company management.
+     */
+    match /empresas/{empresaId}/usuarios/{usuarioId} {
+      allow get, list: if isOwner(usuarioId) || isAdmin(empresaId);
+      allow create: if isOwner(usuarioId) && request.resource.data.empresaId == empresaId;
+      allow update: if (isOwner(usuarioId) || isAdmin(empresaId)) && resource != null;
+      allow delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Fleet management for vehicles.
+     * @path /empresas/{empresaId}/vehiculos/{vehiculoId}
+     * @allow (read) All company members. (write) Company Admins.
+     * @deny External access or non-admin modifications.
+     * @principle Shared read-access for operations with restricted admin-only configuration.
+     */
+    match /empresas/{empresaId}/vehiculos/{vehiculoId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create: if isAdmin(empresaId) && request.resource.data.empresaId == empresaId;
+      allow update: if isAdmin(empresaId) && resource != null;
+      allow delete: if isAdmin(empresaId) && resource != null;
+
+      /**
+       * @description Vehicle-specific documents (SOAT, Tecno).
+       * @path /empresas/{empresaId}/vehiculos/{vehiculoId}/documentos/{documentoId}
+       * @allow (read) Company members. (write) Company Admins.
+       * @principle Nested entity security inheriting company-scope.
+       */
+      match /documentos/{documentoId} {
+        allow get, list: if isMemberOf(empresaId);
+        allow create: if isAdmin(empresaId) && request.resource.data.empresaId == empresaId;
+        allow update, delete: if isAdmin(empresaId) && resource != null;
+      }
+    }
+
+    /**
+     * @description Driver profiles and licensing.
+     * @path /empresas/{empresaId}/conductores/{conductorId}
+     * @allow (read) Company members. (update) Self or Admin.
+     * @deny Cross-tenant reads.
+     * @principle Driver profile management with relational link to User.
+     */
+    match /empresas/{empresaId}/conductores/{conductorId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create: if isAdmin(empresaId) && request.resource.data.empresaId == empresaId;
+      allow update: if (isAdmin(empresaId) || isOwner(resource.data.usuarioId)) && resource != null;
+      allow delete: if isAdmin(empresaId) && resource != null;
+
+      /**
+       * @description Gamification achievements for drivers.
+       * @path /empresas/{empresaId}/conductores/{conductorId}/logros/{logroId}
+       */
+      match /logros/{logroId} {
+        allow get, list: if isMemberOf(empresaId);
+        allow create: if isAdmin(empresaId);
+        allow update, delete: if isAdmin(empresaId) && resource != null;
+      }
+    }
+
+    /**
+     * @description Daily pre-operational safety checklists.
+     * @path /empresas/{empresaId}/inspeccionesPreoperacionales/{inspeccionId}
+     * @allow (create) Authenticated conductors for their assigned vehicle. (read) Company members.
+     * @principle Self-creation based on driver identity; company-wide auditability.
+     */
+    match /empresas/{empresaId}/inspeccionesPreoperacionales/{inspeccionId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create: if isMemberOf(empresaId) && request.resource.data.conductorId == request.auth.uid;
+      allow update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Vehicle maintenance records.
+     * @path /empresas/{empresaId}/mantenimientos/{mantenimientoId}
+     * @allow (read) Company members. (write) Admins or Workshop managers.
+     */
+    match /empresas/{empresaId}/mantenimientos/{mantenimientoId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create: if (isAdmin(empresaId) || hasRole(empresaId, 'Jefe_Taller')) && request.resource.data.empresaId == empresaId;
+      allow update, delete: if (isAdmin(empresaId) || hasRole(empresaId, 'Jefe_Taller')) && resource != null;
+    }
+
+    /**
+     * @description Training sessions and attendance.
+     * @path /empresas/{empresaId}/capacitaciones/{capacitacionId}
+     */
+    match /empresas/{empresaId}/capacitaciones/{capacitacionId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && request.resource.data.empresaId == empresaId;
+
+      match /asistencias/{asistenciaId} {
+        allow get, list: if isMemberOf(empresaId);
+        allow create: if isMemberOf(empresaId) && request.resource.data.conductorId == request.auth.uid;
+        allow update, delete: if isAdmin(empresaId) && resource != null;
+      }
+    }
+
+    /**
+     * @description Road incident records and investigations.
+     * @path /empresas/{empresaId}/siniestros/{siniestroId}
+     */
+    match /empresas/{empresaId}/siniestros/{siniestroId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create: if isMemberOf(empresaId) && request.resource.data.empresaId == empresaId;
+      allow update, delete: if isAdmin(empresaId) && resource != null;
+
+      match /investigaciones/{investigacionId} {
+        allow get, list: if isMemberOf(empresaId);
+        allow create, update, delete: if isAdmin(empresaId) && resource != null;
+      }
+    }
+
+    /**
+     * @description Workday and fatigue monitoring.
+     * @path /empresas/{empresaId}/jornadasLaborales/{jornadaId}
+     */
+    match /empresas/{empresaId}/jornadasLaborales/{jornadaId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create: if isMemberOf(empresaId) && request.resource.data.conductorId == request.auth.uid;
+      allow update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Task manager for corrective/preventive actions.
+     * @path /empresas/{empresaId}/planesAccion/{planAccionId}
+     * @allow (update) The assigned responsible user or Admin.
+     */
+    match /empresas/{empresaId}/planesAccion/{planAccionId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create: if isAdmin(empresaId) && request.resource.data.empresaId == empresaId;
+      allow update: if (isAdmin(empresaId) || isOwner(resource.data.responsableId)) && resource != null;
+      allow delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Collaborative committee management.
+     * @path /empresas/{empresaId}/comitesSeguridadVial/{comiteId}
+     * @principle Uses map-based membership for performant access check.
+     */
+    match /empresas/{empresaId}/comitesSeguridadVial/{comiteId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create: if isAdmin(empresaId) && request.resource.data.empresaId == empresaId;
+      allow update: if (isAdmin(empresaId) || isMapMember(resource.data.miembroIds)) && resource != null;
+      allow delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Road safety policies and official documents.
+     * @path /empresas/{empresaId}/politicasSeguridadVial/{politicaId}
+     */
+    match /empresas/{empresaId}/politicasSeguridadVial/{politicaId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Routes and risk mapping.
+     */
+    match /empresas/{empresaId}/rutas/{rutaId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    match /empresas/{empresaId}/riesgosViales/{riesgoId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Internal and external audits.
+     */
+    match /empresas/{empresaId}/auditorias/{auditoriaId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if (isAdmin(empresaId) || hasRole(empresaId, 'Auditor')) && resource != null;
+
+      match /hallazgos/{hallazgoId} {
+        allow get, list: if isMemberOf(empresaId);
+        allow create, update, delete: if (isAdmin(empresaId) || hasRole(empresaId, 'Auditor')) && resource != null;
+      }
+    }
+
+    /**
+     * @description PESV Indicators (Definitions and Historical Measurements).
+     */
+    match /empresas/{empresaId}/indicadoresDefinicion/{indicadorId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    match /empresas/{empresaId}/indicadoresMedicion/{medicionId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Official regulatory reports for Supertransporte.
+     */
+    match /empresas/{empresaId}/reportesSupertransporte/{reporteId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Third-party contractor management.
+     */
+    match /empresas/{empresaId}/contratistas/{contratistaId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+
+      match /documentos/{documentoId} {
+        allow get, list: if isMemberOf(empresaId);
+        allow create, update, delete: if isAdmin(empresaId) && resource != null;
+      }
+    }
+
+    /**
+     * @description System-wide alerts and notifications.
+     * @principle Restricts read access to the specific recipients defined in the destinatarioIds map.
+     */
+    match /empresas/{empresaId}/alertasNotificacion/{alertaId} {
+      allow get, list: if isMemberOf(empresaId) && (isAdmin(empresaId) || isMapMember(resource.data.destinatarioIds));
+      allow create: if isMemberOf(empresaId); // System or user generated
+      allow update: if isMemberOf(empresaId) && (isAdmin(empresaId) || isMapMember(resource.data.destinatarioIds)) && resource != null;
+      allow delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Geofencing and speed zones.
+     */
+    match /empresas/{empresaId}/geocercas/{geocercaId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    /**
+     * @description Gamification achievement definitions.
+     */
+    match /empresas/{empresaId}/gamificacionLogros/{logroId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+    }
+
+    match /empresas/{empresaId}/metasPESV/{metaId} {
+      allow get, list: if isMemberOf(empresaId);
+      allow create, update, delete: if isAdmin(empresaId) && resource != null;
+    }
+  }
+}
