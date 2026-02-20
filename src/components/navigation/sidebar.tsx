@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from "next/link";
@@ -17,7 +16,6 @@ import {
   AlertTriangle,
   Activity,
   HardHat,
-  Stethoscope,
   GraduationCap,
   Wrench,
   Fuel,
@@ -25,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useUser } from "@/firebase";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
@@ -56,10 +55,10 @@ const navItems = [
   { href: "/dashboard/configuracion", icon: Settings, label: "Configuración" },
 ];
 
-const userAvatar = PlaceHolderImages.find(p => p.id === "user-avatar-1");
-
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const userAvatar = PlaceHolderImages.find(p => p.id === "user-avatar-1");
 
   return (
     <aside className="hidden md:flex w-72 flex-col justify-between border-r bg-card p-4 overflow-y-auto custom-scrollbar">
@@ -120,8 +119,8 @@ export function Sidebar() {
             </div>
           ) : <div className="w-10 h-10 rounded-full bg-muted"></div>}
           <div className="flex flex-col overflow-hidden">
-            <p className="text-foreground text-sm font-bold leading-none truncate">Carlos Rodriguez</p>
-            <p className="text-muted-foreground text-[10px] font-medium leading-none mt-1 truncate">Admin. Estratégico</p>
+            <p className="text-foreground text-sm font-bold leading-none truncate">{user?.email === 'info@datnova.io' ? 'Super Admin' : 'Usuario Demo'}</p>
+            <p className="text-muted-foreground text-[10px] font-medium leading-none mt-1 truncate">{user?.email || 'Sesión Anónima'}</p>
           </div>
         </div>
       </div>

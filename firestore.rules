@@ -4,7 +4,7 @@ service cloud.firestore {
 
     /**
      * ROADWISE 360 - SECURITY RULES
-     * Superadmin UID: I9Al3kS46rcTAbylTHgufUFke8b2
+     * Superadmin UID: I9Al3kS46rcTAbylTHgufUFke8b2 (info@datnova.io)
      */
 
     function isSignedIn() {
@@ -35,11 +35,11 @@ service cloud.firestore {
 
       match /{allSubcollections=**} {
         allow read: if isMemberOf(empresaId);
-        allow write: if isMemberOf(empresaId); // Permiso amplio para prototipado
+        allow write: if isMemberOf(empresaId); // Permiso amplio para prototipado rápido
       }
     }
     
-    // Global access for SuperAdmin to everything
+    // Acceso global para SuperAdmin
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }
