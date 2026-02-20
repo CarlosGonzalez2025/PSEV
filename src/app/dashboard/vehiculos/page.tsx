@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, serverTimestamp, addDoc } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -12,7 +12,6 @@ import {
   Filter, 
   MoreVertical, 
   Calendar, 
-  AlertCircle,
   FileCheck
 } from "lucide-react";
 import {
@@ -40,8 +39,6 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 const vehicleSchema = z.object({
   placa: z.string().min(6, "Placa inválida"),
   marca: z.string().min(2, "Marca requerida"),
@@ -53,14 +50,15 @@ const vehicleSchema = z.object({
 
 export default function VehiculosPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
   const [open, setOpen] = useState(false);
 
   const vehiculosRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile?.empresaId) return null;
     return query(
-      collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'vehiculos')
+      collection(firestore, 'empresas', profile.empresaId, 'vehiculos')
     );
-  }, [firestore]);
+  }, [firestore, profile?.empresaId]);
 
   const { data: vehiculos, isLoading } = useCollection(vehiculosRef);
 
@@ -77,11 +75,11 @@ export default function VehiculosPage() {
   });
 
   function onSubmit(values: z.infer<typeof vehicleSchema>) {
-    if (!firestore) return;
-    const colRef = collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'vehiculos');
+    if (!firestore || !profile?.empresaId) return;
+    const colRef = collection(firestore, 'empresas', profile.empresaId, 'vehiculos');
     addDocumentNonBlocking(colRef, {
       ...values,
-      empresaId: MOCK_EMPRESA_ID,
+      empresaId: profile.empresaId,
       fechaRegistro: new Date().toISOString(),
       tipoVehiculo: "Automotor",
       propiedad: "Propio"
@@ -107,13 +105,13 @@ export default function VehiculosPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">Gestión de Flota</h1>
+          <h1 className="text-3xl font-black tracking-tight text-white uppercase">Gestión de Flota</h1>
           <p className="text-muted-foreground mt-1">Inventario y estado de activos (Paso 16 del PESV)</p>
         </div>
         
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="font-bold shadow-lg shadow-primary/20">
+            <Button className="font-bold shadow-lg shadow-primary/20 bg-primary">
               <Plus className="w-4 h-4 mr-2" />
               Registrar Vehículo
             </Button>
@@ -283,7 +281,7 @@ export default function VehiculosPage() {
                 ) : vehiculos?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                      No hay vehículos registrados.
+                      No hay vehículos registrados para esta empresa.
                     </TableCell>
                   </TableRow>
                 ) : (

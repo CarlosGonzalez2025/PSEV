@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * ROADWISE 360 - SECURITY RULES
+     * ROADWISE 360 - SaaS SECURITY RULES
      * Superadmin UID: I9Al3kS46rcTAbylTHgufUFke8b2 (info@datnova.io)
      */
 
@@ -15,27 +15,34 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == 'I9Al3kS46rcTAbylTHgufUFke8b2';
     }
 
-    function getProfile(empresaId) {
-      return get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data;
+    // El perfil del usuario define a qué empresa pertenece
+    function getUserData() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
     }
 
-    function isMemberOf(empresaId) {
-      return isSignedIn() && (isSuperAdmin() || exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)));
+    function belongsToCompany(empresaId) {
+      return isSignedIn() && (isSuperAdmin() || getUserData().empresaId == empresaId);
     }
 
-    function isAdmin(empresaId) {
-      return isSuperAdmin() || (isMemberOf(empresaId) && (getProfile(empresaId).rol in ['Admin', 'Lider_PESV']));
+    function hasRole(empresaId, roles) {
+      return isSuperAdmin() || (belongsToCompany(empresaId) && getUserData().rol in roles);
     }
 
-    // --- COLLECTION RULES ---
+    // --- REGLAS DE USUARIOS (LOOKUP) ---
+    match /usuarios/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
+      allow write: if isSuperAdmin(); // Solo el superadmin puede crear/editar perfiles raíz
+    }
 
+    // --- REGLAS DE EMPRESAS (MULTI-TENANCY) ---
     match /empresas/{empresaId} {
-      allow read: if isMemberOf(empresaId);
-      allow write: if isSuperAdmin() || isAdmin(empresaId);
+      allow read: if belongsToCompany(empresaId);
+      allow write: if isSuperAdmin();
 
       match /{allSubcollections=**} {
-        allow read: if isMemberOf(empresaId);
-        allow write: if isMemberOf(empresaId); // Permiso amplio para prototipado rápido
+        allow read: if belongsToCompany(empresaId);
+        allow write: if belongsToCompany(empresaId); 
+        // Nota: Para producción, se deben restringir roles específicos (ej. Conductor no edita Auditorías)
       }
     }
     

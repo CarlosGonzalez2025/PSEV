@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Wrench,
   Fuel,
+  ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -57,7 +58,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const userAvatar = PlaceHolderImages.find(p => p.id === "user-avatar-1");
 
   return (
@@ -69,10 +70,25 @@ export function Sidebar() {
           </div>
           <div className="flex flex-col">
             <h1 className="text-foreground text-lg font-black leading-none tracking-tight font-headline">RoadWise 360</h1>
-            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mt-1">Gestión PESV & SST</p>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mt-1">SaaS de Gestión PESV</p>
           </div>
         </div>
         <nav className="flex flex-col gap-1 mt-2">
+          {profile?.rol === 'Superadmin' && (
+            <Link
+              href="/admin"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group mb-4",
+                pathname === "/admin"
+                  ? "bg-red-500 text-white font-bold"
+                  : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+              )}
+            >
+              <ShieldAlert className="w-5 h-5 shrink-0" />
+              <p className="text-sm">Panel Superadmin</p>
+            </Link>
+          )}
+
           {navItems.map((item, index) => {
             if (item.isTitle) {
               return (
@@ -119,8 +135,12 @@ export function Sidebar() {
             </div>
           ) : <div className="w-10 h-10 rounded-full bg-muted"></div>}
           <div className="flex flex-col overflow-hidden">
-            <p className="text-foreground text-sm font-bold leading-none truncate">{user?.email === 'info@datnova.io' ? 'Super Admin' : 'Usuario Demo'}</p>
-            <p className="text-muted-foreground text-[10px] font-medium leading-none mt-1 truncate">{user?.email || 'Sesión Anónima'}</p>
+            <p className="text-foreground text-sm font-bold leading-none truncate">
+              {profile?.rol === 'Superadmin' ? 'Super Admin' : profile?.nombreCompleto || 'Usuario'}
+            </p>
+            <p className="text-muted-foreground text-[10px] font-medium leading-none mt-1 truncate">
+              {profile?.rol === 'Superadmin' ? 'Global' : `Empresa: ${profile?.empresaId || 'Sin asignar'}`}
+            </p>
           </div>
         </div>
       </div>
