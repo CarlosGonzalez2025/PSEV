@@ -1,11 +1,7 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * ROADWISE 360 - SaaS SECURITY RULES
-     * Superadmin UID: I9Al3kS46rcTAbylTHgufUFke8b2 (info@datnova.io)
-     */
 
     function isSignedIn() {
       return request.auth != null;
@@ -15,7 +11,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == 'I9Al3kS46rcTAbylTHgufUFke8b2';
     }
 
-    // El perfil del usuario define a qué empresa pertenece
     function getUserData() {
       return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
     }
@@ -24,29 +19,29 @@ service cloud.firestore {
       return isSignedIn() && (isSuperAdmin() || getUserData().empresaId == empresaId);
     }
 
-    function hasRole(empresaId, roles) {
-      return isSuperAdmin() || (belongsToCompany(empresaId) && getUserData().rol in roles);
+    // Reglas para Invitaciones (Necesarias para el flujo de activación)
+    match /invitaciones/{tokenId} {
+      allow read: if true; // Permitir lectura pública para validación de token
+      allow write: if isSuperAdmin();
     }
 
-    // --- REGLAS DE USUARIOS (LOOKUP) ---
+    // Reglas de Usuarios Raíz
     match /usuarios/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
-      allow write: if isSuperAdmin(); // Solo el superadmin puede crear/editar perfiles raíz
+      allow write: if isSuperAdmin() || (isSignedIn() && request.auth.uid == uid && !exists(/databases/$(database)/documents/usuarios/$(uid)));
     }
 
-    // --- REGLAS DE EMPRESAS (MULTI-TENANCY) ---
+    // Reglas Multi-tenant
     match /empresas/{empresaId} {
       allow read: if belongsToCompany(empresaId);
       allow write: if isSuperAdmin();
 
       match /{allSubcollections=**} {
         allow read: if belongsToCompany(empresaId);
-        allow write: if belongsToCompany(empresaId); 
-        // Nota: Para producción, se deben restringir roles específicos (ej. Conductor no edita Auditorías)
+        allow write: if belongsToCompany(empresaId);
       }
     }
     
-    // Acceso global para SuperAdmin
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }
