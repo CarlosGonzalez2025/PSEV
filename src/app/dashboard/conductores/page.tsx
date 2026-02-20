@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, serverTimestamp } from 'firebase/firestore';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,8 +42,6 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 const driverSchema = z.object({
   nombreCompleto: z.string().min(3, "Nombre requerido"),
   cedula: z.string().min(5, "Cédula inválida"),
@@ -52,14 +51,15 @@ const driverSchema = z.object({
 
 export default function ConductoresPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
   const [open, setOpen] = useState(false);
 
   const conductoresRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile?.empresaId) return null;
     return query(
-      collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'conductores')
+      collection(firestore, 'empresas', profile.empresaId, 'conductores')
     );
-  }, [firestore]);
+  }, [firestore, profile?.empresaId]);
 
   const { data: conductores, isLoading } = useCollection(conductoresRef);
 
@@ -74,11 +74,11 @@ export default function ConductoresPage() {
   });
 
   function onSubmit(values: z.infer<typeof driverSchema>) {
-    if (!firestore) return;
-    const colRef = collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'conductores');
+    if (!firestore || !profile?.empresaId) return;
+    const colRef = collection(firestore, 'empresas', profile.empresaId, 'conductores');
     addDocumentNonBlocking(colRef, {
       ...values,
-      empresaId: MOCK_EMPRESA_ID,
+      empresaId: profile.empresaId,
       fechaRegistro: new Date().toISOString(),
       estado: "Activo",
       estadoLicencia: "Vigente",
@@ -95,13 +95,13 @@ export default function ConductoresPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">Talento Humano Vial</h1>
+          <h1 className="text-3xl font-black tracking-tight text-white uppercase">Talento Humano Vial</h1>
           <p className="text-muted-foreground mt-1">Directorio de conductores y actores viales (Paso 10 del PESV)</p>
         </div>
         
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="font-bold shadow-lg shadow-primary/20">
+            <Button className="font-bold shadow-lg shadow-primary/20 bg-primary">
               <Plus className="w-4 h-4 mr-2" />
               Registrar Conductor
             </Button>
@@ -191,7 +191,7 @@ export default function ConductoresPage() {
             <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Licencias por Vencer</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-amber-500">3</div>
+            <div className="text-3xl font-black text-amber-500">0</div>
             <p className="text-xs text-muted-foreground mt-1">Próximos 30 días</p>
           </CardContent>
         </Card>
@@ -217,7 +217,7 @@ export default function ConductoresPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="border-border-dark text-white">
+              <Button variant="outline" size="sm" className="border-border-dark text-white hover:bg-white/10">
                 <Filter className="w-4 h-4 mr-2" />
                 Filtros
               </Button>
@@ -228,13 +228,13 @@ export default function ConductoresPage() {
           <div className="rounded-md border border-border-dark overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/5 border-border-dark">
-                  <th className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Nombre</th>
-                  <th className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Identificación</th>
-                  <th className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Licencia</th>
-                  <th className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Desempeño</th>
-                  <th className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Vigencia Lic.</th>
-                  <th className="p-4 text-right"></th>
+                <TableRow className="bg-muted/5 border-border-dark hover:bg-transparent">
+                  <TableHead className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Nombre</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Identificación</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Licencia</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Desempeño</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase text-muted-foreground text-left">Vigencia Lic.</TableHead>
+                  <TableHead className="p-4 text-right"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -251,8 +251,8 @@ export default function ConductoresPage() {
                   ))
                 ) : conductores?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                      No hay conductores registrados.
+                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground italic">
+                      No hay conductores registrados para esta empresa.
                     </TableCell>
                   </TableRow>
                 ) : (

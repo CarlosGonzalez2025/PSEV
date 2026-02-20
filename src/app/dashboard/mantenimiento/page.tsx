@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +25,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 const maintenanceSchema = z.object({
   vehiculoId: z.string().min(1, "Vehículo requerido"),
   tipo: z.string(),
@@ -36,22 +35,23 @@ const maintenanceSchema = z.object({
 
 export default function MantenimientoPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
   const [open, setOpen] = useState(false);
 
   const mantenimientosRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile?.empresaId) return null;
     return query(
-      collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'mantenimientos'),
+      collection(firestore, 'empresas', profile.empresaId, 'mantenimientos'),
       orderBy('fechaEjecucion', 'desc')
     );
-  }, [firestore]);
+  }, [firestore, profile?.empresaId]);
 
   const { data: mantenimientos, isLoading } = useCollection(mantenimientosRef);
 
   const vehiculosRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'vehiculos'));
-  }, [firestore]);
+    if (!firestore || !profile?.empresaId) return null;
+    return query(collection(firestore, 'empresas', profile.empresaId, 'vehiculos'));
+  }, [firestore, profile?.empresaId]);
   const { data: vehiculos } = useCollection(vehiculosRef);
 
   const form = useForm<z.infer<typeof maintenanceSchema>>({
@@ -66,11 +66,11 @@ export default function MantenimientoPage() {
   });
 
   function onSubmit(values: z.infer<typeof maintenanceSchema>) {
-    if (!firestore) return;
-    const colRef = collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'mantenimientos');
+    if (!firestore || !profile?.empresaId) return;
+    const colRef = collection(firestore, 'empresas', profile.empresaId, 'mantenimientos');
     addDocumentNonBlocking(colRef, {
       ...values,
-      empresaId: MOCK_EMPRESA_ID,
+      empresaId: profile.empresaId,
       estado: "Ejecutado"
     });
     setOpen(false);
@@ -81,16 +81,15 @@ export default function MantenimientoPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Plan de Mantenimiento</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Plan de Mantenimiento</h1>
           <p className="text-text-secondary mt-1">Gestión de servicios preventivos y correctivos (Paso 17 del PESV)</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="font-bold border-border-dark text-white">Configurar Alertas</Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="font-bold shadow-lg shadow-primary/20 bg-primary">
                 <Plus className="w-4 h-4 mr-2" />
-                Programar Mantenimiento
+                Registrar Mantenimiento
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-surface-dark border-border-dark text-white">
@@ -201,7 +200,7 @@ export default function MantenimientoPage() {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest mb-1">Mantenimientos Hoy</p>
-                <h3 className="text-2xl font-black text-white">{mantenimientos?.length || 0}</h3>
+                <h3 className="text-2xl font-black text-white">{mantenimientos?.filter(m => m.fechaEjecucion === new Date().toISOString().split('T')[0]).length || 0}</h3>
               </div>
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
                 <Calendar className="size-5" />
@@ -213,21 +212,8 @@ export default function MantenimientoPage() {
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest mb-1">Vencimientos Críticos</p>
-                <h3 className="text-2xl font-black text-red-500">2</h3>
-              </div>
-              <div className="p-2 bg-red-500/10 rounded-lg text-red-500">
-                <AlertTriangle className="size-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-surface-dark border-border-dark">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest mb-1">Cumplimiento Plan</p>
-                <h3 className="text-2xl font-black text-emerald-500">92%</h3>
+                <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest mb-1">Total Servicios</p>
+                <h3 className="text-2xl font-black text-white">{mantenimientos?.length || 0}</h3>
               </div>
               <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
                 <CheckCircle2 className="size-5" />
@@ -240,10 +226,23 @@ export default function MantenimientoPage() {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest mb-1">Gastos Mes</p>
-                <h3 className="text-2xl font-black text-white">$12.4M</h3>
+                <h3 className="text-2xl font-black text-white">${mantenimientos?.reduce((acc, curr) => acc + (Number(curr.costo) || 0), 0).toLocaleString()}</h3>
               </div>
               <div className="p-2 bg-white/5 rounded-lg text-white">
                 <Settings className="size-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-surface-dark border-border-dark">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest mb-1">Alertas</p>
+                <h3 className="text-2xl font-black text-red-500">0</h3>
+              </div>
+              <div className="p-2 bg-red-500/10 rounded-lg text-red-500">
+                <AlertTriangle className="size-5" />
               </div>
             </div>
           </CardContent>
@@ -253,10 +252,6 @@ export default function MantenimientoPage() {
       <Card className="bg-surface-dark border-border-dark">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-bold text-white">Historial de Mantenimientos</CardTitle>
-          <div className="flex gap-2">
-            <Badge variant="outline" className="text-[10px] border-border-dark text-white">Preventivos</Badge>
-            <Badge variant="outline" className="text-[10px] border-border-dark text-white">Correctivos</Badge>
-          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -277,6 +272,10 @@ export default function MantenimientoPage() {
                     <TableCell colSpan={6} className="h-12 bg-white/5" />
                   </TableRow>
                 ))
+              ) : mantenimientos?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-10 text-text-secondary italic">No se han registrado mantenimientos para esta empresa.</TableCell>
+                </TableRow>
               ) : (
                 mantenimientos?.map(mtto => (
                   <TableRow key={mtto.id} className="border-border-dark hover:bg-white/5 transition-colors">
@@ -288,9 +287,9 @@ export default function MantenimientoPage() {
                     </TableCell>
                     <TableCell className="text-xs text-text-secondary max-w-xs truncate">{mtto.descripcion}</TableCell>
                     <TableCell className="text-xs text-white">{mtto.fechaEjecucion}</TableCell>
-                    <TableCell className="font-mono text-xs text-white">${mtto.costo.toLocaleString()}</TableCell>
+                    <TableCell className="font-mono text-xs text-white">${mtto.costo?.toLocaleString()}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="text-[10px] font-bold">{mtto.estado.toUpperCase()}</Badge>
+                      <Badge variant="secondary" className="text-[10px] font-bold">{mtto.estado?.toUpperCase()}</Badge>
                     </TableCell>
                   </TableRow>
                 ))

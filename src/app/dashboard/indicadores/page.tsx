@@ -1,23 +1,25 @@
+
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart3, TrendingUp, AlertTriangle, FileBarChart, Download, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-
-const MOCK_EMPRESA_ID = "demo-empresa-123";
+import { Badge } from "@/components/ui/badge";
 
 export default function IndicadoresPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
+
   const medicionesRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile?.empresaId) return null;
     return query(
-      collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'indicadoresMedicion'),
+      collection(firestore, 'empresas', profile.empresaId, 'indicadoresMedicion'),
       orderBy('fechaMedicion', 'desc')
     );
-  }, [firestore]);
+  }, [firestore, profile?.empresaId]);
 
   const { data: mediciones, isLoading } = useCollection(medicionesRef);
 
@@ -32,10 +34,10 @@ export default function IndicadoresPage() {
     <div className="space-y-8 pb-10">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Indicadores PESV (Paso 20)</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Indicadores PESV (Paso 20)</h1>
           <p className="text-text-secondary mt-1">Cálculo automático de los 13 indicadores mínimos de ley</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/20">
+        <Button className="bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20">
           <Download className="size-4 mr-2" />
           Exportar Reporte SISI
         </Button>
@@ -43,7 +45,7 @@ export default function IndicadoresPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {indicators.map((ind, i) => (
-          <Card key={i} className="bg-surface-dark border-border-dark hover:border-primary/30 transition-all group">
+          <Card key={i} className="bg-surface-dark border-border-dark hover:border-primary/30 transition-all group shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
                 <CardTitle className="text-base font-bold text-white">{ind.name}</CardTitle>
@@ -71,7 +73,7 @@ export default function IndicadoresPage() {
         ))}
       </div>
 
-      <Card className="bg-surface-dark border-border-dark">
+      <Card className="bg-surface-dark border-border-dark shadow-2xl">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-white">Consolidado Histórico</CardTitle>
           <CardDescription>Resumen de autogestión anual reportado</CardDescription>
@@ -84,14 +86,14 @@ export default function IndicadoresPage() {
               </div>
             ) : mediciones?.length === 0 ? (
               <div className="text-center py-10 text-text-secondary italic border-2 border-dashed border-border-dark rounded-xl">
-                No hay mediciones históricas registradas. Los datos se generarán al finalizar el trimestre.
+                No hay mediciones históricas registradas para esta empresa.
               </div>
             ) : (
               mediciones?.map(m => (
                 <div key={m.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-transparent hover:border-primary/20 transition-all">
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-white">{m.periodo}</span>
-                    <span className="text-[10px] text-text-secondary">{m.fechaMedicion}</span>
+                    <span className="text-[10px] text-text-secondary">{m.fechaMedicion?.split('T')[0]}</span>
                   </div>
                   <div className="flex items-center gap-8">
                     <div className="text-right">

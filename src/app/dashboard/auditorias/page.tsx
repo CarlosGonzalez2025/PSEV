@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,17 +10,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 export default function AuditoriasPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
+
   const auditoriasRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile?.empresaId) return null;
     return query(
-      collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'auditorias'),
+      collection(firestore, 'empresas', profile.empresaId, 'auditorias'),
       orderBy('fechaProgramada', 'desc')
     );
-  }, [firestore]);
+  }, [firestore, profile?.empresaId]);
 
   const { data: auditorias, isLoading } = useCollection(auditoriasRef);
 
@@ -27,7 +28,7 @@ export default function AuditoriasPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Auditorías Internas PESV</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Auditorías Internas PESV</h1>
           <p className="text-text-secondary mt-1">Verificación y cumplimiento de la Resolución 40595 (Paso 22)</p>
         </div>
         <Button className="font-bold shadow-lg shadow-primary/20 bg-primary">
@@ -51,8 +52,8 @@ export default function AuditoriasPage() {
             <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Auditorías Ejecutadas</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">12</div>
-            <p className="text-[10px] text-text-secondary mt-2">Periodo 2023</p>
+            <div className="text-3xl font-black text-white">{auditorias?.filter(a => a.estado === 'Ejecutada').length || 0}</div>
+            <p className="text-[10px] text-text-secondary mt-2">Periodo actual</p>
           </CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark border-l-4 border-l-red-500">
@@ -102,7 +103,7 @@ export default function AuditoriasPage() {
                 ))
               ) : auditorias?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10 text-text-secondary italic">No se han registrado auditorías.</TableCell>
+                  <TableCell colSpan={6} className="text-center py-10 text-text-secondary italic">No hay auditorías registradas para esta empresa.</TableCell>
                 </TableRow>
               ) : (
                 auditorias?.map(aud => (
@@ -111,20 +112,20 @@ export default function AuditoriasPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">AUD</div>
-                        <span className="text-sm text-white">Ing. Juan Pérez</span>
+                        <span className="text-sm text-white">Auditor PESV</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-text-secondary">Avanzado</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="w-20 bg-white/10 h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-emerald-500 h-full w-[92%]"></div>
+                          <div className="bg-emerald-500 h-full" style={{ width: `${aud.puntuacionObtenida}%` }}></div>
                         </div>
-                        <span className="text-xs font-bold text-emerald-500">92%</span>
+                        <span className="text-xs font-bold text-emerald-500">{aud.puntuacionObtenida}%</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="text-[10px]">{aud.estado.toUpperCase()}</Badge>
+                      <Badge variant="secondary" className="text-[10px]">{aud.estado?.toUpperCase()}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" className="text-primary font-bold">Ver Detalles</Button>

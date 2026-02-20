@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +25,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 const inspectionSchema = z.object({
   vehiculoId: z.string().min(1, "Vehículo requerido"),
   conductorId: z.string().min(1, "Conductor requerido"),
@@ -36,29 +35,30 @@ const inspectionSchema = z.object({
 
 export default function InspeccionesPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
   const [open, setOpen] = useState(false);
 
   const inspeccionesRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile?.empresaId) return null;
     return query(
-      collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'inspeccionesPreoperacionales'),
+      collection(firestore, 'empresas', profile.empresaId, 'inspeccionesPreoperacionales'),
       orderBy('fechaHora', 'desc'),
       limit(20)
     );
-  }, [firestore]);
+  }, [firestore, profile?.empresaId]);
 
   const { data: inspecciones, isLoading } = useCollection(inspeccionesRef);
 
   const vehiculosRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'vehiculos'));
-  }, [firestore]);
+    if (!firestore || !profile?.empresaId) return null;
+    return query(collection(firestore, 'empresas', profile.empresaId, 'vehiculos'));
+  }, [firestore, profile?.empresaId]);
   const { data: vehiculos } = useCollection(vehiculosRef);
 
   const conductoresRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'conductores'));
-  }, [firestore]);
+    if (!firestore || !profile?.empresaId) return null;
+    return query(collection(firestore, 'empresas', profile.empresaId, 'conductores'));
+  }, [firestore, profile?.empresaId]);
   const { data: conductores } = useCollection(conductoresRef);
 
   const form = useForm<z.infer<typeof inspectionSchema>>({
@@ -73,11 +73,11 @@ export default function InspeccionesPage() {
   });
 
   function onSubmit(values: z.infer<typeof inspectionSchema>) {
-    if (!firestore) return;
-    const colRef = collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'inspeccionesPreoperacionales');
+    if (!firestore || !profile?.empresaId) return;
+    const colRef = collection(firestore, 'empresas', profile.empresaId, 'inspeccionesPreoperacionales');
     addDocumentNonBlocking(colRef, {
       ...values,
-      empresaId: MOCK_EMPRESA_ID,
+      empresaId: profile.empresaId,
       fechaHora: new Date().toISOString(),
       itemsChequeados: JSON.stringify({ luces: "ok", frenos: "ok", llantas: "ok" }),
       alertaBloqueoGenerada: !values.aprobadoParaCircular
@@ -90,7 +90,7 @@ export default function InspeccionesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Inspecciones Diarias</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Inspecciones Diarias</h1>
           <p className="text-text-secondary mt-1">Control preoperacional de flota (Paso 16 del PESV)</p>
         </div>
         
@@ -180,7 +180,7 @@ export default function InspeccionesPage() {
                           type="checkbox"
                           checked={field.value}
                           onChange={field.onChange}
-                          className="size-5 rounded border-border-dark text-primary focus:ring-primary"
+                          className="size-5 rounded border-border-dark text-primary focus:ring-primary bg-transparent"
                         />
                       </FormControl>
                     </FormItem>
@@ -196,29 +196,29 @@ export default function InspeccionesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-emerald-500/10 border-emerald-500/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black uppercase text-emerald-500">Aprobadas Hoy</CardTitle>
+            <CardTitle className="text-xs font-black uppercase text-emerald-500">Aprobadas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">42</div>
-            <p className="text-[10px] text-emerald-500 mt-1 flex items-center gap-1"><CheckCircle2 className="size-3" /> 100% operatividad</p>
+            <div className="text-3xl font-black text-white">{inspecciones?.filter(i => i.aprobadoParaCircular).length || 0}</div>
+            <p className="text-[10px] text-emerald-500 mt-1 flex items-center gap-1"><CheckCircle2 className="size-3" /> Estado: Operativo</p>
           </CardContent>
         </Card>
         <Card className="bg-red-500/10 border-red-500/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black uppercase text-red-500">Rechazadas / Bloqueadas</CardTitle>
+            <CardTitle className="text-xs font-black uppercase text-red-500">Rechazadas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">3</div>
-            <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><XCircle className="size-3" /> Falla crítica en frenos</p>
+            <div className="text-3xl font-black text-white">{inspecciones?.filter(i => !i.aprobadoParaCircular).length || 0}</div>
+            <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><XCircle className="size-3" /> Requiere mantenimiento</p>
           </CardContent>
         </Card>
         <Card className="bg-amber-500/10 border-amber-500/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black uppercase text-amber-500">Pendientes Turno</CardTitle>
+            <CardTitle className="text-xs font-black uppercase text-amber-500">Total Recientes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">12</div>
-            <p className="text-[10px] text-amber-500 mt-1 flex items-center gap-1"><AlertCircle className="size-3" /> Turno 2 (Tarde)</p>
+            <div className="text-3xl font-black text-white">{inspecciones?.length || 0}</div>
+            <p className="text-[10px] text-amber-500 mt-1 flex items-center gap-1"><AlertCircle className="size-3" /> Últimos 20 registros</p>
           </CardContent>
         </Card>
       </div>
@@ -227,7 +227,7 @@ export default function InspeccionesPage() {
         <CardHeader>
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-3 size-4 text-text-secondary" />
-            <Input className="pl-10 bg-background-dark border-border-dark text-white" placeholder="Buscar por placa o conductor..." />
+            <Input className="pl-10 bg-background-dark border-border-dark text-white" placeholder="Filtrar inspecciones..." />
           </div>
         </CardHeader>
         <CardContent>
@@ -251,7 +251,7 @@ export default function InspeccionesPage() {
                 ))
               ) : inspecciones?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10 text-text-secondary italic">No se han registrado inspecciones hoy.</TableCell>
+                  <TableCell colSpan={6} className="text-center py-10 text-text-secondary italic">No se han registrado inspecciones para esta empresa.</TableCell>
                 </TableRow>
               ) : (
                 inspecciones?.map(insp => (

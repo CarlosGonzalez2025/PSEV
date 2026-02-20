@@ -1,7 +1,8 @@
+
 'use client';
 
-import { useState } from 'react';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useState, useEffect } from 'react';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,27 +11,34 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 export default function PoliticaPage() {
   const firestore = useFirestore();
-  const politicaRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'empresas', MOCK_EMPRESA_ID, 'politicasSeguridadVial', 'actual');
-  }, [firestore]);
-
-  const { data: politica, isLoading } = useDoc(politicaRef);
+  const { profile } = useUser();
   const [content, setContent] = useState('');
 
+  const politicaRef = useMemoFirebase(() => {
+    if (!firestore || !profile?.empresaId) return null;
+    return doc(firestore, 'empresas', profile.empresaId, 'politicasSeguridadVial', 'actual');
+  }, [firestore, profile?.empresaId]);
+
+  const { data: politica, isLoading } = useDoc(politicaRef);
+
+  useEffect(() => {
+    if (politica?.contenidoHtml) {
+      setContent(politica.contenidoHtml);
+    }
+  }, [politica]);
+
   const handleSave = async () => {
-    if (!firestore) return;
+    if (!firestore || !politicaRef) return;
     try {
-      await setDoc(politicaRef!, {
+      await setDoc(politicaRef, {
         titulo: "Política de Seguridad Vial",
-        contenidoHtml: content || politica?.contenidoHtml || '',
+        contenidoHtml: content,
         version: "2.1",
         fechaAprobacion: new Date().toISOString(),
-        estado: "Borrador"
+        estado: "Borrador",
+        empresaId: profile?.empresaId
       }, { merge: true });
       toast({ title: "Cambios guardados", description: "La política ha sido actualizada exitosamente." });
     } catch (e) {
@@ -42,11 +50,11 @@ export default function PoliticaPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Política de Seguridad Vial</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Política de Seguridad Vial</h1>
           <p className="text-text-secondary mt-1">Liderazgo, compromiso y corresponsabilidad (Pasos 1-5 del PESV)</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="font-bold border-border-dark">
+          <Button variant="outline" className="font-bold border-border-dark text-white hover:bg-white/10">
             <History className="w-4 h-4 mr-2" />
             Historial
           </Button>
@@ -59,19 +67,19 @@ export default function PoliticaPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 space-y-6">
-          <Card className="bg-surface-dark border-border-dark min-h-[500px] flex flex-col">
+          <Card className="bg-surface-dark border-border-dark min-h-[500px] flex flex-col shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between border-b border-border-dark">
               <div>
                 <CardTitle className="text-lg font-bold text-white">Editor de Política</CardTitle>
-                <CardDescription>Redacción oficial del compromiso directivo</CardDescription>
+                <CardDescription className="text-text-secondary">Redacción oficial del compromiso directivo</CardDescription>
               </div>
-              <Badge variant="outline" className="text-emerald-500 border-emerald-500/20">ÚLTIMA VERSIÓN: 2.1</Badge>
+              <Badge variant="outline" className="text-emerald-500 border-emerald-500/20">VERSIÓN: 2.1</Badge>
             </CardHeader>
             <CardContent className="p-0 flex-1">
               <Textarea 
-                className="w-full h-full min-h-[400px] bg-transparent border-none p-8 text-white resize-none font-serif leading-relaxed text-lg"
+                className="w-full h-full min-h-[400px] bg-transparent border-none p-8 text-white resize-none font-serif leading-relaxed text-lg focus-visible:ring-0"
                 placeholder="Escriba aquí la política de seguridad vial de la organización..."
-                defaultValue={politica?.contenidoHtml || ''}
+                value={content}
                 onChange={(e) => setContent(e.target.value)}
               />
             </CardContent>
@@ -84,7 +92,7 @@ export default function PoliticaPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-border-dark rounded-xl p-10 text-center hover:border-primary/50 transition-all cursor-pointer group">
+              <div className="border-2 border-dashed border-border-dark rounded-xl p-10 text-center hover:border-primary/50 transition-all cursor-pointer group bg-white/5">
                 <div className="size-16 rounded-full bg-white/5 mx-auto mb-4 flex items-center justify-center text-text-secondary group-hover:text-primary transition-colors">
                   <Upload className="w-8 h-8" />
                 </div>
@@ -96,7 +104,7 @@ export default function PoliticaPage() {
         </div>
 
         <aside className="lg:col-span-4 space-y-6">
-          <Card className="bg-surface-dark border-border-dark sticky top-24">
+          <Card className="bg-surface-dark border-border-dark sticky top-24 shadow-xl">
             <CardHeader>
               <CardTitle className="text-base font-bold text-white flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-primary" /> Verificación de Requisitos
@@ -110,21 +118,21 @@ export default function PoliticaPage() {
                 "Mejora continua",
                 "Promoción de hábitos seguros"
               ].map((req, i) => (
-                <div key={i} className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors">
-                  <div className="size-5 rounded border border-primary/50 flex items-center justify-center text-primary">
+                <div key={i} className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors group">
+                  <div className="size-5 rounded border border-primary/50 flex items-center justify-center text-primary group-hover:bg-primary/10">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
-                  <span className="text-sm text-text-secondary">{req}</span>
+                  <span className="text-sm text-text-secondary group-hover:text-white">{req}</span>
                 </div>
               ))}
               
               <div className="pt-6 border-t border-border-dark mt-6">
-                <Button className="w-full bg-primary hover:bg-primary/90 font-bold h-12 gap-2">
+                <Button className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 gap-2 shadow-lg shadow-primary/20">
                   <Send className="w-4 h-4" />
                   Difundir a la Organización
                 </Button>
                 <p className="text-[10px] text-text-secondary text-center mt-3">
-                  Se notificará vía email y App a 124 colaboradores.
+                  Se notificará vía email y App a todos los colaboradores registrados.
                 </p>
               </div>
             </CardContent>

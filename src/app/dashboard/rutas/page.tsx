@@ -1,20 +1,21 @@
+
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Map, MapPin, Plus, Navigation, AlertTriangle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 export default function RutasPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
+
   const rutasRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'rutas'));
-  }, [firestore]);
+    if (!firestore || !profile?.empresaId) return null;
+    return query(collection(firestore, 'empresas', profile.empresaId, 'rutas'));
+  }, [firestore, profile?.empresaId]);
 
   const { data: rutas, isLoading } = useCollection(rutasRef);
 
@@ -22,10 +23,10 @@ export default function RutasPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Rutas y Puntos Críticos</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Rutas y Puntos Críticos</h1>
           <p className="text-text-secondary mt-1">Planificación de desplazamientos seguros (Paso 6 del PESV)</p>
         </div>
-        <Button className="font-bold shadow-lg shadow-primary/20">
+        <Button className="font-bold shadow-lg shadow-primary/20 bg-primary">
           <Plus className="w-4 h-4 mr-2" />
           Nueva Ruta
         </Button>
@@ -33,15 +34,15 @@ export default function RutasPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          <Card className="bg-surface-dark border-border-dark min-h-[400px] flex items-center justify-center relative overflow-hidden">
+          <Card className="bg-surface-dark border-border-dark min-h-[400px] flex items-center justify-center relative overflow-hidden shadow-2xl">
             <div className="absolute inset-0 opacity-20 pointer-events-none grayscale">
               <img src="https://picsum.photos/seed/map/1200/800" alt="Map Placeholder" className="w-full h-full object-cover" />
             </div>
-            <div className="text-center z-10 p-10 bg-surface-dark/80 backdrop-blur rounded-xl border border-border-dark max-w-md">
+            <div className="text-center z-10 p-10 bg-surface-dark/80 backdrop-blur rounded-xl border border-border-dark max-w-md shadow-2xl">
               <Map className="size-12 text-primary mx-auto mb-4" />
               <h3 className="text-lg font-bold text-white">Mapa Interactivo de Rutas</h3>
               <p className="text-sm text-text-secondary mt-2">Visualice los puntos críticos reportados y las zonas de alta accidentalidad en tiempo real.</p>
-              <Button variant="outline" className="mt-6 font-bold">Abrir Visor de Mapas</Button>
+              <Button variant="outline" className="mt-6 font-bold text-white border-border-dark hover:bg-white/10">Abrir Visor de Mapas</Button>
             </div>
           </Card>
         </div>
@@ -54,11 +55,11 @@ export default function RutasPage() {
             </div>
           ) : rutas?.length === 0 ? (
             <Card className="bg-surface-dark border-border-dark border-dashed">
-              <CardContent className="p-10 text-center text-text-secondary italic">No hay rutas registradas.</CardContent>
+              <CardContent className="p-10 text-center text-text-secondary italic">No hay rutas registradas para esta empresa.</CardContent>
             </Card>
           ) : (
             rutas?.map(ruta => (
-              <Card key={ruta.id} className="bg-surface-dark border-border-dark hover:border-primary/50 transition-colors cursor-pointer group">
+              <Card key={ruta.id} className="bg-surface-dark border-border-dark hover:border-primary/50 transition-colors cursor-pointer group shadow-lg">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex justify-between items-start">
                     <h4 className="font-bold text-white group-hover:text-primary transition-colors">{ruta.nombre}</h4>

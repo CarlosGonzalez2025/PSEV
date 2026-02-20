@@ -1,30 +1,29 @@
 
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, limit } from 'firebase/firestore';
 import { KpiCard } from "@/components/dashboard/kpi-card";
-import { BadgeCheck, AlertTriangle, Truck, Users, TrendingDown, TrendingUp, Calendar, Zap } from "lucide-react";
+import { BadgeCheck, AlertTriangle, Truck, Users, TrendingDown, Calendar, Zap } from "lucide-react";
 import { ComplianceChart } from "@/components/dashboard/compliance-chart";
 import { MaintenanceProgress } from "@/components/dashboard/maintenance-progress";
 import { AlertsWidget } from "@/components/dashboard/alerts-widget";
 import { MapWidget } from "@/components/dashboard/map-widget";
 import { Button } from "@/components/ui/button";
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 export default function DashboardPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
 
   const vehiculosQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'vehiculos'), limit(50));
-  }, [firestore]);
+    if (!firestore || !profile?.empresaId) return null;
+    return query(collection(firestore, 'empresas', profile.empresaId, 'vehiculos'), limit(50));
+  }, [firestore, profile?.empresaId]);
 
   const conductoresQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'conductores'), limit(100));
-  }, [firestore]);
+    if (!firestore || !profile?.empresaId) return null;
+    return query(collection(firestore, 'empresas', profile.empresaId, 'conductores'), limit(100));
+  }, [firestore, profile?.empresaId]);
 
   const { data: vehiculos } = useCollection(vehiculosQuery);
   const { data: conductores } = useCollection(conductoresQuery);
@@ -33,15 +32,15 @@ export default function DashboardPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tight">Panel de Control</h1>
+          <h1 className="text-4xl font-black tracking-tight text-white uppercase">Dashboard Principal</h1>
           <p className="text-muted-foreground text-lg">Resumen estratégico de seguridad vial (Res. 40595)</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="font-bold">
+          <Button variant="outline" className="font-bold border-border-dark text-white hover:bg-white/10">
             <Calendar className="w-4 h-4 mr-2" />
             Octubre 2023
           </Button>
-          <Button className="font-bold shadow-lg shadow-primary/20">
+          <Button className="font-bold shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
             <Zap className="w-4 h-4 mr-2" />
             Reporte SISI
           </Button>
@@ -78,7 +77,7 @@ export default function DashboardPage() {
           icon={Truck}
           badge="Operativa"
           badgeVariant="secondary"
-          progressText="5 en mantenimiento correctivo"
+          progressText="Vehículos activos hoy"
           iconBgColor="bg-orange-500/10"
           iconColor="text-orange-500"
         />
@@ -88,7 +87,7 @@ export default function DashboardPage() {
           icon={Users}
           badge="Habilitados"
           badgeVariant="success"
-          progressText="100% con ARL Nivel V"
+          progressText="Conductores vinculados"
           iconBgColor="bg-purple-500/10"
           iconColor="text-purple-500"
         />
