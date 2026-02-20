@@ -1,14 +1,13 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useFirestore, useUser } from '@/firebase';
-import { doc, setDoc, getDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Building2, UserPlus, AlertTriangle, Settings, Copy, Check, Link as LinkIcon } from "lucide-react";
+import { Shield, Building2, AlertTriangle, Settings, Copy, Link as LinkIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { redirect } from 'next/navigation';
 
@@ -51,6 +50,7 @@ export default function SuperAdminPage() {
     try {
       const userRef = doc(firestore, 'usuarios', SUPERADMIN_UID);
       await setDoc(userRef, {
+        id: SUPERADMIN_UID,
         empresaId: 'system',
         rol: 'Superadmin',
         nombreCompleto: 'Super Admin Datnova',
@@ -155,7 +155,7 @@ export default function SuperAdminPage() {
                       value={empresa.nit} 
                       onChange={e => setEmpresa({...empresa, nit: e.target.value})} 
                       placeholder="900123456" 
-                      className="bg-background-dark border-border-dark"
+                      className="bg-background-dark border-border-dark text-white"
                       required
                     />
                   </div>
@@ -165,7 +165,7 @@ export default function SuperAdminPage() {
                       value={empresa.razonSocial} 
                       onChange={e => setEmpresa({...empresa, razonSocial: e.target.value})} 
                       placeholder="Nombre Legal" 
-                      className="bg-background-dark border-border-dark"
+                      className="bg-background-dark border-border-dark text-white"
                       required
                     />
                   </div>
@@ -175,7 +175,7 @@ export default function SuperAdminPage() {
                       value={admin.nombre} 
                       onChange={e => setAdmin({...admin, nombre: e.target.value})} 
                       placeholder="Nombre del responsable" 
-                      className="bg-background-dark border-border-dark"
+                      className="bg-background-dark border-border-dark text-white"
                       required
                     />
                   </div>
@@ -186,7 +186,7 @@ export default function SuperAdminPage() {
                       value={admin.email} 
                       onChange={e => setAdmin({...admin, email: e.target.value})} 
                       placeholder="admin@cliente.com" 
-                      className="bg-background-dark border-border-dark"
+                      className="bg-background-dark border-border-dark text-white"
                       required
                     />
                   </div>
@@ -209,7 +209,7 @@ export default function SuperAdminPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-2">
-                    <Input readOnly value={invitationLink} className="bg-background-dark border-border-dark font-mono text-xs" />
+                    <Input readOnly value={invitationLink} className="bg-background-dark border-border-dark font-mono text-xs text-white" />
                     <Button variant="secondary" onClick={() => {
                       navigator.clipboard.writeText(invitationLink);
                       toast({ title: "Copiado", description: "Link listo para enviar." });
