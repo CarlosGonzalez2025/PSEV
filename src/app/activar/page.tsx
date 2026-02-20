@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Loader2, CheckCircle2, Lock } from "lucide-react";
+import { Shield, Loader2, CheckCircle2, Lock, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 function ActivationForm() {
@@ -143,7 +143,7 @@ function ActivationForm() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Correo Electrónico</Label>
-              <Input value={invitation.email} disabled className="bg-background-dark border-border-dark opacity-70" />
+              <Input value={invitation.email} disabled className="bg-background-dark border-border-dark opacity-70 text-white" />
             </div>
             <div className="space-y-2">
               <Label>Crea tu Contraseña</Label>
@@ -154,7 +154,7 @@ function ActivationForm() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Mínimo 6 caracteres" 
-                  className="pl-10 bg-background-dark border-border-dark"
+                  className="pl-10 bg-background-dark border-border-dark text-white"
                   required
                 />
               </div>

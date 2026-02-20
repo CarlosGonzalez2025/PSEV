@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -155,7 +156,7 @@ export default function SuperAdminPage() {
                       value={empresa.nit} 
                       onChange={e => setEmpresa({...empresa, nit: e.target.value})} 
                       placeholder="900123456" 
-                      className="bg-background-dark border-border-dark text-white"
+                      className="bg-background-dark border-border-dark text-white placeholder:text-slate-600"
                       required
                     />
                   </div>
@@ -165,7 +166,7 @@ export default function SuperAdminPage() {
                       value={empresa.razonSocial} 
                       onChange={e => setEmpresa({...empresa, razonSocial: e.target.value})} 
                       placeholder="Nombre Legal" 
-                      className="bg-background-dark border-border-dark text-white"
+                      className="bg-background-dark border-border-dark text-white placeholder:text-slate-600"
                       required
                     />
                   </div>
@@ -175,7 +176,7 @@ export default function SuperAdminPage() {
                       value={admin.nombre} 
                       onChange={e => setAdmin({...admin, nombre: e.target.value})} 
                       placeholder="Nombre del responsable" 
-                      className="bg-background-dark border-border-dark text-white"
+                      className="bg-background-dark border-border-dark text-white placeholder:text-slate-600"
                       required
                     />
                   </div>
@@ -186,7 +187,7 @@ export default function SuperAdminPage() {
                       value={admin.email} 
                       onChange={e => setAdmin({...admin, email: e.target.value})} 
                       placeholder="admin@cliente.com" 
-                      className="bg-background-dark border-border-dark text-white"
+                      className="bg-background-dark border-border-dark text-white placeholder:text-slate-600"
                       required
                     />
                   </div>
@@ -234,7 +235,7 @@ export default function SuperAdminPage() {
                   Este flujo garantiza el aislamiento de datos. Al activar la cuenta, el usuario se convierte en el Admin de su propia organización.
                 </p>
                 <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 text-xs">
-                  <span className="font-bold text-primary">Próxima Mejora:</span> Integrar con SendGrid para envío automático del correo.
+                  <span className="font-bold text-primary">Próxima Mejora:</span> Integrar con un proveedor de correo (SendGrid/Resend) para envío automático.
                 </div>
               </CardContent>
             </Card>
