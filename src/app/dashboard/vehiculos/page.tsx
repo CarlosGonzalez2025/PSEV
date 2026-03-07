@@ -70,20 +70,20 @@ import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
 
 const vehicleSchema = z.object({
-  placa: z.string().min(6, "La placa debe tener al menos 6 caracteres"),
+  placa: z.string().min(5, "La placa debe tener al menos 5 caracteres"),
   vin: z.string().min(5, "VIN requerido"),
   numeroMotor: z.string().min(5, "Número de motor requerido"),
   marca: z.string().min(2, "Marca requerida"),
   modelo: z.string().min(2, "Modelo requerido"),
   tipoVehiculo: z.string().min(1, "Clase requerida"),
-  cilindraje: z.string().optional(),
-  carroceria: z.string().optional(),
+  cilindraje: z.string().optional().or(z.literal("")),
+  carroceria: z.string().optional().or(z.literal("")),
   propietario: z.string().min(3, "Propietario requerido"),
-  soatVencimiento: z.string().optional(),
-  rtmVencimiento: z.string().optional(),
-  polizaVencimiento: z.string().optional(),
-  kilometrajeActual: z.coerce.number().min(0),
-  kilometrajeMensualEstimado: z.coerce.number().min(0),
+  soatVencimiento: z.string().optional().or(z.literal("")),
+  rtmVencimiento: z.string().optional().or(z.literal("")),
+  polizaVencimiento: z.string().optional().or(z.literal("")),
+  kilometrajeActual: z.coerce.number().min(0, "Debe ser mayor o igual a 0"),
+  kilometrajeMensualEstimado: z.coerce.number().min(0, "Debe ser mayor o igual a 0"),
   estadoOperativo: z.string().default("Operativo"),
 });
 
@@ -150,25 +150,30 @@ export default function VehiculosPage() {
       }
       handleClose();
     } catch (error: any) {
+      console.error("Error al guardar:", error);
       toast({ variant: "destructive", title: "Error", description: "Ocurrió un error al procesar la solicitud." });
     }
   };
 
   const onInvalid = (errors: any) => {
-    console.error("Errores de validación:", errors);
+    console.error("Errores de validación detallados:", errors);
+    const firstError = Object.keys(errors)[0];
+    const message = errors[firstError]?.message || "Por favor revisa todas las pestañas. Hay campos obligatorios marcados en rojo.";
+    
     toast({ 
       variant: "destructive", 
       title: "Información Incompleta", 
-      description: "Por favor revisa todas las pestañas. Hay campos obligatorios marcados en rojo." 
+      description: message 
     });
   };
 
   const handleEdit = (vehicle: any) => {
     setEditingVehicle(vehicle);
-    // Filtramos solo los campos que están en el esquema para evitar errores de Firestore
     const cleanedValues: any = {};
     Object.keys(vehicleSchema.shape).forEach((key) => {
-      cleanedValues[key] = vehicle[key] !== undefined ? vehicle[key] : "";
+      const val = vehicle[key];
+      const isNum = key === 'kilometrajeActual' || key === 'kilometrajeMensualEstimado';
+      cleanedValues[key] = (val !== undefined && val !== null) ? val : (isNum ? 0 : "");
     });
     form.reset(cleanedValues);
     setOpen(true);
@@ -197,6 +202,7 @@ export default function VehiculosPage() {
     if (!fechaStr) return 'neutral';
     const hoy = new Date();
     const fecha = new Date(fechaStr);
+    if (isNaN(fecha.getTime())) return 'neutral';
     const diff = fecha.getTime() - hoy.getTime();
     const dias = diff / (1000 * 60 * 60 * 24);
     if (dias < 0) return 'vencido';
