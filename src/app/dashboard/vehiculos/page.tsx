@@ -21,7 +21,8 @@ import {
   Info,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  Loader2
 } from "lucide-react";
 import {
   Table,
@@ -136,7 +137,7 @@ export default function VehiculosPage() {
         ...values,
         fechaActualizacion: new Date().toISOString()
       });
-      toast({ title: "Vehículo Actualizado", description: "La hoja de vida ha sido modificada." });
+      toast({ title: "Vehículo Actualizado", description: "La hoja de vida ha sido modificada correctamente." });
     } else {
       const colRef = collection(firestore, 'empresas', profile.empresaId, 'vehiculos');
       addDocumentNonBlocking(colRef, {
