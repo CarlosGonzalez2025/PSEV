@@ -16,7 +16,6 @@ service cloud.firestore {
     }
 
     // Validación de pertenencia a empresa (Multi-tenancy)
-    // Se utiliza una ruta absoluta para asegurar consistencia en operaciones de listado
     function belongsToCompany(empresaId) {
       return isSignedIn() && (
         isSuperAdmin() || 
@@ -43,7 +42,7 @@ service cloud.firestore {
       allow read: if belongsToCompany(empresaId);
       allow write: if isSuperAdmin() || belongsToCompany(empresaId);
 
-      // Regla recursiva para todas las subcolecciones (vehiculos, conductores, mantenimientos, inspecciones, etc.)
+      // Regla recursiva para todas las subcolecciones (vehiculos, mantenimientos, inspecciones, etc.)
       match /{allSubcollections=**} {
         allow read, write: if belongsToCompany(empresaId);
       }
