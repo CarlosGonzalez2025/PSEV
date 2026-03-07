@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -18,7 +18,10 @@ import {
   Activity,
   Settings,
   AlertTriangle,
-  Info
+  Info,
+  Eye,
+  Edit,
+  Trash2
 } from "lucide-react";
 import {
   Table,
@@ -43,12 +46,31 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useRouter } from 'next/navigation';
+import { toast } from '@/hooks/use-toast';
 
 const vehicleSchema = z.object({
-  // Identificación
   placa: z.string().min(6, "Placa inválida"),
   vin: z.string().min(5, "VIN requerido"),
   numeroMotor: z.string().min(5, "Número de motor requerido"),
@@ -58,11 +80,9 @@ const vehicleSchema = z.object({
   cilindraje: z.string(),
   carroceria: z.string(),
   propietario: z.string().min(3, "Propietario requerido"),
-  // Vigencias
   soatVencimiento: z.string(),
   rtmVencimiento: z.string(),
   polizaVencimiento: z.string(),
-  // Operación
   kilometrajeActual: z.coerce.number().min(0),
   kilometrajeMensualEstimado: z.coerce.number().min(0),
   estadoOperativo: z.string().default("Operativo"),
@@ -71,7 +91,10 @@ const vehicleSchema = z.object({
 export default function VehiculosPage() {
   const firestore = useFirestore();
   const { profile } = useUser();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<any>(null);
+  const [deletingVehicle, setDeletingVehicle] = useState<any>(null);
 
   const vehiculosRef = useMemoFirebase(() => {
     if (!firestore || !profile?.empresaId) return null;
@@ -106,15 +129,51 @@ export default function VehiculosPage() {
 
   function onSubmit(values: z.infer<typeof vehicleSchema>) {
     if (!firestore || !profile?.empresaId) return;
-    const colRef = collection(firestore, 'empresas', profile.empresaId, 'vehiculos');
-    addDocumentNonBlocking(colRef, {
-      ...values,
-      empresaId: profile.empresaId,
-      fechaRegistro: new Date().toISOString(),
-    });
-    setOpen(false);
-    form.reset();
+    
+    if (editingVehicle) {
+      const docRef = doc(firestore, 'empresas', profile.empresaId, 'vehiculos', editingVehicle.id);
+      updateDocumentNonBlocking(docRef, {
+        ...values,
+        fechaActualizacion: new Date().toISOString()
+      });
+      toast({ title: "Vehículo Actualizado", description: "La hoja de vida ha sido modificada." });
+    } else {
+      const colRef = collection(firestore, 'empresas', profile.empresaId, 'vehiculos');
+      addDocumentNonBlocking(colRef, {
+        ...values,
+        empresaId: profile.empresaId,
+        fechaRegistro: new Date().toISOString(),
+      });
+      toast({ title: "Vehículo Registrado", description: "Se ha creado una nueva hoja de vida." });
+    }
+    
+    handleClose();
   }
+
+  const handleEdit = (vehicle: any) => {
+    setEditingVehicle(vehicle);
+    form.reset(vehicle);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setEditingVehicle(null);
+    form.reset({
+      placa: "", vin: "", numeroMotor: "", marca: "", modelo: "",
+      tipoVehiculo: "Automotor", cilindraje: "", carroceria: "", propietario: "",
+      soatVencimiento: "", rtmVencimiento: "", polizaVencimiento: "",
+      kilometrajeActual: 0, kilometrajeMensualEstimado: 0, estadoOperativo: "Operativo"
+    });
+  };
+
+  const handleDelete = () => {
+    if (!deletingVehicle || !profile?.empresaId) return;
+    const docRef = doc(firestore, 'empresas', profile.empresaId, 'vehiculos', deletingVehicle.id);
+    deleteDocumentNonBlocking(docRef);
+    setDeletingVehicle(null);
+    toast({ title: "Vehículo Eliminado", description: "El registro ha sido removido del sistema." });
+  };
 
   const checkVencimiento = (fechaStr: string) => {
     if (!fechaStr) return 'neutral';
@@ -135,16 +194,18 @@ export default function VehiculosPage() {
           <p className="text-text-secondary mt-1">Hoja de vida digital y control de vigencias legales PESV</p>
         </div>
         
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(val) => !val && handleClose()}>
           <DialogTrigger asChild>
-            <Button className="font-bold shadow-lg shadow-primary/20 bg-primary">
+            <Button className="font-bold shadow-lg shadow-primary/20 bg-primary" onClick={() => setOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Registrar Vehículo
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-3xl bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
             <DialogHeader className="p-6 border-b border-border-dark">
-              <DialogTitle className="text-xl font-black uppercase">Nueva Hoja de Vida de Vehículo</DialogTitle>
+              <DialogTitle className="text-xl font-black uppercase">
+                {editingVehicle ? 'Editar Hoja de Vida' : 'Nueva Hoja de Vida de Vehículo'}
+              </DialogTitle>
               <DialogDescription className="text-text-secondary">
                 Información obligatoria según Resolución 40595 para desplazamientos laborales.
               </DialogDescription>
@@ -229,7 +290,7 @@ export default function VehiculosPage() {
                       </div>
                       <FormField control={form.control} name="estadoOperativo" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-[10px] uppercase font-bold">Estado Inicial</FormLabel>
+                          <FormLabel className="text-[10px] uppercase font-bold">Estado Operativo</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger className="bg-background-dark border-border-dark text-white">
@@ -248,7 +309,9 @@ export default function VehiculosPage() {
                   </div>
 
                   <div className="p-6 border-t border-border-dark bg-background-dark/30">
-                    <Button type="submit" className="w-full font-black uppercase tracking-widest h-12 shadow-lg shadow-primary/20">Guardar Hoja de Vida</Button>
+                    <Button type="submit" className="w-full font-black uppercase tracking-widest h-12 shadow-lg shadow-primary/20">
+                      {editingVehicle ? 'Actualizar Hoja de Vida' : 'Guardar Hoja de Vida'}
+                    </Button>
                   </div>
                 </Tabs>
               </form>
@@ -264,7 +327,7 @@ export default function VehiculosPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-black text-white">{vehiculos?.length || 0} <span className="text-sm font-normal text-text-secondary">Vehículos</span></div>
-            <p className="text-[10px] text-primary mt-1 flex items-center gap-1"><Info className="size-3" /> Reportados en diagnóstico</p>
+            <p className="text-[10px] text-primary mt-1 flex items-center gap-1"><Info className="size-3" /> Registrados en PESV</p>
           </CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark border-l-4 border-l-red-500">
@@ -372,9 +435,27 @@ export default function VehiculosPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="text-text-secondary hover:text-white">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-text-secondary hover:text-white">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-surface-dark border-border-dark text-white w-48">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuSeparator className="bg-border-dark" />
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push(`/dashboard/vehiculos/${v.id}`)}>
+                              <Eye className="size-4 mr-2 text-primary" /> Ver Hoja de Vida
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleEdit(v)}>
+                              <Edit className="size-4 mr-2" /> Editar Datos
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-border-dark" />
+                            <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-500/10" onClick={() => setDeletingVehicle(v)}>
+                              <Trash2 className="size-4 mr-2" /> Eliminar Unidad
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -384,6 +465,23 @@ export default function VehiculosPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deletingVehicle} onOpenChange={(val) => !val && setDeletingVehicle(null)}>
+        <AlertDialogContent className="bg-surface-dark border-border-dark text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="text-red-500" /> ¿Eliminar Vehículo {deletingVehicle?.placa}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-text-secondary">
+              Esta acción eliminará permanentemente la hoja de vida del vehículo. No se pueden recuperar los datos técnicos registrados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-border-dark text-white hover:bg-white/5">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Eliminar Definitivamente</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
