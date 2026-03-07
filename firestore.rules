@@ -14,40 +14,28 @@ service cloud.firestore {
       );
     }
 
-    // Validación de pertenencia a empresa
-    // Verifica AMBAS fuentes para máxima robustez
+    // Validación de pertenencia a empresa basada en el perfil global
     function belongsToCompany(empresaId) {
       return isSignedIn() && (
         isSuperAdmin() ||
-        // Verificar en la subcolección de la empresa (fuente primaria)
-        exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) ||
-        // Verificar en el perfil global del usuario (fuente secundaria)
         (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
          get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.empresaId == empresaId)
       );
     }
 
-    // Verificar si el usuario está activo en la empresa (usando el campo 'estado')
+    // Verificar si el usuario está activo (usando el perfil global como fuente de verdad)
     function isActiveInCompany(empresaId) {
       return isSuperAdmin() || (
-        belongsToCompany(empresaId) && (
-          (exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) &&
-           get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.estado == 'Activo')
-          ||
-          (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-           get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == 'Activo')
-        )
+        belongsToCompany(empresaId) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == 'Activo'
       );
     }
 
-    // Verificar rol del usuario dentro de la empresa
+    // Verificar rol del usuario
     function hasRoleInCompany(empresaId, allowedRoles) {
-      return belongsToCompany(empresaId) && (
-        isSuperAdmin() ||
-        (exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.rol in allowedRoles) ||
-        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in allowedRoles)
+      return isSuperAdmin() || (
+        isActiveInCompany(empresaId) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in allowedRoles
       );
     }
 
@@ -59,7 +47,7 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // === USUARIOS RAÍZ (perfil global) ===
+    // === USUARIOS RAÍZ (Perfil Global) ===
     match /usuarios/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
       allow create: if isSignedIn() && request.auth.uid == uid;
@@ -74,35 +62,10 @@ service cloud.firestore {
       allow update: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin();
       allow delete: if isSuperAdmin();
 
-      // Subcolección de usuarios de la empresa
-      match /usuarios/{uid} {
-        allow read: if isActiveInCompany(empresaId);
-        allow create: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin();
-        allow update: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin() ||
-                        (isSignedIn() && request.auth.uid == uid);
-        allow delete: if isSuperAdmin();
-      }
-
-      // Todas las demás subcolecciones operativas
-      match /mantenimientos/{docId} {
-        allow read: if isActiveInCompany(empresaId);
-        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Auditor"]);
-      }
-
-      match /vehiculos/{docId} {
-        allow read: if isActiveInCompany(empresaId);
-        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
-      }
-
-      match /inspeccionesPreoperacionales/{docId} {
-        allow read: if isActiveInCompany(empresaId);
-        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Conductor"]);
-      }
-
-      // Catch-all para subcolecciones no listadas explícitamente
+      // Subcolecciones operativas
       match /{subcollection}/{docId} {
         allow read: if isActiveInCompany(empresaId);
-        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Auditor", "Conductor"]);
       }
     }
 
@@ -113,7 +76,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // === SUPERADMIN GLOBAL ===
+    // === SUPERADMIN GLOBAL (Respaldo) ===
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }

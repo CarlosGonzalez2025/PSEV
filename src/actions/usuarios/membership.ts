@@ -24,6 +24,9 @@ const MembershipInputSchema = z.object({
 
 export type MembershipInput = z.infer<typeof MembershipInputSchema>;
 
+/**
+ * Vincula un usuario a una empresa de forma atómica en ambas ubicaciones.
+ */
 export async function assignUserToCompanyAction(input: MembershipInput) {
   try {
     const validated = MembershipInputSchema.parse(input);
@@ -43,14 +46,17 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
       fechaActualizacion: new Date().toISOString()
     };
 
+    // 1. Perfil Raíz (Passport)
     batch.set(rootUserRef, payload, { merge: true });
 
+    // 2. Registro Local en Empresa (Denormalizado)
     batch.set(companyUserRef, {
       ...payload,
       asignadoPor: validated.assignedBy,
       fechaCreacion: new Date().toISOString()
     }, { merge: true });
 
+    // 3. Auditoría
     const auditRef = doc(collection(firestore, '_audit_log'));
     batch.set(auditRef, {
       accion: 'user.assigned_to_company',
@@ -61,14 +67,15 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
     });
 
     await batch.commit();
-    return { success: true, message: "Usuario vinculado correctamente." };
+    return { success: true, message: "Membresía vinculada correctamente en todas las fuentes." };
   } catch (error: any) {
+    console.error("Error en assignUserToCompanyAction:", error);
     return { success: false, message: error.message };
   }
 }
 
 /**
- * Script 1: Reparar membresías de usuarios.
+ * Script de reparación: Sincroniza perfiles inconsistentes.
  */
 export async function repairBrokenUsersAction() {
   try {
@@ -99,7 +106,7 @@ export async function repairBrokenUsersAction() {
         });
         await batch.commit();
         repairedCount++;
-        log.push(`Vínculo creado: ${data.email} -> Empresa ${data.empresaId}`);
+        log.push(`Reparado: ${data.email} vinculado a Empresa ${data.empresaId}`);
       }
     }
 
@@ -107,7 +114,7 @@ export async function repairBrokenUsersAction() {
       success: true, 
       repairedCount, 
       log,
-      message: `Proceso finalizado. Se repararon ${repairedCount} perfiles inconsistentes.` 
+      message: `Proceso finalizado. ${repairedCount} perfiles restaurados.` 
     };
   } catch (error: any) {
     return { success: false, message: error.message };
@@ -115,7 +122,7 @@ export async function repairBrokenUsersAction() {
 }
 
 /**
- * Script 2: Corregir empresaId en registros operativos.
+ * Script de sincronización: Estampa empresaId en registros huérfanos.
  */
 export async function fixTenantRecordsAction() {
   try {
@@ -124,7 +131,17 @@ export async function fixTenantRecordsAction() {
     
     let totalFixed = 0;
     const report: string[] = [];
-    const subcollections = ['vehiculos', 'mantenimientos', 'inspeccionesPreoperacionales', 'conductores', 'rutas', 'siniestros'];
+    const subcollections = [
+      'vehiculos', 
+      'mantenimientos', 
+      'inspeccionesPreoperacionales', 
+      'conductores', 
+      'rutas', 
+      'siniestros',
+      'auditorias',
+      'indicadoresMedicion',
+      'capacitaciones'
+    ];
 
     for (const empDoc of empresasSnap.docs) {
       const empId = empDoc.id;
@@ -144,14 +161,14 @@ export async function fixTenantRecordsAction() {
           }
         }
       }
-      if (empFixed > 0) report.push(`${empDoc.data().razonSocial}: ${empFixed} registros actualizados.`);
+      if (empFixed > 0) report.push(`${empDoc.data().razonSocial}: ${empFixed} registros corregidos.`);
     }
 
     return { 
       success: true, 
       totalFixed, 
       report,
-      message: `Sincronización de registros completada. Total reparados: ${totalFixed}` 
+      message: `Sincronización completada. Total: ${totalFixed} documentos estampados.` 
     };
   } catch (error: any) {
     return { success: false, message: error.message };

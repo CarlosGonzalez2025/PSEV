@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore } from '@/firebase';
-import { Skeleton } from '@/components/ui/skeleton';
 import { doc, getDoc } from 'firebase/firestore';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -13,7 +12,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
   const router = useRouter();
   const [isValidatingMembership, setIsValidatingMembership] = useState(true);
-  const [membershipError, setMembershipError] = useState<string | null>(null);
+  const [membershipError, setMembershipError] = useState<{title: string, message: string} | null>(null);
 
   useEffect(() => {
     async function validateMembership() {
@@ -24,36 +23,51 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Si es Superadmin con UID maestro, omitir validación de empresa
+      // 1. Caso Superadmin Maestro
       if (user.uid === 'I9Al3kS46rcTAbylTHgufUFke8b2' || user.email === 'info@datnova.io') {
         setIsValidatingMembership(false);
         return;
       }
 
+      // 2. Verificar existencia de Perfil Root (Passport)
       if (!profile) {
-        setMembershipError("Tu perfil global no ha sido configurado.");
+        setMembershipError({
+          title: "Perfil no configurado",
+          message: "Tu cuenta de acceso existe pero no tiene un perfil asignado en el sistema PESV."
+        });
         setIsValidatingMembership(false);
         return;
       }
 
+      // 3. Verificar Empresa ID en Perfil
       if (!profile.empresaId) {
-        setMembershipError("No tienes una empresa asignada.");
+        setMembershipError({
+          title: "Sin Empresa Asignada",
+          message: "Tu perfil no está vinculado a ninguna organización activa en RoadWise 360."
+        });
         setIsValidatingMembership(false);
         return;
       }
 
-      // Validar fuente primaria (Membresía en subcolección de empresa)
+      // 4. Validar integridad de Membresía Local (Doble Verificación)
       try {
         const membershipRef = doc(firestore, 'empresas', profile.empresaId, 'usuarios', user.uid);
         const membershipSnap = await getDoc(membershipRef);
         
         if (!membershipSnap.exists()) {
-          setMembershipError("Configuración de membresía incompleta (Error de Multi-tenancy).");
+          setMembershipError({
+            title: "Error de Multi-tenancy",
+            message: "Inconsistencia detectada: Estás en el sistema global pero no en la base de datos de tu empresa. Contacta al Superadmin."
+          });
         } else {
           setMembershipError(null);
         }
       } catch (e) {
-        setMembershipError("Error al verificar permisos de acceso.");
+        console.error("AuthGuard Validation Error:", e);
+        setMembershipError({
+          title: "Error de Seguridad",
+          message: "No se pudieron validar tus permisos de acceso al tenant."
+        });
       } finally {
         setIsValidatingMembership(false);
       }
@@ -66,7 +80,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen w-full items-center justify-center p-8 space-y-4 flex-col bg-background-dark">
         <Loader2 className="animate-spin text-primary size-10" />
-        <p className="text-text-secondary font-bold uppercase text-[10px] tracking-widest">Validando Seguridad Vial...</p>
+        <p className="text-text-secondary font-bold uppercase text-[10px] tracking-widest animate-pulse">Autenticando Actor Vial...</p>
       </div>
     );
   }
@@ -75,17 +89,17 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen w-full items-center justify-center p-8 bg-background-dark">
         <div className="max-w-md w-full text-center space-y-6">
-          <div className="size-20 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto">
-            <AlertTriangle size={40} />
+          <div className="size-24 bg-red-500/10 rounded-3xl flex items-center justify-center text-red-500 mx-auto shadow-2xl shadow-red-500/20">
+            <ShieldAlert size={48} />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-white uppercase tracking-tight">Acceso Restringido</h2>
-            <p className="text-text-secondary">{membershipError}</p>
+            <h2 className="text-3xl font-black text-white uppercase tracking-tighter">{membershipError.title}</h2>
+            <p className="text-text-secondary text-sm leading-relaxed">{membershipError.message}</p>
           </div>
-          <div className="pt-4 border-t border-border-dark flex flex-col gap-2">
-            <p className="text-[10px] text-text-secondary uppercase font-bold">Contacta al Administrador de tu Empresa</p>
-            <Button variant="outline" onClick={() => router.push('/login')} className="w-full">
-              Volver al Inicio
+          <div className="pt-6 border-t border-border-dark flex flex-col gap-3">
+            <p className="text-[10px] text-text-secondary uppercase font-black tracking-widest">Soporte Técnico DateNova</p>
+            <Button variant="default" onClick={() => router.push('/login')} className="w-full font-bold h-12">
+              Regresar al Login
             </Button>
           </div>
         </div>
@@ -94,12 +108,4 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
-}
-
-function Loader2({ className }: { className?: string }) {
-  return (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
-  );
 }
