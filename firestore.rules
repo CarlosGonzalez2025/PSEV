@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -14,28 +15,27 @@ service cloud.firestore {
       );
     }
 
-    // Validación de pertenencia a empresa basada en el perfil global
+    // El perfil global del usuario (/usuarios/{uid}) es la fuente de verdad absoluta
+    function getUserProfile() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function profileExists() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
+    // Validación de pertenencia a empresa basada en el perfil raíz
     function belongsToCompany(empresaId) {
       return isSignedIn() && (
         isSuperAdmin() ||
-        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.empresaId == empresaId)
+        (profileExists() && getUserProfile().empresaId == empresaId)
       );
     }
 
-    // Verificar si el usuario está activo (usando el perfil global como fuente de verdad)
-    function isActiveInCompany(empresaId) {
+    // El usuario debe estar activo en el sistema global
+    function isActive() {
       return isSuperAdmin() || (
-        belongsToCompany(empresaId) &&
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == 'Activo'
-      );
-    }
-
-    // Verificar rol del usuario
-    function hasRoleInCompany(empresaId, allowedRoles) {
-      return isSuperAdmin() || (
-        isActiveInCompany(empresaId) &&
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in allowedRoles
+        profileExists() && getUserProfile().estado == 'Activo'
       );
     }
 
@@ -47,7 +47,7 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // === USUARIOS RAÍZ (Perfil Global) ===
+    // === PERFILES RAÍZ ===
     match /usuarios/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
       allow create: if isSignedIn() && request.auth.uid == uid;
@@ -55,28 +55,33 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // === EMPRESAS Y SUBCOLECCIONES ===
+    // === EMPRESAS Y SUS DATOS OPERATIVOS ===
     match /empresas/{empresaId} {
-      allow read: if isActiveInCompany(empresaId);
+      allow read: if isSignedIn() && belongsToCompany(empresaId) && isActive();
       allow create: if isSuperAdmin();
-      allow update: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin();
+      allow update: if isSuperAdmin() || (belongsToCompany(empresaId) && getUserProfile().rol == 'Admin');
       allow delete: if isSuperAdmin();
 
-      // Subcolecciones operativas
-      match /{subcollection}/{docId} {
-        allow read: if isActiveInCompany(empresaId);
-        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Auditor", "Conductor"]);
+      // Regla recursiva para todas las subcolecciones (vehiculos, mantenimientos, etc.)
+      match /{allSubcollections=**} {
+        allow read: if isSignedIn() && belongsToCompany(empresaId) && isActive();
+        allow write: if isSignedIn() && belongsToCompany(empresaId) && isActive() &&
+                     getUserProfile().rol in ['Admin', 'Lider_PESV', 'Auditor', 'Conductor'];
       }
     }
 
-    // === AUDITORÍA ===
+    // === LOGS Y DEPURE ===
     match /_audit_log/{doc} {
       allow create: if isSignedIn();
       allow read: if isSuperAdmin();
-      allow update, delete: if false;
     }
 
-    // === SUPERADMIN GLOBAL (Respaldo) ===
+    match /_audit_errors/{doc} {
+      allow create: if isSignedIn();
+      allow read: if isSuperAdmin();
+    }
+
+    // Respaldo Superadmin
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }

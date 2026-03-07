@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -10,7 +11,8 @@ import {
   getDocs,
   query,
   where,
-  serverTimestamp
+  serverTimestamp,
+  addDoc
 } from 'firebase/firestore';
 
 const MembershipInputSchema = z.object({
@@ -25,7 +27,7 @@ const MembershipInputSchema = z.object({
 export type MembershipInput = z.infer<typeof MembershipInputSchema>;
 
 /**
- * Vincula un usuario a una empresa de forma atómica en ambas ubicaciones.
+ * Vincula un usuario a una empresa de forma atómica.
  */
 export async function assignUserToCompanyAction(input: MembershipInput) {
   try {
@@ -46,17 +48,13 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
       fechaActualizacion: new Date().toISOString()
     };
 
-    // 1. Perfil Raíz (Passport)
     batch.set(rootUserRef, payload, { merge: true });
-
-    // 2. Registro Local en Empresa (Denormalizado)
     batch.set(companyUserRef, {
       ...payload,
       asignadoPor: validated.assignedBy,
       fechaCreacion: new Date().toISOString()
     }, { merge: true });
 
-    // 3. Auditoría
     const auditRef = doc(collection(firestore, '_audit_log'));
     batch.set(auditRef, {
       accion: 'user.assigned_to_company',
@@ -67,9 +65,62 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
     });
 
     await batch.commit();
-    return { success: true, message: "Membresía vinculada correctamente en todas las fuentes." };
+    return { success: true, message: "Membresía vinculada correctamente." };
   } catch (error: any) {
-    console.error("Error en assignUserToCompanyAction:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Registra un error de permisos para depuración del Superadmin.
+ */
+export async function logPermissionErrorAction(errorData: any) {
+  try {
+    const { firestore } = initializeFirebase();
+    await addDoc(collection(firestore, '_audit_errors'), {
+      ...errorData,
+      timestamp: new Date().toISOString(),
+      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server'
+    });
+    return { success: true };
+  } catch (e) {
+    return { success: false };
+  }
+}
+
+/**
+ * Diagnóstico de un usuario específico.
+ */
+export async function getUserDiagnosticAction(email: string) {
+  try {
+    const { firestore } = initializeFirebase();
+    const usersRef = collection(firestore, 'usuarios');
+    const q = query(usersRef, where('email', '==', email));
+    const snap = await getDocs(q);
+
+    if (snap.empty) return { success: false, message: "Usuario no encontrado en Firestore." };
+
+    const user = snap.docs[0].data();
+    const uid = snap.docs[0].id;
+
+    // Verificar membresía en empresa
+    let membership = null;
+    if (user.empresaId && user.empresaId !== 'system') {
+      const memRef = doc(firestore, 'empresas', user.empresaId, 'usuarios', uid);
+      const memSnap = await getDoc(memRef);
+      membership = memSnap.exists() ? memSnap.data() : "FALTANTE EN EMPRESA";
+    }
+
+    return { 
+      success: true, 
+      data: {
+        uid,
+        rootProfile: user,
+        membershipRecord: membership,
+        isConsistent: typeof membership === 'object' && membership !== null && membership.empresaId === user.empresaId
+      }
+    };
+  } catch (error: any) {
     return { success: false, message: error.message };
   }
 }
@@ -95,12 +146,7 @@ export async function repairBrokenUsersAction() {
       if (!companyUserSnap.exists()) {
         const batch = writeBatch(firestore);
         batch.set(companyUserRef, {
-          id: userDoc.id,
-          empresaId: data.empresaId,
-          rol: data.rol || 'Lider_PESV',
-          nombreCompleto: data.nombreCompleto || 'Usuario Migrado',
-          email: data.email || '',
-          estado: 'Activo',
+          ...data,
           fechaCreacion: new Date().toISOString(),
           reparadoAuto: true
         });
@@ -110,19 +156,14 @@ export async function repairBrokenUsersAction() {
       }
     }
 
-    return { 
-      success: true, 
-      repairedCount, 
-      log,
-      message: `Proceso finalizado. ${repairedCount} perfiles restaurados.` 
-    };
+    return { success: true, repairedCount, log, message: `Proceso finalizado. ${repairedCount} perfiles restaurados.` };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
 }
 
 /**
- * Script de sincronización: Estampa empresaId en registros huérfanos.
+ * Sincroniza el campo empresaId en todos los registros.
  */
 export async function fixTenantRecordsAction() {
   try {
@@ -131,45 +172,25 @@ export async function fixTenantRecordsAction() {
     
     let totalFixed = 0;
     const report: string[] = [];
-    const subcollections = [
-      'vehiculos', 
-      'mantenimientos', 
-      'inspeccionesPreoperacionales', 
-      'conductores', 
-      'rutas', 
-      'siniestros',
-      'auditorias',
-      'indicadoresMedicion',
-      'capacitaciones'
-    ];
+    const subcollections = ['vehiculos', 'mantenimientos', 'inspeccionesPreoperacionales', 'conductores', 'rutas', 'siniestros'];
 
     for (const empDoc of empresasSnap.docs) {
       const empId = empDoc.id;
-      let empFixed = 0;
-
       for (const sub of subcollections) {
         const subSnap = await getDocs(collection(firestore, 'empresas', empId, sub));
-        
         for (const recordDoc of subSnap.docs) {
-          const data = recordDoc.data();
-          if (data.empresaId !== empId) {
+          if (recordDoc.data().empresaId !== empId) {
             const batch = writeBatch(firestore);
             batch.update(recordDoc.ref, { empresaId: empId });
             await batch.commit();
-            empFixed++;
             totalFixed++;
           }
         }
       }
-      if (empFixed > 0) report.push(`${empDoc.data().razonSocial}: ${empFixed} registros corregidos.`);
+      report.push(`${empDoc.data().razonSocial}: Procesada.`);
     }
 
-    return { 
-      success: true, 
-      totalFixed, 
-      report,
-      message: `Sincronización completada. Total: ${totalFixed} documentos estampados.` 
-    };
+    return { success: true, totalFixed, report, message: `Total: ${totalFixed} documentos corregidos.` };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
