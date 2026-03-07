@@ -19,7 +19,8 @@ import {
   GraduationCap,
   Wrench,
   Fuel,
-  ShieldAlert
+  ShieldAlert,
+  ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -62,15 +63,15 @@ export function Sidebar() {
   const userAvatar = PlaceHolderImages.find(p => p.id === "user-avatar-1");
 
   return (
-    <aside className="hidden md:flex w-72 flex-col justify-between border-r bg-card p-4 overflow-y-auto custom-scrollbar">
+    <aside className="hidden md:flex w-72 flex-col justify-between border-r bg-card p-4 overflow-y-auto custom-scrollbar border-border-dark">
       <div className="flex flex-col gap-4">
-        <div className="flex gap-3 items-center px-2 py-4 border-b">
+        <div className="flex gap-3 items-center px-2 py-4 border-b border-border-dark">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary shadow-sm">
             <Shield className="w-6 h-6" />
           </div>
           <div className="flex flex-col">
             <h1 className="text-foreground text-lg font-black leading-none tracking-tight font-headline">RoadWise 360</h1>
-            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mt-1">SaaS de Gestión PESV</p>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">por DateNova</p>
           </div>
         </div>
         <nav className="flex flex-col gap-1 mt-2">
@@ -85,7 +86,7 @@ export function Sidebar() {
               )}
             >
               <ShieldAlert className="w-5 h-5 shrink-0" />
-              <p className="text-sm">Panel Superadmin</p>
+              <p className="text-sm">Panel Maestro SaaS</p>
             </Link>
           )}
 
@@ -98,7 +99,7 @@ export function Sidebar() {
               );
             }
             if (item.isSeparator) {
-              return <div key={index} className="my-4 border-t border-border" />;
+              return <div key={index} className="my-4 border-t border-border-dark" />;
             }
             const isActive = pathname === item.href;
             return (
@@ -119,8 +120,9 @@ export function Sidebar() {
           })}
         </nav>
       </div>
+      
       <div className="flex flex-col gap-2 mt-8">
-        <div className="flex items-center gap-3 px-3 py-4 border-t border-border bg-secondary/20 rounded-xl">
+        <div className="flex items-center gap-3 px-3 py-4 border border-border-dark bg-secondary/20 rounded-xl">
           {userAvatar ? (
             <div className="relative">
               <Image
@@ -139,9 +141,19 @@ export function Sidebar() {
               {profile?.rol === 'Superadmin' ? 'Super Admin' : profile?.nombreCompleto || 'Usuario'}
             </p>
             <p className="text-muted-foreground text-[10px] font-medium leading-none mt-1 truncate">
-              {profile?.rol === 'Superadmin' ? 'Global' : `Empresa: ${profile?.empresaId || 'Sin asignar'}`}
+              {profile?.rol === 'Superadmin' ? 'DateNova Global' : `Empresa: ${profile?.empresaId || 'Sin asignar'}`}
             </p>
           </div>
+        </div>
+        <div className="px-2 pt-4">
+          <a 
+            href="https://www.datenova.io" 
+            target="_blank" 
+            className="flex items-center justify-between group px-3 py-2 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors"
+          >
+            <span className="text-[10px] font-black text-primary tracking-widest">WWW.DATENOVA.IO</span>
+            <ExternalLink className="size-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+          </a>
         </div>
       </div>
     </aside>

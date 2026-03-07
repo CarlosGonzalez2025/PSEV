@@ -73,4 +73,4 @@ El sistema utiliza una arquitectura de **aislamiento de datos por empresa**:
 - `/empresas/{empresaId}/siniestros`: Gestión de incidentes.
 
 ---
-© 2024 RoadWise 360 - Datnova IO. Todos los derechos reservados.
+© 2024 RoadWise 360 - Desarrollado por [DateNova](https://www.datenova.io). Todos los derechos reservados.

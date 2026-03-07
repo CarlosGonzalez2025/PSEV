@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -54,13 +53,13 @@ export default function SuperAdminPage() {
         id: SUPERADMIN_UID,
         empresaId: 'system',
         rol: 'Superadmin',
-        nombreCompleto: 'Super Admin Datnova',
+        nombreCompleto: 'Super Admin DateNova',
         email: 'info@datnova.io',
         fechaCreacion: new Date().toISOString(),
         estado: 'Activo'
       });
       setProfileExists(true);
-      toast({ title: "Perfil Inicializado", description: "Tu cuenta ahora tiene permisos globales." });
+      toast({ title: "Perfil Inicializado", description: "Tu cuenta ahora tiene permisos globales de DateNova." });
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
@@ -121,7 +120,7 @@ export default function SuperAdminPage() {
             </div>
             <div>
               <h1 className="text-3xl font-black text-white uppercase tracking-tighter">Panel Maestro SaaS</h1>
-              <p className="text-text-secondary">Gestión de Tenants e Invitaciones</p>
+              <p className="text-text-secondary uppercase text-[10px] font-bold tracking-widest">Plataforma DateNova</p>
             </div>
           </div>
           
@@ -131,7 +130,7 @@ export default function SuperAdminPage() {
                 <AlertTriangle className="text-red-500" />
                 <div className="text-sm">
                   <p className="font-bold">Perfil de Sistema Faltante</p>
-                  <Button onClick={handleInitializeAdmin} disabled={loading} size="sm" variant="destructive" className="mt-2">
+                  <Button onClick={handleInitializeAdmin} disabled={loading} size="sm" variant="destructive" className="mt-2 font-bold uppercase text-[10px]">
                     Inicializar Mi Perfil
                   </Button>
                 </div>
@@ -145,13 +144,13 @@ export default function SuperAdminPage() {
             <form onSubmit={handleCreateTenant} className="space-y-6">
               <Card className="bg-surface-dark border-border-dark text-white">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-lg uppercase font-black">
                     <Building2 className="size-5 text-primary" /> Datos del Nuevo Cliente
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>NIT de la Empresa</Label>
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">NIT de la Empresa</Label>
                     <Input 
                       value={empresa.nit} 
                       onChange={e => setEmpresa({...empresa, nit: e.target.value})} 
@@ -161,7 +160,7 @@ export default function SuperAdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Razón Social</Label>
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">Razón Social</Label>
                     <Input 
                       value={empresa.razonSocial} 
                       onChange={e => setEmpresa({...empresa, razonSocial: e.target.value})} 
@@ -171,7 +170,7 @@ export default function SuperAdminPage() {
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Administrador Inicial (Nombre)</Label>
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">Administrador Inicial (Nombre)</Label>
                     <Input 
                       value={admin.nombre} 
                       onChange={e => setAdmin({...admin, nombre: e.target.value})} 
@@ -181,7 +180,7 @@ export default function SuperAdminPage() {
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Correo de Activación</Label>
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">Correo de Activación</Label>
                     <Input 
                       type="email"
                       value={admin.email} 
@@ -191,7 +190,7 @@ export default function SuperAdminPage() {
                       required
                     />
                   </div>
-                  <Button type="submit" disabled={loading} className="w-full md:col-span-2 font-bold mt-4">
+                  <Button type="submit" disabled={loading} className="w-full md:col-span-2 font-bold h-11 uppercase tracking-widest">
                     {loading ? 'Procesando...' : 'Registrar Empresa e Invitar'}
                   </Button>
                 </CardContent>
@@ -201,7 +200,7 @@ export default function SuperAdminPage() {
             {invitationLink && (
               <Card className="bg-emerald-500/10 border-emerald-500/50 text-white">
                 <CardHeader>
-                  <CardTitle className="text-emerald-400 flex items-center gap-2">
+                  <CardTitle className="text-emerald-400 flex items-center gap-2 text-md uppercase font-bold">
                     <LinkIcon className="size-5" /> Link de Activación Generado
                   </CardTitle>
                   <CardDescription className="text-text-secondary">
@@ -226,16 +225,19 @@ export default function SuperAdminPage() {
           <div className="space-y-6">
             <Card className="bg-surface-dark border-border-dark text-white">
               <CardHeader>
-                <CardTitle className="text-md flex items-center gap-2">
+                <CardTitle className="text-xs uppercase font-black tracking-widest flex items-center gap-2 text-primary">
                   <Settings className="size-4" /> Resumen Operativo
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm">
-                <p className="text-text-secondary leading-relaxed">
-                  Este flujo garantiza el aislamiento de datos. Al activar la cuenta, el usuario se convierte en el Admin de su propia organización.
+              <CardContent className="space-y-4 text-xs">
+                <p className="text-text-secondary leading-relaxed font-medium">
+                  Este flujo garantiza el aislamiento de datos por tenant. Al activar la cuenta, el usuario se convierte en el Administrador oficial de su propia organización dentro de la red DateNova.
                 </p>
-                <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 text-xs">
-                  <span className="font-bold text-primary">Próxima Mejora:</span> Integrar con un proveedor de correo (SendGrid/Resend) para envío automático.
+                <div className="p-4 bg-primary/5 rounded-lg border border-primary/20 space-y-2">
+                  <span className="font-black text-primary text-[10px] uppercase tracking-widest">Soporte Técnico</span>
+                  <p className="text-[10px] text-text-secondary leading-normal">
+                    Como Superadmin, tienes visibilidad global para auditoría y soporte comercial. Todos los logs se centralizan bajo www.datenova.io.
+                  </p>
                 </div>
               </CardContent>
             </Card>
