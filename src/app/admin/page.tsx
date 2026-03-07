@@ -49,7 +49,7 @@ export default function SuperAdminPage() {
   const firestore = useFirestore();
   const [loading, setLoading] = useState(false);
   const [profileExists, setProfileExists] = useState<boolean | null>(null);
-  const [invitationLink, setInvitacionLink] = useState<string | null>(null);
+  const [invitationLink, setInvitationLink] = useState<string | null>(null);
   const [selectedEmpresa, setSelectedEmpresa] = useState<any>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isInviteUserOpen, setIsInviteUserOpen] = useState(false);
@@ -126,7 +126,7 @@ export default function SuperAdminPage() {
   const handleCreateTenant = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setInvitacionLink(null);
+    setInvitationLink(null);
 
     try {
       const empresaId = empresa.nit.replace(/[^0-9]/g, '');
@@ -156,7 +156,7 @@ export default function SuperAdminPage() {
       });
 
       const activationUrl = `${window.location.origin}/activar?token=${token}`;
-      setInvitacionLink(activationUrl);
+      setInvitationLink(activationUrl);
 
       toast({ title: "Empresa Registrada", description: "Se ha generado el token de activación." });
       setEmpresa({ nit: '', razonSocial: '', misionalidad: 'Transporte' });
@@ -188,7 +188,7 @@ export default function SuperAdminPage() {
       });
 
       const activationUrl = `${window.location.origin}/activar?token=${token}`;
-      setInvitacionLink(activationUrl);
+      setInvitationLink(activationUrl);
       setIsInviteUserOpen(false);
       setNewUser({ nombre: '', email: '', rol: 'Lider_PESV' });
       
@@ -198,6 +198,11 @@ export default function SuperAdminPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copiado", description: "Link copiado al portapapeles." });
   };
 
   return (
@@ -329,10 +334,7 @@ export default function SuperAdminPage() {
                 </CardHeader>
                 <CardContent className="flex gap-2">
                   <Input readOnly value={invitationLink} className="bg-background-dark border-border-dark font-mono text-xs text-white" />
-                  <Button variant="secondary" size="icon" onClick={() => {
-                    navigator.clipboard.writeText(invitationLink);
-                    toast({ title: "Copiado", description: "Link copiado al portapapeles." });
-                  }}>
+                  <Button variant="secondary" size="icon" onClick={() => copyToClipboard(invitationLink)}>
                     <Copy className="size-4" />
                   </Button>
                 </CardContent>
