@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,17 +10,17 @@ import { GraduationCap, Calendar, CheckCircle2, Clock, Upload, Search, Filter } 
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 export default function PlanFormacionPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
+
   const capacitacionesRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile?.empresaId) return null;
     return query(
-      collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'capacitaciones'),
+      collection(firestore, 'empresas', profile.empresaId, 'capacitaciones'),
       orderBy('fechaProgramada', 'desc')
     );
-  }, [firestore]);
+  }, [firestore, profile?.empresaId]);
 
   const { data: capacitaciones, isLoading } = useCollection(capacitacionesRef);
 
@@ -58,7 +59,7 @@ export default function PlanFormacionPage() {
             <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Sesiones Realizadas</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">48</div>
+            <div className="text-3xl font-black text-white">{capacitaciones?.filter(c => c.estado === 'Realizada').length || 0}</div>
             <p className="text-[10px] text-emerald-500 mt-2 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> 100% efectividad
             </p>
@@ -66,19 +67,21 @@ export default function PlanFormacionPage() {
         </Card>
         <Card className="bg-surface-dark border-border-dark text-amber-500">
           <CardHeader className="pb-2">
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Pendientes Urgentes</p>
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Sesiones Pendientes</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black">5</div>
-            <p className="text-[10px] opacity-70 mt-2">Vencen esta semana</p>
+            <div className="text-3xl font-black">{capacitaciones?.filter(c => c.estado !== 'Realizada').length || 0}</div>
+            <p className="text-[10px] opacity-70 mt-2">Próximamente</p>
           </CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2">
-            <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Horas Impartidas</p>
+            <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Horas Acumuladas</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">124h</div>
+            <div className="text-3xl font-black text-white">
+              {capacitaciones?.reduce((acc, curr) => acc + (Number(curr.horasDuracion) || 0), 0)}h
+            </div>
             <p className="text-[10px] text-text-secondary mt-2">Acumulado anual</p>
           </CardContent>
         </Card>
@@ -108,7 +111,7 @@ export default function PlanFormacionPage() {
             ) : capacitaciones?.length === 0 ? (
               <div className="text-center py-20 border-2 border-dashed border-border-dark rounded-xl">
                 <GraduationCap className="w-12 h-12 text-border-dark mx-auto mb-4" />
-                <p className="text-text-secondary italic">No hay sesiones programadas en el plan actual.</p>
+                <p className="text-text-secondary italic">No hay sesiones programadas en el plan de esta empresa.</p>
               </div>
             ) : (
               capacitaciones?.map(cap => (
@@ -130,7 +133,7 @@ export default function PlanFormacionPage() {
                       <p className="text-[10px] font-mono text-white/50">{cap.fechaProgramada?.split('T')[1]}</p>
                     </div>
                     <Badge className={cap.estado === 'Realizada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}>
-                      {cap.estado.toUpperCase()}
+                      {(cap.estado || 'Programada').toUpperCase()}
                     </Badge>
                     <Button variant="ghost" size="sm" className="text-primary font-bold">Gestionar</Button>
                   </div>

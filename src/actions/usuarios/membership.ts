@@ -11,8 +11,7 @@ import {
   getDocs,
   query,
   where,
-  addDoc,
-  serverTimestamp
+  addDoc
 } from 'firebase/firestore';
 
 const MembershipInputSchema = z.object({
@@ -91,7 +90,7 @@ export async function logPermissionErrorAction(input: { uid: string, email: stri
 
 /**
  * Script de reparación integral (Fase 3).
- * Sincroniza perfiles raíz con subcolecciones y estampa empresaId.
+ * Sincroniza perfiles raíz con subcolecciones y viceversa.
  */
 export async function repairMultitenancyAction() {
   try {
@@ -101,11 +100,11 @@ export async function repairMultitenancyAction() {
     let repairedCount = 0;
     const log: string[] = [];
 
+    // 1. Passport -> Visa
     for (const userDoc of usersSnap.docs) {
       const data = userDoc.data();
       if (!data.empresaId || data.empresaId === 'system') continue;
 
-      // 1. Verificar/Crear Visa (Subcolección)
       const companyUserRef = doc(firestore, 'empresas', data.empresaId, 'usuarios', userDoc.id);
       const companyUserSnap = await getDoc(companyUserRef);
 
@@ -119,7 +118,30 @@ export async function repairMultitenancyAction() {
         });
         await batch.commit();
         repairedCount++;
-        log.push(`Visa creada para: ${data.email} en Empresa ${data.empresaId}`);
+        log.push(`Visa creada: ${data.email} en Empresa ${data.empresaId}`);
+      }
+    }
+
+    // 2. Visa -> Passport (Sincronización de vuelta)
+    const empresasSnap = await getDocs(collection(firestore, 'empresas'));
+    for (const empDoc of empresasSnap.docs) {
+      const visasSnap = await getDocs(collection(firestore, 'empresas', empDoc.id, 'usuarios'));
+      for (const visaDoc of visasSnap.docs) {
+        const visaData = visaDoc.data();
+        const rootRef = doc(firestore, 'usuarios', visaDoc.id);
+        const rootSnap = await getDoc(rootRef);
+        
+        if (!rootSnap.exists() || rootSnap.data().empresaId !== empDoc.id) {
+          const batch = writeBatch(firestore);
+          batch.set(rootRef, {
+            ...visaData,
+            empresaId: empDoc.id,
+            fechaActualizacion: new Date().toISOString()
+          }, { merge: true });
+          await batch.commit();
+          repairedCount++;
+          log.push(`Passport reparado: ${visaData.email} vinculado a ${empDoc.id}`);
+        }
       }
     }
 
@@ -139,23 +161,40 @@ export async function fixTenantRecordsAction() {
     
     let totalFixed = 0;
     const report: string[] = [];
-    const subcollections = ['vehiculos', 'mantenimientos', 'inspeccionesPreoperacionales', 'conductores', 'rutas', 'siniestros'];
+    const subcollections = [
+      'vehiculos', 
+      'mantenimientos', 
+      'inspeccionesPreoperacionales', 
+      'conductores', 
+      'rutas', 
+      'siniestros', 
+      'capacitaciones',
+      'indicadoresMedicion',
+      'auditorias',
+      'planesAccion'
+    ];
 
     for (const empDoc of empresasSnap.docs) {
       const empId = empDoc.id;
+      let empFixed = 0;
       for (const sub of subcollections) {
         const subSnap = await getDocs(collection(firestore, 'empresas', empId, sub));
         for (const recordDoc of subSnap.docs) {
           const data = recordDoc.data();
           if (data.empresaId !== empId) {
             const batch = writeBatch(firestore);
-            batch.update(recordDoc.ref, { empresaId: empId });
+            batch.update(recordDoc.ref, { 
+              empresaId: empId,
+              reparadoAuto: true,
+              fechaSincronizacion: new Date().toISOString()
+            });
             await batch.commit();
+            empFixed++;
             totalFixed++;
           }
         }
       }
-      report.push(`${empDoc.data().razonSocial}: Sincronizada.`);
+      if (empFixed > 0) report.push(`${empDoc.data().razonSocial}: ${empFixed} registros reparados.`);
     }
 
     return { success: true, totalFixed, report, message: `Total: ${totalFixed} registros operativos aislados.` };

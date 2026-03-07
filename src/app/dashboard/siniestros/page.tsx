@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const MOCK_EMPRESA_ID = "demo-empresa-123";
-
 const GRAVEDAD_VARIANTS: Record<string, string> = {
   Fatalidad: "bg-red-600",
   Grave: "bg-red-400",
@@ -33,14 +32,15 @@ const GRAVEDAD_VARIANTS: Record<string, string> = {
 
 export default function SiniestrosPage() {
   const firestore = useFirestore();
+  const { profile } = useUser();
 
   const siniestrosRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile?.empresaId) return null;
     return query(
-      collection(firestore, 'empresas', MOCK_EMPRESA_ID, 'siniestros'),
+      collection(firestore, 'empresas', profile.empresaId, 'siniestros'),
       orderBy('fechaHora', 'desc')
     );
-  }, [firestore]);
+  }, [firestore, profile?.empresaId]);
 
   const { data: siniestros, isLoading } = useCollection(siniestrosRef);
 
@@ -48,7 +48,7 @@ export default function SiniestrosPage() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Siniestralidad y Emergencias</h1>
+          <h1 className="text-3xl font-black tracking-tight uppercase">Siniestralidad y Emergencias</h1>
           <p className="text-muted-foreground mt-1">Investigación y análisis de eventos viales (Pasos 12 y 13)</p>
         </div>
         <Button className="font-bold shadow-lg shadow-destructive/20" variant="destructive">
@@ -58,13 +58,13 @@ export default function SiniestrosPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2">
             <p className="text-[10px] font-bold uppercase text-muted-foreground">Tasa Siniestralidad</p>
           </CardHeader>
           <CardContent>
             <div className="flex items-end gap-2">
-              <span className="text-3xl font-black">1.2%</span>
+              <span className="text-3xl font-black text-white">1.2%</span>
               <Badge className="bg-green-500/10 text-green-500 mb-1 flex gap-1">
                 <TrendingDown className="size-3" /> -0.5%
               </Badge>
@@ -72,22 +72,24 @@ export default function SiniestrosPage() {
             <p className="text-[10px] text-muted-foreground mt-1">Vs trimestre anterior</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2">
-            <p className="text-[10px] font-bold uppercase text-muted-foreground">Costos Totales</p>
+            <p className="text-[10px] font-bold uppercase text-muted-foreground">Eventos Registrados</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black">$12.4M</div>
-            <p className="text-[10px] text-muted-foreground mt-1">Directos + Indirectos</p>
+            <div className="text-3xl font-black text-white">{siniestros?.length || 0}</div>
+            <p className="text-[10px] text-muted-foreground mt-1">En el histórico del tenant</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2">
             <p className="text-[10px] font-bold uppercase text-muted-foreground">Investigaciones</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black">12</div>
-            <p className="text-[10px] text-muted-foreground mt-1">8 cerradas / 4 abiertas</p>
+            <div className="text-3xl font-black text-white">
+              {siniestros?.filter(s => s.estadoInvestigacion === 'Abierta').length || 0}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">Abiertas actualmente</p>
           </CardContent>
         </Card>
         <Card className="bg-primary/5 border-primary/20">
@@ -101,72 +103,72 @@ export default function SiniestrosPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="bg-surface-dark border-border-dark">
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Buscar siniestro por ID, placa o conductor..." />
+              <Input className="pl-9 bg-background-dark border-border-dark text-white" placeholder="Buscar siniestro por ID, placa o conductor..." />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm"><Filter className="size-4 mr-2" /> Filtros</Button>
+              <Button variant="outline" size="sm" className="text-white border-border-dark"><Filter className="size-4 mr-2" /> Filtros</Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-hidden">
+          <div className="rounded-md border border-border-dark overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="text-xs uppercase font-bold">Evento</TableHead>
-                  <TableHead className="text-xs uppercase font-bold">Fecha / Hora</TableHead>
-                  <TableHead className="text-xs uppercase font-bold">Conductor / Vehículo</TableHead>
-                  <TableHead className="text-xs uppercase font-bold">Gravedad</TableHead>
-                  <TableHead className="text-xs uppercase font-bold">Estado Inv.</TableHead>
+                <TableRow className="bg-white/5 border-border-dark hover:bg-transparent">
+                  <TableHead className="text-xs uppercase font-bold text-text-secondary">Evento</TableHead>
+                  <TableHead className="text-xs uppercase font-bold text-text-secondary">Fecha / Hora</TableHead>
+                  <TableHead className="text-xs uppercase font-bold text-text-secondary">Conductor / Vehículo</TableHead>
+                  <TableHead className="text-xs uppercase font-bold text-text-secondary">Gravedad</TableHead>
+                  <TableHead className="text-xs uppercase font-bold text-text-secondary">Estado Inv.</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={6} className="h-12 bg-muted/10 animate-pulse" />
+                    <TableRow key={i} className="border-border-dark">
+                      <TableCell colSpan={6} className="h-12 bg-white/5 animate-pulse" />
                     </TableRow>
                   ))
                 ) : siniestros?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground italic">No hay siniestros reportados.</TableCell>
+                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground italic">No hay siniestros reportados para esta empresa.</TableCell>
                   </TableRow>
                 ) : (
                   siniestros?.map((s) => (
-                    <TableRow key={s.id} className="hover:bg-muted/30 transition-colors">
+                    <TableRow key={s.id} className="hover:bg-white/5 transition-colors border-border-dark">
                       <TableCell>
                         <span className="font-mono font-bold text-primary">#EVT-{s.id.slice(-4).toUpperCase()}</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium">{s.fechaHora?.split('T')[0]}</span>
+                          <span className="text-sm font-medium text-white">{s.fechaHora?.split('T')[0]}</span>
                           <span className="text-[10px] text-muted-foreground">{s.fechaHora?.split('T')[1]}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold">ID: {s.conductorId.slice(-4)}</span>
-                          <span className="text-[10px] text-muted-foreground">Placa: {s.vehiculoId.slice(-4)}</span>
+                          <span className="text-sm font-bold text-white">ID: {s.conductorId?.slice(-4)}</span>
+                          <span className="text-[10px] text-muted-foreground">Placa: {s.vehiculoId}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${GRAVEDAD_VARIANTS[s.gravedad] || 'bg-slate-500'} text-[10px]`}>
+                        <Badge className={`${GRAVEDAD_VARIANTS[s.gravedad] || 'bg-slate-500'} text-[10px] text-white`}>
                           {s.gravedad}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-[10px] font-bold">
-                          {s.estadoInvestigacion || 'Abierta'}
+                        <Badge variant="outline" className="text-[10px] font-bold text-white border-border-dark">
+                          {s.estadoInvestigacion || 'ABIERTA'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon"><MoreVertical className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" className="text-text-secondary hover:text-white"><MoreVertical className="size-4" /></Button>
                       </TableCell>
                     </TableRow>
                   ))
