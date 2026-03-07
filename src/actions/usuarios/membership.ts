@@ -11,7 +11,8 @@ import {
   getDocs,
   query,
   where,
-  addDoc
+  addDoc,
+  serverTimestamp
 } from 'firebase/firestore';
 
 const MembershipInputSchema = z.object({
@@ -26,7 +27,7 @@ const MembershipInputSchema = z.object({
 export type MembershipInput = z.infer<typeof MembershipInputSchema>;
 
 /**
- * Vincula un usuario a una empresa de forma atómica.
+ * Vincula un usuario a una empresa de forma atómica (Passport + Visa).
  */
 export async function assignUserToCompanyAction(input: MembershipInput) {
   try {
@@ -71,61 +72,28 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
 }
 
 /**
- * Registra un error de permisos para depuración del Superadmin.
+ * Registra un error de permisos detectado en el cliente para auditoría del Superadmin.
  */
-export async function logPermissionErrorAction(errorData: any) {
+export async function logPermissionErrorAction(input: { uid: string, email: string | null, error: string, profile: any }) {
   try {
     const { firestore } = initializeFirebase();
     await addDoc(collection(firestore, '_audit_errors'), {
-      ...errorData,
-      timestamp: new Date().toISOString()
+      ...input,
+      fecha: new Date().toISOString(),
+      tipo: 'AuthGuard_Validation_Failure'
     });
     return { success: true };
-  } catch (e) {
-    return { success: false };
+  } catch (e: any) {
+    console.error("Error logging permission error:", e.message);
+    return { success: false, message: e.message };
   }
 }
 
 /**
- * Diagnóstico de un usuario específico.
+ * Script de reparación integral (Fase 3).
+ * Sincroniza perfiles raíz con subcolecciones y estampa empresaId.
  */
-export async function getUserDiagnosticAction(email: string) {
-  try {
-    const { firestore } = initializeFirebase();
-    const usersRef = collection(firestore, 'usuarios');
-    const q = query(usersRef, where('email', '==', email));
-    const snap = await getDocs(q);
-
-    if (snap.empty) return { success: false, message: "Usuario no encontrado en Firestore." };
-
-    const user = snap.docs[0].data();
-    const uid = snap.docs[0].id;
-
-    let membership = null;
-    if (user.empresaId && user.empresaId !== 'system') {
-      const memRef = doc(firestore, 'empresas', user.empresaId, 'usuarios', uid);
-      const memSnap = await getDoc(memRef);
-      membership = memSnap.exists() ? memSnap.data() : "FALTANTE EN EMPRESA";
-    }
-
-    return { 
-      success: true, 
-      data: {
-        uid,
-        rootProfile: user,
-        membershipRecord: membership,
-        isConsistent: typeof membership === 'object' && membership !== null && membership.empresaId === user.empresaId
-      }
-    };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
-}
-
-/**
- * Script de reparación: Sincroniza perfiles inconsistentes y estampa empresaId en registros.
- */
-export async function repairBrokenUsersAction() {
+export async function repairMultitenancyAction() {
   try {
     const { firestore } = initializeFirebase();
     const usersSnap = await getDocs(collection(firestore, 'usuarios'));
@@ -137,6 +105,7 @@ export async function repairBrokenUsersAction() {
       const data = userDoc.data();
       if (!data.empresaId || data.empresaId === 'system') continue;
 
+      // 1. Verificar/Crear Visa (Subcolección)
       const companyUserRef = doc(firestore, 'empresas', data.empresaId, 'usuarios', userDoc.id);
       const companyUserSnap = await getDoc(companyUserRef);
 
@@ -145,22 +114,23 @@ export async function repairBrokenUsersAction() {
         batch.set(companyUserRef, {
           ...data,
           fechaCreacion: new Date().toISOString(),
-          reparadoAuto: true
+          reparadoAuto: true,
+          estado: data.estado || 'Activo'
         });
         await batch.commit();
         repairedCount++;
-        log.push(`Reparado: ${data.email} vinculado a Empresa ${data.empresaId}`);
+        log.push(`Visa creada para: ${data.email} en Empresa ${data.empresaId}`);
       }
     }
 
-    return { success: true, repairedCount, log, message: `Proceso finalizado. ${repairedCount} perfiles restaurados.` };
+    return { success: true, repairedCount, log, message: `Proceso finalizado. ${repairedCount} documentos sincronizados.` };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
 }
 
 /**
- * Sincroniza el campo empresaId en todos los registros de subcolecciones.
+ * Sincroniza el campo empresaId en todos los registros operativos para aislamiento total.
  */
 export async function fixTenantRecordsAction() {
   try {
@@ -188,7 +158,40 @@ export async function fixTenantRecordsAction() {
       report.push(`${empDoc.data().razonSocial}: Sincronizada.`);
     }
 
-    return { success: true, totalFixed, report, message: `Total: ${totalFixed} documentos corregidos.` };
+    return { success: true, totalFixed, report, message: `Total: ${totalFixed} registros operativos aislados.` };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+export async function getUserDiagnosticAction(email: string) {
+  try {
+    const { firestore } = initializeFirebase();
+    const usersRef = collection(firestore, 'usuarios');
+    const q = query(usersRef, where('email', '==', email));
+    const snap = await getDocs(q);
+
+    if (snap.empty) return { success: false, message: "Usuario no encontrado." };
+
+    const user = snap.docs[0].data();
+    const uid = snap.docs[0].id;
+
+    let membership = null;
+    if (user.empresaId && user.empresaId !== 'system') {
+      const memRef = doc(firestore, 'empresas', user.empresaId, 'usuarios', uid);
+      const memSnap = await getDoc(memRef);
+      membership = memSnap.exists() ? memSnap.data() : "VISADO FALTANTE";
+    }
+
+    return { 
+      success: true, 
+      data: {
+        uid,
+        rootProfile: user,
+        membershipRecord: membership,
+        isConsistent: typeof membership === 'object' && membership !== null && membership.empresaId === user.empresaId
+      }
+    };
   } catch (error: any) {
     return { success: false, message: error.message };
   }

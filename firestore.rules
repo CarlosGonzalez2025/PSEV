@@ -16,33 +16,30 @@ service cloud.firestore {
       );
     }
 
-    // Verifica si el usuario tiene el "Passport" (Perfil Raíz) correcto
-    function hasValidPassport(empresaId) {
-      let userDoc = get(/databases/$(database)/documents/usuarios/$(request.auth.uid));
-      return userDoc != null && 
-             userDoc.data.empresaId == empresaId && 
-             userDoc.data.estado == 'Activo';
+    // Passport: Perfil global del usuario
+    function getPassport() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
     }
 
-    // Verifica si el usuario tiene la "Visa" (Registro de Membresía en la Empresa)
+    // Visa: Registro de membresía dentro de la empresa
     function hasValidVisa(empresaId) {
-      let membershipDoc = get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid));
-      return membershipDoc != null && 
-             membershipDoc.data.estado == 'Activo';
+      return exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.estado == 'Activo';
     }
 
-    // Lógica maestra de pertenencia: Superadmin OR Passport OR Visa
+    // Lógica maestra de pertenencia
     function belongsToCompany(empresaId) {
       return isSignedIn() && (
         isSuperAdmin() || 
-        hasValidPassport(empresaId) || 
+        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && 
+         getPassport().empresaId == empresaId && 
+         getPassport().estado == 'Activo') ||
         hasValidVisa(empresaId)
       );
     }
 
     function hasRole(empresaId, allowedRoles) {
-      let userDoc = get(/databases/$(database)/documents/usuarios/$(request.auth.uid));
-      return isSuperAdmin() || (userDoc != null && userDoc.data.rol in allowedRoles);
+      return isSuperAdmin() || (belongsToCompany(empresaId) && getPassport().rol in allowedRoles);
     }
 
     // === REGLAS POR COLECCIÓN ===
@@ -62,31 +59,34 @@ service cloud.firestore {
     }
 
     match /empresas/{empresaId} {
-      // Un usuario puede leer los datos de su propia empresa
       allow read: if belongsToCompany(empresaId);
       allow create: if isSuperAdmin();
       allow update: if isSuperAdmin() || (belongsToCompany(empresaId) && hasRole(empresaId, ['Admin', 'Lider_PESV']));
       allow delete: if isSuperAdmin();
 
-      // Subcolección de usuarios (Visa)
+      // Subcolección de usuarios (Membresía local)
       match /usuarios/{uid} {
         allow read: if belongsToCompany(empresaId);
         allow write: if isSuperAdmin() || (belongsToCompany(empresaId) && hasRole(empresaId, ['Admin']));
       }
 
-      // Colecciones operativas (Vehículos, Mantenimientos, Inspecciones, etc.)
+      // Datos operativos (Vehículos, Mantenimientos, etc.)
       match /{subcollection}/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow write: if belongsToCompany(empresaId) && 
-                     hasRole(empresaId, ['Admin', 'Lider_PESV', 'Auditor', 'Conductor']);
+        allow create: if belongsToCompany(empresaId) && 
+                        hasRole(empresaId, ['Admin', 'Lider_PESV', 'Auditor', 'Conductor']) &&
+                        request.resource.data.empresaId == empresaId;
+        allow update: if belongsToCompany(empresaId) && 
+                        hasRole(empresaId, ['Admin', 'Lider_PESV', 'Auditor', 'Conductor']);
+        allow delete: if isSuperAdmin() || (belongsToCompany(empresaId) && hasRole(empresaId, ['Admin']));
       }
     }
 
-    // Auditoría
+    // Logs y Auditoría
     match /_audit_log/{doc} { allow create: if isSignedIn(); allow read: if isSuperAdmin(); }
     match /_audit_errors/{doc} { allow create: if isSignedIn(); allow read: if isSuperAdmin(); }
 
-    // Respaldo Global
+    // Backup Global
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }
