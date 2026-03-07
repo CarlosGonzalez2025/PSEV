@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -16,13 +16,11 @@ import {
   FileCheck,
   ShieldCheck,
   Activity,
-  Settings,
   AlertTriangle,
   Info,
   Eye,
   Edit,
-  Trash2,
-  Loader2
+  Trash2
 } from "lucide-react";
 import {
   Table,
@@ -72,22 +70,24 @@ import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
 
 const vehicleSchema = z.object({
-  placa: z.string().min(6, "Placa inválida"),
+  placa: z.string().min(6, "La placa debe tener al menos 6 caracteres"),
   vin: z.string().min(5, "VIN requerido"),
   numeroMotor: z.string().min(5, "Número de motor requerido"),
   marca: z.string().min(2, "Marca requerida"),
   modelo: z.string().min(2, "Modelo requerido"),
-  tipoVehiculo: z.string(),
-  cilindraje: z.string(),
-  carroceria: z.string(),
+  tipoVehiculo: z.string().min(1, "Clase requerida"),
+  cilindraje: z.string().optional(),
+  carroceria: z.string().optional(),
   propietario: z.string().min(3, "Propietario requerido"),
-  soatVencimiento: z.string(),
-  rtmVencimiento: z.string(),
-  polizaVencimiento: z.string(),
+  soatVencimiento: z.string().optional(),
+  rtmVencimiento: z.string().optional(),
+  polizaVencimiento: z.string().optional(),
   kilometrajeActual: z.coerce.number().min(0),
   kilometrajeMensualEstimado: z.coerce.number().min(0),
   estadoOperativo: z.string().default("Operativo"),
 });
+
+type VehicleFormValues = z.infer<typeof vehicleSchema>;
 
 export default function VehiculosPage() {
   const firestore = useFirestore();
@@ -107,7 +107,7 @@ export default function VehiculosPage() {
 
   const { data: vehiculos, isLoading } = useCollection(vehiculosRef);
 
-  const form = useForm<z.infer<typeof vehicleSchema>>({
+  const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
       placa: "",
@@ -128,32 +128,49 @@ export default function VehiculosPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof vehicleSchema>) {
+  const onSubmit = (values: VehicleFormValues) => {
     if (!firestore || !profile?.empresaId) return;
     
-    if (editingVehicle) {
-      const docRef = doc(firestore, 'empresas', profile.empresaId, 'vehiculos', editingVehicle.id);
-      updateDocumentNonBlocking(docRef, {
-        ...values,
-        fechaActualizacion: new Date().toISOString()
-      });
-      toast({ title: "Vehículo Actualizado", description: "La hoja de vida ha sido modificada correctamente." });
-    } else {
-      const colRef = collection(firestore, 'empresas', profile.empresaId, 'vehiculos');
-      addDocumentNonBlocking(colRef, {
-        ...values,
-        empresaId: profile.empresaId,
-        fechaRegistro: new Date().toISOString(),
-      });
-      toast({ title: "Vehículo Registrado", description: "Se ha creado una nueva hoja de vida." });
+    try {
+      if (editingVehicle) {
+        const docRef = doc(firestore, 'empresas', profile.empresaId, 'vehiculos', editingVehicle.id);
+        updateDocumentNonBlocking(docRef, {
+          ...values,
+          fechaActualizacion: new Date().toISOString()
+        });
+        toast({ title: "Vehículo Actualizado", description: `La unidad ${values.placa} ha sido modificada.` });
+      } else {
+        const colRef = collection(firestore, 'empresas', profile.empresaId, 'vehiculos');
+        addDocumentNonBlocking(colRef, {
+          ...values,
+          empresaId: profile.empresaId,
+          fechaRegistro: new Date().toISOString(),
+        });
+        toast({ title: "Vehículo Registrado", description: `Se ha creado la hoja de vida para ${values.placa}.` });
+      }
+      handleClose();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: "Ocurrió un error al procesar la solicitud." });
     }
-    
-    handleClose();
-  }
+  };
+
+  const onInvalid = (errors: any) => {
+    console.error("Errores de validación:", errors);
+    toast({ 
+      variant: "destructive", 
+      title: "Información Incompleta", 
+      description: "Por favor revisa todas las pestañas. Hay campos obligatorios marcados en rojo." 
+    });
+  };
 
   const handleEdit = (vehicle: any) => {
     setEditingVehicle(vehicle);
-    form.reset(vehicle);
+    // Filtramos solo los campos que están en el esquema para evitar errores de Firestore
+    const cleanedValues: any = {};
+    Object.keys(vehicleSchema.shape).forEach((key) => {
+      cleanedValues[key] = vehicle[key] !== undefined ? vehicle[key] : "";
+    });
+    form.reset(cleanedValues);
     setOpen(true);
   };
 
@@ -176,7 +193,7 @@ export default function VehiculosPage() {
     toast({ title: "Vehículo Eliminado", description: "El registro ha sido removido del sistema." });
   };
 
-  const checkVencimiento = (fechaStr: string) => {
+  const checkVencimiento = (fechaStr?: string) => {
     if (!fechaStr) return 'neutral';
     const hoy = new Date();
     const fecha = new Date(fechaStr);
@@ -213,7 +230,7 @@ export default function VehiculosPage() {
             </DialogHeader>
             
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
+              <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
                 <Tabs defaultValue="tecnica" className="w-full">
                   <div className="px-6 bg-background-dark/50">
                     <TabsList className="bg-transparent border-none gap-6 h-12">
@@ -225,7 +242,7 @@ export default function VehiculosPage() {
 
                   <div className="p-6 max-h-[60vh] overflow-y-auto">
                     <TabsContent value="tecnica" className="mt-0 space-y-4">
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField control={form.control} name="placa" render={({ field }) => (
                           <FormItem><FormLabel className="text-[10px] uppercase font-bold">Placa</FormLabel><FormControl><Input placeholder="ABC-123" {...field} className="bg-background-dark border-border-dark text-white" /></FormControl><FormMessage /></FormItem>
                         )} />
@@ -236,7 +253,7 @@ export default function VehiculosPage() {
                           <FormItem><FormLabel className="text-[10px] uppercase font-bold">Número de Motor</FormLabel><FormControl><Input placeholder="M-12345..." {...field} className="bg-background-dark border-border-dark text-white" /></FormControl><FormMessage /></FormItem>
                         )} />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField control={form.control} name="marca" render={({ field }) => (
                           <FormItem><FormLabel className="text-[10px] uppercase font-bold">Marca</FormLabel><FormControl><Input placeholder="Toyota" {...field} className="bg-background-dark border-border-dark text-white" /></FormControl><FormMessage /></FormItem>
                         )} />
@@ -244,7 +261,7 @@ export default function VehiculosPage() {
                           <FormItem><FormLabel className="text-[10px] uppercase font-bold">Modelo (Año)</FormLabel><FormControl><Input placeholder="2023" {...field} className="bg-background-dark border-border-dark text-white" /></FormControl><FormMessage /></FormItem>
                         )} />
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField control={form.control} name="tipoVehiculo" render={({ field }) => (
                           <FormItem><FormLabel className="text-[10px] uppercase font-bold">Clase</FormLabel><FormControl><Input placeholder="Camión / Automóvil" {...field} className="bg-background-dark border-border-dark text-white" /></FormControl><FormMessage /></FormItem>
                         )} />
@@ -281,7 +298,7 @@ export default function VehiculosPage() {
                     </TabsContent>
 
                     <TabsContent value="operacion" className="mt-0 space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField control={form.control} name="kilometrajeActual" render={({ field }) => (
                           <FormItem><FormLabel className="text-[10px] uppercase font-bold">Kilometraje Actual (Corte)</FormLabel><FormControl><Input type="number" {...field} className="bg-background-dark border-border-dark text-white" /></FormControl><FormMessage /></FormItem>
                         )} />
@@ -392,7 +409,7 @@ export default function VehiculosPage() {
                     <TableRow key={i} className="border-border-dark"><TableCell colSpan={6}><Skeleton className="h-12 bg-white/5" /></TableCell></TableRow>
                   ))
                 ) : vehiculos?.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-20 text-text-secondary italic">No hay vehículos registrados para esta empresa.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-10 text-text-secondary italic">No hay vehículos registrados para esta empresa.</TableCell></TableRow>
                 ) : (
                   vehiculos?.map((v) => (
                     <TableRow key={v.id} className="hover:bg-white/5 transition-colors border-border-dark group">
@@ -478,8 +495,12 @@ export default function VehiculosPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-border-dark text-white hover:bg-white/5">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Eliminar Definitivamente</AlertDialogAction>
+            <AlertDialogCancel asChild>
+              <Button variant="ghost" className="border-border-dark text-white hover:bg-white/5">Cancelar</Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Eliminar Definitivamente</Button>
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
