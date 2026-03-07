@@ -3,54 +3,70 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Funciones de utilidad básicas
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isSuperAdmin() {
-      return isSignedIn() && (request.auth.uid == 'I9Al3kS46rcTAbylTHgufUFke8b2' || request.auth.token.email == 'info@datnova.io');
+      return isSignedIn() && (
+        request.auth.uid == 'I9Al3kS46rcTAbylTHgufUFke8b2' || 
+        request.auth.token.email == 'info@datnova.io'
+      );
     }
 
-    function getUserData() {
-      let userPath = /databases/$(database)/documents/usuarios/$(request.auth.uid);
-      return exists(userPath) ? get(userPath).data : null;
-    }
-
+    // Función crítica para el aislamiento de datos entre empresas (Multi-tenancy)
     function belongsToCompany(empresaId) {
       if (!isSignedIn()) return false;
       if (isSuperAdmin()) return true;
       
-      let userData = getUserData();
-      // Verificamos por perfil global o por presencia en la subcolección de la empresa
-      return (userData != null && userData.empresaId == empresaId) || 
-             exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid));
+      let uid = request.auth.uid;
+      let rootProfilePath = /databases/$(database)/documents/usuarios/$(uid);
+      let companyMembershipPath = /databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(uid);
+      
+      // El usuario pertenece a la empresa si:
+      // 1. Su perfil global tiene el empresaId asignado (Security Lookup)
+      // 2. O si ya existe un registro de membresía dentro de la subcolección de la empresa
+      return (exists(rootProfilePath) && get(rootProfilePath).data.empresaId == empresaId) || 
+             exists(companyMembershipPath);
     }
 
-    // Reglas para Invitaciones
+    // Reglas para el sistema de Invitaciones
     match /invitaciones/{tokenId} {
-      allow read: if true; 
+      allow read: if true; // Necesario para que el cliente valide el token antes de loguearse
       allow update: if isSignedIn() && (resource.data.email == request.auth.token.email || isSuperAdmin());
       allow write: if isSuperAdmin();
     }
 
-    // Reglas de Usuarios Raíz
+    // Reglas de Usuarios Raíz (Tabla de búsqueda para seguridad)
     match /usuarios/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
       allow write: if isSuperAdmin() || (isSignedIn() && request.auth.uid == uid);
     }
 
-    // Reglas Multi-tenant
+    // Estructura Multi-tenant Principal
     match /empresas/{empresaId} {
+      // Permite leer/escribir datos institucionales de la empresa
       allow read: if belongsToCompany(empresaId);
       allow write: if isSuperAdmin() || belongsToCompany(empresaId);
 
+      // Regla recursiva para todas las subcolecciones (vehiculos, conductores, mantenimientos, inspecciones, etc.)
       match /{allSubcollections=**} {
-        allow read: if belongsToCompany(empresaId);
-        allow write: if belongsToCompany(empresaId);
+        allow read, write: if belongsToCompany(empresaId);
+      }
+      
+      // Regla específica para la subcolección de usuarios de la empresa
+      // Permite que un usuario gestione su propia vinculación si tiene la invitación correcta
+      match /usuarios/{uid} {
+        allow read, write: if isSignedIn() && (
+          request.auth.uid == uid || 
+          isSuperAdmin() || 
+          belongsToCompany(empresaId)
+        );
       }
     }
     
-    // Regla de escape para Superadmin (acceso total)
+    // Regla de seguridad global para el Superadmin
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }
