@@ -27,20 +27,27 @@ service cloud.firestore {
       );
     }
 
+    // Verificar si el usuario está activo en la empresa (usando el campo 'estado')
+    function isActiveInCompany(empresaId) {
+      return isSuperAdmin() || (
+        belongsToCompany(empresaId) && (
+          (exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) &&
+           get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.estado == 'Activo')
+          ||
+          (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+           get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == 'Activo')
+        )
+      );
+    }
+
     // Verificar rol del usuario dentro de la empresa
     function hasRoleInCompany(empresaId, allowedRoles) {
       return belongsToCompany(empresaId) && (
         isSuperAdmin() ||
         (exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.rol in allowedRoles)
-      );
-    }
-
-    function isActiveInCompany(empresaId) {
-      return belongsToCompany(empresaId) && (
-        isSuperAdmin() ||
-        (exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.estado == 'Activo')
+         get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.rol in allowedRoles) ||
+        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in allowedRoles)
       );
     }
 
