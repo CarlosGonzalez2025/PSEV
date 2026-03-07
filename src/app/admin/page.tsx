@@ -25,7 +25,8 @@ import {
   Mail,
   UserPlus,
   Trash2,
-  Key
+  Key,
+  Check
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { redirect } from 'next/navigation';
@@ -53,6 +54,7 @@ export default function SuperAdminPage() {
   const [selectedEmpresa, setSelectedEmpresa] = useState<any>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isInviteUserOpen, setIsInviteUserOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const [empresa, setEmpresa] = useState({
     nit: '',
@@ -172,6 +174,7 @@ export default function SuperAdminPage() {
     e.preventDefault();
     if (!selectedEmpresa) return;
     setLoading(true);
+    setInvitationLink(null);
 
     try {
       const token = Math.random().toString(36).substring(2, 15);
@@ -189,7 +192,6 @@ export default function SuperAdminPage() {
 
       const activationUrl = `${window.location.origin}/activar?token=${token}`;
       setInvitationLink(activationUrl);
-      setIsInviteUserOpen(false);
       setNewUser({ nombre: '', email: '', rol: 'Lider_PESV' });
       
       toast({ title: "Usuario Invitado", description: "Link de activación generado exitosamente." });
@@ -202,7 +204,9 @@ export default function SuperAdminPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+    setCopied(true);
     toast({ title: "Copiado", description: "Link copiado al portapapeles." });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -322,7 +326,7 @@ export default function SuperAdminPage() {
               </Card>
             </form>
 
-            {invitationLink && (
+            {invitationLink && !isInviteUserOpen && (
               <Card className="bg-emerald-500/10 border-emerald-500/50 text-white border-dashed">
                 <CardHeader>
                   <CardTitle className="text-emerald-400 flex items-center gap-2 text-md uppercase font-bold">
@@ -335,7 +339,7 @@ export default function SuperAdminPage() {
                 <CardContent className="flex gap-2">
                   <Input readOnly value={invitationLink} className="bg-background-dark border-border-dark font-mono text-xs text-white" />
                   <Button variant="secondary" size="icon" onClick={() => copyToClipboard(invitationLink)}>
-                    <Copy className="size-4" />
+                    {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
                   </Button>
                 </CardContent>
               </Card>
@@ -476,7 +480,10 @@ export default function SuperAdminPage() {
                   <Button 
                     size="sm" 
                     className="h-8 font-bold text-[10px] uppercase tracking-widest"
-                    onClick={() => setIsInviteUserOpen(true)}
+                    onClick={() => {
+                      setInvitationLink(null);
+                      setIsInviteUserOpen(true);
+                    }}
                   >
                     <UserPlus className="size-3 mr-2" /> Agregar Usuario
                   </Button>
@@ -556,56 +563,93 @@ export default function SuperAdminPage() {
       <Dialog open={isInviteUserOpen} onOpenChange={setIsInviteUserOpen}>
         <DialogContent className="bg-surface-dark border-border-dark text-white sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter">
               <UserPlus className="size-5 text-primary" /> Invitar Colaborador
             </DialogTitle>
             <DialogDescription className="text-text-secondary">
-              Se generará un link para que el nuevo usuario de {selectedEmpresa?.razonSocial} active su cuenta.
+              Se generará un link para que el nuevo usuario de <span className="text-white font-bold">{selectedEmpresa?.razonSocial}</span> active su cuenta.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleInviteAdditionalUser} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase">Nombre Completo</Label>
-              <Input 
-                value={newUser.nombre}
-                onChange={e => setNewUser({...newUser, nombre: e.target.value})}
-                placeholder="Ej: Pedro Martínez"
-                className="bg-background-dark border-border-dark text-white"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase">Correo Electrónico</Label>
-              <Input 
-                type="email"
-                value={newUser.email}
-                onChange={e => setNewUser({...newUser, email: e.target.value})}
-                placeholder="pedro@empresa.com"
-                className="bg-background-dark border-border-dark text-white"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase">Rol en la Empresa</Label>
-              <Select 
-                value={newUser.rol}
-                onValueChange={v => setNewUser({...newUser, rol: v})}
+          
+          {invitationLink ? (
+            <div className="py-6 space-y-6 animate-in fade-in zoom-in duration-300">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="size-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-2">
+                  <CheckCircle2 className="size-10" />
+                </div>
+                <h3 className="text-lg font-bold text-white uppercase tracking-tight">¡Link Generado!</h3>
+                <p className="text-xs text-text-secondary">Copia este enlace y compártelo con el colaborador.</p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input readOnly value={invitationLink} className="bg-background-dark border-border-dark font-mono text-xs text-white h-11" />
+                  <Button 
+                    className="shrink-0 h-11 px-4 font-bold bg-primary hover:bg-primary/90"
+                    onClick={() => copyToClipboard(invitationLink)}
+                  >
+                    {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                  </Button>
+                </div>
+                <p className="text-[10px] text-amber-500 text-center font-medium">Este link es de un solo uso y expirará pronto.</p>
+              </div>
+
+              <Button 
+                variant="outline" 
+                className="w-full border-border-dark text-white font-bold"
+                onClick={() => {
+                  setInvitationLink(null);
+                  setIsInviteUserOpen(false);
+                }}
               >
-                <SelectTrigger className="bg-background-dark border-border-dark text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-surface-dark border-border-dark text-white">
-                  <SelectItem value="Admin">Administrador</SelectItem>
-                  <SelectItem value="Lider_PESV">Líder PESV</SelectItem>
-                  <SelectItem value="Auditor">Auditor Interno</SelectItem>
-                  <SelectItem value="Supervisor">Supervisor de Operaciones</SelectItem>
-                </SelectContent>
-              </Select>
+                Cerrar Ventana
+              </Button>
             </div>
-            <Button type="submit" disabled={loading} className="w-full font-bold uppercase tracking-widest mt-4">
-              {loading ? 'Generando...' : 'Generar Link de Invitación'}
-            </Button>
-          </form>
+          ) : (
+            <form onSubmit={handleInviteAdditionalUser} className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-text-secondary">Nombre Completo</Label>
+                <Input 
+                  value={newUser.nombre}
+                  onChange={e => setNewUser({...newUser, nombre: e.target.value})}
+                  placeholder="Ej: Pedro Martínez"
+                  className="bg-background-dark border-border-dark text-white h-11"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-text-secondary">Correo Electrónico</Label>
+                <Input 
+                  type="email"
+                  value={newUser.email}
+                  onChange={e => setNewUser({...newUser, email: e.target.value})}
+                  placeholder="pedro@empresa.com"
+                  className="bg-background-dark border-border-dark text-white h-11"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-text-secondary">Rol en la Empresa</Label>
+                <Select 
+                  value={newUser.rol}
+                  onValueChange={v => setNewUser({...newUser, rol: v})}
+                >
+                  <SelectTrigger className="bg-background-dark border-border-dark text-white h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-dark border-border-dark text-white">
+                    <SelectItem value="Admin">Administrador</SelectItem>
+                    <SelectItem value="Lider_PESV">Líder PESV</SelectItem>
+                    <SelectItem value="Auditor">Auditor Interno</SelectItem>
+                    <SelectItem value="Supervisor">Supervisor de Operaciones</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" disabled={loading} className="w-full font-bold uppercase tracking-widest mt-4 h-12 shadow-lg shadow-primary/20">
+                {loading ? 'Generando...' : 'Generar Link de Invitación'}
+              </Button>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>
