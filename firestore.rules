@@ -15,33 +15,38 @@ service cloud.firestore {
       );
     }
 
-    // Perfil global (Passport)
-    function getPassport() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
-    }
-
-    // Validación de pertenencia a empresa (Redundante para robustez)
+    // Validación optimizada de pertenencia a empresa
     function belongsToCompany(empresaId) {
+      let uid = request.auth.uid;
+      let rootProfilePath = /databases/$(database)/documents/usuarios/$(uid);
+      let companyMembershipPath = /databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(uid);
+      
       return isSignedIn() && (
         isSuperAdmin() ||
-        exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) ||
-        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && getPassport().empresaId == empresaId)
+        // Opción 1: Existe en la subcolección de la empresa (Visa)
+        exists(companyMembershipPath) ||
+        // Opción 2: El perfil raíz tiene el empresaId correcto (Passport)
+        (exists(rootProfilePath) && get(rootProfilePath).data.empresaId == empresaId)
       );
     }
 
     function isActiveInCompany(empresaId) {
+      let uid = request.auth.uid;
+      let rootProfilePath = /databases/$(database)/documents/usuarios/$(uid);
+      
       return belongsToCompany(empresaId) && (
         isSuperAdmin() ||
-        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && getPassport().estado == 'Activo') ||
-        (exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.estado == 'Activo')
+        (exists(rootProfilePath) && get(rootProfilePath).data.estado == 'Activo')
       );
     }
 
     function hasRoleInCompany(empresaId, roles) {
+      let uid = request.auth.uid;
+      let rootProfilePath = /databases/$(database)/documents/usuarios/$(uid);
+      
       return isActiveInCompany(empresaId) && (
         isSuperAdmin() ||
-        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && getPassport().rol in roles)
+        (exists(rootProfilePath) && get(rootProfilePath).data.rol in roles)
       );
     }
 
@@ -57,13 +62,14 @@ service cloud.firestore {
     match /invitaciones/{tokenId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn(); // Permitir actualización para marcar como usada durante el registro
+      allow update: if isSignedIn();
       allow delete: if isSuperAdmin();
     }
 
     // === EMPRESAS Y SUBCOLECCIONES ===
     match /empresas/{empresaId} {
-      allow read: if belongsToCompany(empresaId); // Permitir lectura básica para validación
+      // Permitir lectura del documento de la empresa si el usuario pertenece a ella
+      allow read: if belongsToCompany(empresaId);
       allow create: if isSuperAdmin();
       allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
       allow delete: if isSuperAdmin();
@@ -71,7 +77,6 @@ service cloud.firestore {
       // Membresía de usuarios en la empresa (Visa)
       match /usuarios/{uid} {
         allow read: if belongsToCompany(empresaId);
-        // PERMITIR que el usuario cree su propia membresía durante el onboarding (Fase Crítica)
         allow create: if (isSignedIn() && request.auth.uid == uid) || hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin();
         allow update: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin() || (isSignedIn() && request.auth.uid == uid);
         allow delete: if isSuperAdmin();
@@ -99,7 +104,7 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
       }
 
-      // Catch-all para subcolecciones nuevas
+      // Catch-all para cualquier otra subcolección bajo la empresa
       match /{anySubcollection}/{docId} {
         allow read: if belongsToCompany(empresaId);
         allow write: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin();
