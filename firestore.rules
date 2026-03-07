@@ -3,8 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // === FUNCIONES NÚCLEO DE SEGURIDAD ===
-    
+    // === FUNCIONES DE UTILIDAD ===
     function isSignedIn() {
       return request.auth != null;
     }
@@ -16,41 +15,37 @@ service cloud.firestore {
       );
     }
 
-    // Passport: Perfil global del usuario
+    // Perfil global (Passport)
     function getPassport() {
       return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
     }
 
-    // Visa: Registro de membresía dentro de la empresa
-    function hasValidVisa(empresaId) {
-      return exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.estado == 'Activo';
-    }
-
-    // Lógica maestra de pertenencia
+    // Validación de pertenencia a empresa (Redundante para robustez)
     function belongsToCompany(empresaId) {
       return isSignedIn() && (
-        isSuperAdmin() || 
-        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && 
-         getPassport().empresaId == empresaId && 
-         getPassport().estado == 'Activo') ||
-        hasValidVisa(empresaId)
+        isSuperAdmin() ||
+        exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && getPassport().empresaId == empresaId)
       );
     }
 
-    function hasRole(empresaId, allowedRoles) {
-      return isSuperAdmin() || (belongsToCompany(empresaId) && getPassport().rol in allowedRoles);
+    function isActiveInCompany(empresaId) {
+      return belongsToCompany(empresaId) && (
+        isSuperAdmin() ||
+        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && getPassport().estado == 'Activo') ||
+        (exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.estado == 'Activo')
+      );
     }
 
-    // === REGLAS POR COLECCIÓN ===
-
-    match /invitaciones/{tokenId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && (request.auth.token.email == resource.data.email || isSuperAdmin());
-      allow delete: if isSuperAdmin();
+    function hasRoleInCompany(empresaId, roles) {
+      return isActiveInCompany(empresaId) && (
+        isSuperAdmin() ||
+        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && getPassport().rol in roles)
+      );
     }
 
+    // === USUARIOS GLOBALES (Passport) ===
     match /usuarios/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
       allow create: if isSignedIn() && request.auth.uid == uid;
@@ -58,35 +53,64 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // === INVITACIONES ===
+    match /invitaciones/{tokenId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn(); // Permitir actualización para marcar como usada durante el registro
+      allow delete: if isSuperAdmin();
+    }
+
+    // === EMPRESAS Y SUBCOLECCIONES ===
     match /empresas/{empresaId} {
-      allow read: if belongsToCompany(empresaId);
+      allow read: if belongsToCompany(empresaId); // Permitir lectura básica para validación
       allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin() || (belongsToCompany(empresaId) && hasRole(empresaId, ['Admin', 'Lider_PESV']));
+      allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
       allow delete: if isSuperAdmin();
 
-      // Subcolección de usuarios (Membresía local)
+      // Membresía de usuarios en la empresa (Visa)
       match /usuarios/{uid} {
         allow read: if belongsToCompany(empresaId);
-        allow write: if isSuperAdmin() || (belongsToCompany(empresaId) && hasRole(empresaId, ['Admin']));
+        // PERMITIR que el usuario cree su propia membresía durante el onboarding (Fase Crítica)
+        allow create: if (isSignedIn() && request.auth.uid == uid) || hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin();
+        allow update: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin() || (isSignedIn() && request.auth.uid == uid);
+        allow delete: if isSuperAdmin();
       }
 
-      // Datos operativos (Vehículos, Mantenimientos, etc.)
-      match /{subcollection}/{docId} {
+      // Datos operativos
+      match /vehiculos/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if belongsToCompany(empresaId) && 
-                        hasRole(empresaId, ['Admin', 'Lider_PESV', 'Auditor', 'Conductor']) &&
-                        request.resource.data.empresaId == empresaId;
-        allow update: if belongsToCompany(empresaId) && 
-                        hasRole(empresaId, ['Admin', 'Lider_PESV', 'Auditor', 'Conductor']);
-        allow delete: if isSuperAdmin() || (belongsToCompany(empresaId) && hasRole(empresaId, ['Admin']));
+        allow create: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor", "Conductor"]);
+        allow update: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      match /mantenimientos/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
+        allow update: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      match /inspeccionesPreoperacionales/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Conductor"]);
+        allow update: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Catch-all para subcolecciones nuevas
+      match /{anySubcollection}/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow write: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin();
       }
     }
 
-    // Logs y Auditoría
+    // === AUDITORÍA ===
     match /_audit_log/{doc} { allow create: if isSignedIn(); allow read: if isSuperAdmin(); }
     match /_audit_errors/{doc} { allow create: if isSignedIn(); allow read: if isSuperAdmin(); }
 
-    // Backup Global
+    // === SUPERADMIN GLOBAL ===
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }
