@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useFirestore, useAuth } from '@/firebase';
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,11 +54,9 @@ function ActivationForm() {
     try {
       let uid = '';
       try {
-        // 1. Intentar crear usuario en Firebase Auth
         const userCredential = await createUserWithEmailAndPassword(auth, invitation.email, password);
         uid = userCredential.user.uid;
       } catch (authError: any) {
-        // Si el correo ya existe, intentamos iniciar sesión para verificar que es el dueño
         if (authError.code === 'auth/email-already-in-use') {
           const userCredential = await signInWithEmailAndPassword(auth, invitation.email, password);
           uid = userCredential.user.uid;
@@ -68,34 +65,41 @@ function ActivationForm() {
         }
       }
 
-      // 2. Crear/Actualizar perfil raíz (Security Lookup)
-      await setDoc(doc(firestore, 'usuarios', uid), {
+      // USO DE BATCH PARA GARANTIZAR ATOMICIDAD (MULTI-TENANCY ROBUSTA)
+      const batch = writeBatch(firestore);
+      
+      const userPayload = {
         id: uid,
         empresaId: invitation.empresaId,
         rol: invitation.rol,
         nombreCompleto: invitation.nombreCompleto,
         email: invitation.email,
-        fechaActualizacion: new Date().toISOString(),
         estado: 'Activo'
+      };
+
+      // 1. Perfil Raíz
+      const rootRef = doc(firestore, 'usuarios', uid);
+      batch.set(rootRef, { 
+        ...userPayload, 
+        fechaActualizacion: new Date().toISOString() 
       }, { merge: true });
 
-      // 3. Crear perfil dentro de la empresa
-      await setDoc(doc(firestore, 'empresas', invitation.empresaId, 'usuarios', uid), {
-        id: uid,
-        empresaId: invitation.empresaId,
-        rol: invitation.rol,
-        nombreCompleto: invitation.nombreCompleto,
-        email: invitation.email,
-        fechaCreacion: new Date().toISOString(),
-        estado: 'Activo'
+      // 2. Membresía de Empresa
+      const companyUserRef = doc(firestore, 'empresas', invitation.empresaId, 'usuarios', uid);
+      batch.set(companyUserRef, { 
+        ...userPayload, 
+        fechaCreacion: new Date().toISOString() 
       }, { merge: true });
 
-      // 4. Marcar invitación como usada
-      await updateDoc(doc(firestore, 'invitaciones', token!), {
+      // 3. Consumir Invitación
+      const invRef = doc(firestore, 'invitaciones', token!);
+      batch.update(invRef, {
         usada: true,
         fechaActivacion: new Date().toISOString(),
         usuarioUid: uid
       });
+
+      await batch.commit();
 
       setSuccess(true);
       toast({ title: "Cuenta Activada", description: "Bienvenido a RoadWise 360." });

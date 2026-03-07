@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "EmpresaCliente": {
@@ -30,7 +29,7 @@
         "estado": { "type": "string" },
         "fechaCreacion": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "empresaId", "nombreCompleto", "email", "rol", "estado", "fechaCreacion"]
+      "required": ["id", "empresaId", "nombreCompleto", "email", "rol", "estado"]
     },
     "Vehiculo": {
       "title": "Vehículo (Hoja de Vida)",
@@ -54,23 +53,6 @@
         "kilometrajeMensualEstimado": { "type": "number" },
         "estadoOperativo": { "type": "string" }
       }
-    },
-    "Mantenimiento": {
-      "title": "Mantenimiento",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "empresaId": { "type": "string" },
-        "vehiculoId": { "type": "string" },
-        "tipo": { "type": "string" },
-        "descripcion": { "type": "string" },
-        "costo": { "type": "number" },
-        "fechaEjecucion": { "type": "string" },
-        "taller": { "type": "string" },
-        "tecnicoResponsable": { "type": "string" },
-        "repuestosUtilizados": { "type": "string" },
-        "estado": { "type": "string" }
-      }
     }
   },
   "auth": {
@@ -87,8 +69,8 @@
         "definition": { "entityName": "Usuario", "description": "Global user lookup table" }
       },
       {
-        "path": "/invitaciones/{invitacionId}",
-        "definition": { "description": "Pending invitations" }
+        "path": "/empresas/{empresaId}/usuarios/{uid}",
+        "definition": { "entityName": "Usuario", "description": "Company membership record" }
       },
       {
         "path": "/empresas/{empresaId}/vehiculos/{vehiculoId}",
@@ -96,15 +78,11 @@
       },
       {
         "path": "/empresas/{empresaId}/mantenimientos/{mantenimientoId}",
-        "definition": { "entityName": "Mantenimiento", "description": "Maintenance records" }
+        "definition": { "description": "Maintenance records" }
       },
       {
         "path": "/empresas/{empresaId}/inspeccionesPreoperacionales/{inspeccionId}",
-        "definition": { "description": "Daily inspections" }
-      },
-      {
-        "path": "/empresas/{empresaId}/usuarios/{uid}",
-        "definition": { "description": "Company members" }
+        "definition": { "description": "Daily pre-operational inspections" }
       }
     ]
   }
