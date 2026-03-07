@@ -8,7 +8,8 @@ import {
   getDoc, 
   collection, 
   getDocs,
-  serverTimestamp 
+  query,
+  where
 } from 'firebase/firestore';
 
 const MembershipInputSchema = z.object({
@@ -28,14 +29,9 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
     const { firestore } = initializeFirebase();
     const batch = writeBatch(firestore);
 
-    // 1. Verificar permisos del asignador (Simulado para Server Action)
-    // En una implementación real, aquí verificaríamos los Custom Claims del contexto de la sesión
-
-    // 2. Referencias
     const rootUserRef = doc(firestore, 'usuarios', validated.uid);
     const companyUserRef = doc(firestore, 'empresas', validated.empresaId, 'usuarios', validated.uid);
 
-    // 3. Escribir atómicamente en ambos nodos
     batch.set(rootUserRef, {
       id: validated.uid,
       empresaId: validated.empresaId,
@@ -57,7 +53,6 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
       fechaCreacion: new Date().toISOString()
     });
 
-    // 4. Log de Auditoría
     const auditRef = doc(collection(firestore, '_audit_log'));
     batch.set(auditRef, {
       accion: 'user.assigned_to_company',
@@ -70,48 +65,97 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
     await batch.commit();
     return { success: true, message: "Usuario vinculado correctamente." };
   } catch (error: any) {
-    console.error("Error en assignUserToCompanyAction:", error);
     return { success: false, message: error.message };
   }
 }
 
+/**
+ * Script 1: Reparar membresías de usuarios.
+ * Asegura la existencia de documentos tanto en /usuarios/{uid} como en /empresas/{id}/usuarios/{uid}
+ */
 export async function repairBrokenUsersAction() {
   try {
     const { firestore } = initializeFirebase();
-    const batch = writeBatch(firestore);
     const usersSnap = await getDocs(collection(firestore, 'usuarios'));
     
     let repairedCount = 0;
-    const report: string[] = [];
+    const log: string[] = [];
 
     for (const userDoc of usersSnap.docs) {
       const data = userDoc.data();
       if (!data.empresaId || data.empresaId === 'system') continue;
 
+      const batch = writeBatch(firestore);
       const companyUserRef = doc(firestore, 'empresas', data.empresaId, 'usuarios', userDoc.id);
       const companyUserSnap = await getDoc(companyUserRef);
 
       if (!companyUserSnap.exists()) {
-        // Reparar creando el documento de membresía faltante
         batch.set(companyUserRef, {
-          ...data,
+          id: userDoc.id,
+          empresaId: data.empresaId,
+          rol: data.rol || 'Lider_PESV',
+          nombreCompleto: data.nombreCompleto || 'Usuario Migrado',
+          email: data.email || '',
+          estado: 'Activo',
           fechaCreacion: new Date().toISOString(),
           reparadoAuto: true
         });
+        await batch.commit();
         repairedCount++;
-        report.push(`Reparado: ${data.email} en empresa ${data.empresaId}`);
+        log.push(`Vínculo creado: ${data.email} -> Empresa ${data.empresaId}`);
       }
-    }
-
-    if (repairedCount > 0) {
-      await batch.commit();
     }
 
     return { 
       success: true, 
       repairedCount, 
+      log,
+      message: `Proceso finalizado. Se repararon ${repairedCount} perfiles inconsistentes.` 
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Script 2: Corregir empresaId en registros operativos.
+ * Recorre subcolecciones y asegura que el campo empresaId exista para que las reglas funcionen.
+ */
+export async function fixTenantRecordsAction() {
+  try {
+    const { firestore } = initializeFirebase();
+    const empresasSnap = await getDocs(collection(firestore, 'empresas'));
+    
+    let totalFixed = 0;
+    const report: string[] = [];
+    const subcollections = ['vehiculos', 'mantenimientos', 'inspeccionesPreoperacionales', 'conductores', 'rutas', 'siniestros'];
+
+    for (const empDoc of empresasSnap.docs) {
+      const empId = empDoc.id;
+      let empFixed = 0;
+
+      for (const sub of subcollections) {
+        const subSnap = await getDocs(collection(firestore, 'empresas', empId, sub));
+        
+        for (const recordDoc of subSnap.docs) {
+          const data = recordDoc.data();
+          if (data.empresaId !== empId) {
+            const batch = writeBatch(firestore);
+            batch.update(recordDoc.ref, { empresaId: empId });
+            await batch.commit();
+            empFixed++;
+            totalFixed++;
+          }
+        }
+      }
+      if (empFixed > 0) report.push(`${empDoc.data().razonSocial}: ${empFixed} registros actualizados.`);
+    }
+
+    return { 
+      success: true, 
+      totalFixed, 
       report,
-      message: `Proceso completado. Se repararon ${repairedCount} perfiles.` 
+      message: `Sincronización de registros completada. Total reparados: ${totalFixed}` 
     };
   } catch (error: any) {
     return { success: false, message: error.message };
