@@ -109,6 +109,7 @@ export default function VehiculosPage() {
 
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
+    mode: "onTouched",
     defaultValues: {
       placa: "",
       vin: "",
@@ -157,13 +158,13 @@ export default function VehiculosPage() {
 
   const onInvalid = (errors: any) => {
     console.error("Errores de validación detallados:", errors);
-    const firstError = Object.keys(errors)[0];
-    const message = errors[firstError]?.message || "Por favor revisa todas las pestañas. Hay campos obligatorios marcados en rojo.";
+    const firstErrorKey = Object.keys(errors)[0];
+    const firstErrorMessage = errors[firstErrorKey]?.message;
     
     toast({ 
       variant: "destructive", 
       title: "Información Incompleta", 
-      description: message 
+      description: firstErrorMessage || "Por favor revisa todas las pestañas. Hay campos obligatorios marcados en rojo." 
     });
   };
 

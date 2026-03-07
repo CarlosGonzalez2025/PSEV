@@ -18,24 +18,18 @@ service cloud.firestore {
     // Validación de pertenencia a empresa (Multi-tenancy)
     // Se utiliza una ruta absoluta para asegurar consistencia en operaciones de listado
     function belongsToCompany(empresaId) {
-      if (!isSignedIn()) return false;
-      if (isSuperAdmin()) return true;
-      
-      let uid = request.auth.uid;
-      let rootProfilePath = /databases/$(database)/documents/usuarios/$(uid);
-      let companyUserPath = /databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(uid);
-      
-      // El acceso se concede si:
-      // 1. El documento de usuario raíz apunta a esta empresa
-      // 2. O si el usuario existe explícitamente en la subcolección de la empresa
-      return (exists(rootProfilePath) && get(rootProfilePath).data.empresaId == empresaId) || 
-             exists(companyUserPath);
+      return isSignedIn() && (
+        isSuperAdmin() || 
+        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.empresaId == empresaId) || 
+        exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid))
+      );
     }
 
     // Reglas para el sistema de Invitaciones
     match /invitaciones/{tokenId} {
       allow read: if true;
-      allow write: if isSuperAdmin() || (isSignedIn() && request.auth.token.email == resource.data.email);
+      allow write: if isSuperAdmin() || (isSignedIn() && request.auth.token.email == request.resource.data.email);
     }
 
     // Reglas de Usuarios Raíz
