@@ -38,6 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -51,6 +52,7 @@ export default function SuperAdminPage() {
   const [invitationLink, setInvitacionLink] = useState<string | null>(null);
   const [selectedEmpresa, setSelectedEmpresa] = useState<any>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
+  const [isInviteUserOpen, setIsInviteUserOpen] = useState(false);
 
   const [empresa, setEmpresa] = useState({
     nit: '',
@@ -61,6 +63,12 @@ export default function SuperAdminPage() {
   const [admin, setAdmin] = useState({
     nombre: '',
     email: '',
+  });
+
+  const [newUser, setNewUser] = useState({
+    nombre: '',
+    email: '',
+    rol: 'Lider_PESV'
   });
 
   // Cargar lista de empresas existentes
@@ -153,6 +161,38 @@ export default function SuperAdminPage() {
       toast({ title: "Empresa Registrada", description: "Se ha generado el token de activación." });
       setEmpresa({ nit: '', razonSocial: '', misionalidad: 'Transporte' });
       setAdmin({ nombre: '', email: '' });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInviteAdditionalUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEmpresa) return;
+    setLoading(true);
+
+    try {
+      const token = Math.random().toString(36).substring(2, 15);
+      const invRef = doc(firestore, 'invitaciones', token);
+      await setDoc(invRef, {
+        id: token,
+        email: newUser.email,
+        nombreCompleto: newUser.nombre,
+        empresaId: selectedEmpresa.id,
+        rol: newUser.rol,
+        token: token,
+        usada: false,
+        fechaCreacion: new Date().toISOString()
+      });
+
+      const activationUrl = `${window.location.origin}/activar?token=${token}`;
+      setInvitacionLink(activationUrl);
+      setIsInviteUserOpen(false);
+      setNewUser({ nombre: '', email: '', rol: 'Lider_PESV' });
+      
+      toast({ title: "Usuario Invitado", description: "Link de activación generado exitosamente." });
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
@@ -431,7 +471,11 @@ export default function SuperAdminPage() {
               <TabsContent value="users" className="mt-0 space-y-6">
                 <div className="flex justify-between items-center">
                   <h4 className="text-[10px] font-black uppercase text-primary tracking-widest">Usuarios Vinculados</h4>
-                  <Button size="sm" className="h-8 font-bold text-[10px] uppercase tracking-widest">
+                  <Button 
+                    size="sm" 
+                    className="h-8 font-bold text-[10px] uppercase tracking-widest"
+                    onClick={() => setIsInviteUserOpen(true)}
+                  >
                     <UserPlus className="size-3 mr-2" /> Agregar Usuario
                   </Button>
                 </div>
@@ -503,6 +547,63 @@ export default function SuperAdminPage() {
               </TabsContent>
             </div>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de Invitar Usuario Adicional */}
+      <Dialog open={isInviteUserOpen} onOpenChange={setIsInviteUserOpen}>
+        <DialogContent className="bg-surface-dark border-border-dark text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="size-5 text-primary" /> Invitar Colaborador
+            </DialogTitle>
+            <DialogDescription className="text-text-secondary">
+              Se generará un link para que el nuevo usuario de {selectedEmpresa?.razonSocial} active su cuenta.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleInviteAdditionalUser} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase">Nombre Completo</Label>
+              <Input 
+                value={newUser.nombre}
+                onChange={e => setNewUser({...newUser, nombre: e.target.value})}
+                placeholder="Ej: Pedro Martínez"
+                className="bg-background-dark border-border-dark text-white"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase">Correo Electrónico</Label>
+              <Input 
+                type="email"
+                value={newUser.email}
+                onChange={e => setNewUser({...newUser, email: e.target.value})}
+                placeholder="pedro@empresa.com"
+                className="bg-background-dark border-border-dark text-white"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase">Rol en la Empresa</Label>
+              <Select 
+                value={newUser.rol}
+                onValueChange={v => setNewUser({...newUser, rol: v})}
+              >
+                <SelectTrigger className="bg-background-dark border-border-dark text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-surface-dark border-border-dark text-white">
+                  <SelectItem value="Admin">Administrador</SelectItem>
+                  <SelectItem value="Lider_PESV">Líder PESV</SelectItem>
+                  <SelectItem value="Auditor">Auditor Interno</SelectItem>
+                  <SelectItem value="Supervisor">Supervisor de Operaciones</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button type="submit" disabled={loading} className="w-full font-bold uppercase tracking-widest mt-4">
+              {loading ? 'Generando...' : 'Generar Link de Invitación'}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
