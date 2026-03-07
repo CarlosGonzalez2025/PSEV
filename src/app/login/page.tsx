@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, signInAnonymously } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInAnonymously, sendPasswordResetEmail } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,6 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
     } catch (error: any) {
-      // Mapeo de errores de Firebase a mensajes amigables
       const code = error?.code;
       if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
         setError('Correo o contraseña incorrectos. Verifica tus datos.');
@@ -37,6 +36,26 @@ export default function LoginPage() {
       } else {
         setError('Error de red. Verifica tu conexión e intenta de nuevo.');
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError('Por favor, ingresa tu correo electrónico para enviar el link de recuperación.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: "Correo enviado",
+        description: "Se ha enviado un enlace a tu correo para restablecer tu contraseña.",
+      });
+      setError('');
+    } catch (error: any) {
+      setError('No se pudo enviar el correo. Verifica que la dirección sea correcta.');
     } finally {
       setIsLoading(false);
     }
@@ -60,15 +79,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background-dark p-4 relative overflow-hidden">
-
-      {/* ── Decoración de fondo ── */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md">
-
-        {/* ── Brand header (fuera de la card) ── */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center size-16 bg-primary rounded-2xl shadow-lg shadow-primary/30 mb-4">
             <Shield className="size-9 text-white" />
@@ -79,9 +94,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* ── Card principal ── */}
         <div className="bg-surface-dark border border-border-dark rounded-2xl shadow-2xl p-8">
-
           <div className="mb-6">
             <h2 className="text-lg font-bold text-white">Iniciar sesión</h2>
             <p className="text-sm text-text-secondary mt-0.5">
@@ -90,8 +103,6 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4" noValidate>
-
-            {/* Error inline */}
             {error && (
               <div
                 role="alert"
@@ -103,7 +114,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Email */}
             <div className="space-y-1.5">
               <Label
                 htmlFor="email"
@@ -127,7 +137,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label
@@ -136,11 +145,12 @@ export default function LoginPage() {
                 >
                   Contraseña
                 </Label>
-                {/* Aquí puedes conectar tu flujo de reset cuando lo implementes */}
                 <button
                   type="button"
+                  onClick={handleResetPassword}
                   className="text-[11px] text-primary hover:underline font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
                   tabIndex={0}
+                  disabled={isLoading}
                 >
                   ¿Olvidaste tu contraseña?
                 </button>
@@ -161,7 +171,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit */}
             <Button
               className="w-full font-bold h-11 mt-2 shadow-lg shadow-primary/20"
               type="submit"
@@ -175,7 +184,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Separador visual */}
           <div className="relative my-5">
             <Separator className="bg-border-dark" />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface-dark px-3 text-[10px] text-text-secondary uppercase tracking-widest font-bold select-none">
@@ -183,7 +191,6 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* Acceso demo */}
           <Button
             variant="outline"
             className="w-full text-text-secondary hover:text-white text-xs uppercase font-bold tracking-widest border-border-dark bg-transparent hover:bg-white/5 h-10"
@@ -194,18 +201,15 @@ export default function LoginPage() {
             Entrar como invitado (Demo)
           </Button>
 
-          {/* Nota de seguridad */}
           <p className="text-center text-[10px] text-text-secondary/40 mt-5 flex items-center justify-center gap-1.5">
             <Lock className="size-3" />
             Conexión cifrada SSL · Datos protegidos por Firebase
           </p>
-
         </div>
 
-        {/* ── Footer ── */}
         <div className="mt-6 text-center space-y-1.5">
           <p className="text-[10px] text-text-secondary/50 uppercase font-bold tracking-[0.2em]">
-            © 2024 Todos los derechos reservados
+            © {new Date().getFullYear()} RoadWise 360 - Todos los derechos reservados
           </p>
           <div className="flex items-center justify-center gap-1.5">
             <span className="text-[10px] text-text-secondary/50 uppercase font-bold tracking-widest">
@@ -221,7 +225,6 @@ export default function LoginPage() {
             </a>
           </div>
         </div>
-
       </div>
     </div>
   );
