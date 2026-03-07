@@ -7,6 +7,19 @@ Acompañamos a las organizaciones en todo el ciclo **PHVA** (Planear, Hacer, Ver
 
 ---
 
+## 🛠️ Configuración de Repositorio (GitHub)
+
+Para vincular este proyecto con el repositorio oficial, ejecuta los siguientes comandos en tu terminal:
+
+1. **Inicializar Git**: `git init`
+2. **Agregar Archivos**: `git add .`
+3. **Commit Inicial**: `git commit -m "Initial commit"`
+4. **Rama Principal**: `git branch -M main`
+5. **Vincular Remoto**: `git remote add origin https://github.com/CarlosGonzalez2025/PSEV.git`
+6. **Push**: `git push -u origin main`
+
+---
+
 ## 🏗️ Arquitectura del Sistema
 
 ### Multi-tenancy & Seguridad
@@ -53,7 +66,7 @@ El sistema utiliza una arquitectura de **aislamiento de datos por empresa**:
 ### Acceso al Panel Maestro
 1. Inicie sesión en `/login` con la cuenta de superusuario (`info@datnova.io`).
 2. Diríjase a la ruta `/admin` (solo visible para este UID).
-3. **Inicializar Perfil**: Si es la primera vez, use el botón "Inicializar Mi Perfil" para registrar su rol de Superadmin en Firestore.
+3. **Mantenimiento**: Use la pestaña "Infraestructura" para reparar membresías y sincronizar registros antiguos.
 
 ### Registro de Nuevos Clientes (Empresas)
 1. En el Panel Maestro, complete los datos de la nueva empresa (NIT, Razón Social).
@@ -64,13 +77,12 @@ El sistema utiliza una arquitectura de **aislamiento de datos por empresa**:
 ---
 
 ## 🛠️ Estructura de Datos (Firestore)
-- `/usuarios/{uid}`: Perfiles globales y roles (Superadmin, Admin, etc.).
-- `/invitaciones/{token}`: Tokens temporales para activación de nuevas empresas.
+- `/usuarios/{uid}`: Perfiles globales y roles (Passport).
+- `/invitaciones/{token}`: Tokens temporales para activación.
 - `/empresas/{empresaId}`: Datos institucionales de cada cliente.
+- `/empresas/{empresaId}/usuarios/{uid}`: Membresía local (Visa).
 - `/empresas/{empresaId}/vehiculos`: Inventario de flota del cliente.
 - `/empresas/{empresaId}/conductores`: Talento humano vial del cliente.
-- `/empresas/{empresaId}/inspeccionesPreoperacionales`: Registros diarios.
-- `/empresas/{empresaId}/siniestros`: Gestión de incidentes.
 
 ---
 © 2024 RoadWise 360 - Desarrollado por [DateNova](https://www.datenova.io). Todos los derechos reservados.
