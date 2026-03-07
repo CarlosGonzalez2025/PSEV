@@ -9,14 +9,17 @@ Acompañamos a las organizaciones en todo el ciclo **PHVA** (Planear, Hacer, Ver
 
 ## 🛠️ Configuración de Repositorio (GitHub)
 
-Para vincular este proyecto con el repositorio oficial, ejecuta los siguientes comandos en tu terminal:
+Si al ejecutar `git commit` recibes el mensaje **"nothing to commit, working tree clean"**, significa que tus archivos ya están guardados en el historial local de Git. Puedes saltar directamente al paso 4.
+
+Para vincular este proyecto con el repositorio oficial, ejecuta estos comandos en tu terminal:
 
 1. **Inicializar Git**: `git init`
 2. **Agregar Archivos**: `git add .`
-3. **Commit Inicial**: `git commit -m "Initial commit"`
+3. **Commit Inicial**: `git commit -m "Initial commit: RoadWise 360 Architecture"` (Si ya lo hiciste, continúa al siguiente paso)
 4. **Rama Principal**: `git branch -M main`
 5. **Vincular Remoto**: `git remote add origin https://github.com/CarlosGonzalez2025/PSEV.git`
-6. **Push**: `git push -u origin main`
+   * *Si el remoto ya existe, usa: `git remote set-url origin https://github.com/CarlosGonzalez2025/PSEV.git`*
+6. **Subir a GitHub**: `git push -u origin main`
 
 ---
 
@@ -41,7 +44,7 @@ El sistema utiliza una arquitectura de **aislamiento de datos por empresa**:
 ### 1. Fase: PLANEAR
 - **Determinación de Nivel**: Clasificación automática (Básico, Estándar, Avanzado) según misionalidad y tamaño de flota.
 - **Política y Metas**: Editor de política institucional y carga de documentos firmados.
-- **Matriz de Riesgos**: Visualización interactiva 5x5 para la identificación y valoración de riesgos viales.
+- **Matriz de Riesgos**: Visualización interactiva 5x5 para la eidentificación y valoración de riesgos viales.
 - **Rutas y Puntos Críticos**: Mapeo de trayectos seguros y detección de zonas de alta accidentalidad.
 
 ### 2. Fase: HACER
