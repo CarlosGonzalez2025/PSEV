@@ -6,14 +6,16 @@ import { signInWithEmailAndPassword, signInAnonymously } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Shield, Lock, Mail, Loader2, ExternalLink } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Shield, Lock, Mail, Loader2, ExternalLink, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -21,15 +23,20 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error de autenticación",
-        description: "Credenciales inválidas o error de red.",
-      });
+      // Mapeo de errores de Firebase a mensajes amigables
+      const code = error?.code;
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        setError('Correo o contraseña incorrectos. Verifica tus datos.');
+      } else if (code === 'auth/too-many-requests') {
+        setError('Demasiados intentos. Espera unos minutos e intenta de nuevo.');
+      } else {
+        setError('Error de red. Verifica tu conexión e intenta de nuevo.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -40,7 +47,7 @@ export default function LoginPage() {
     try {
       await signInAnonymously(auth);
       router.push('/dashboard');
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
@@ -52,68 +59,169 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background-dark p-4">
-      <Card className="w-full max-w-md border-border-dark bg-surface-dark shadow-2xl">
-        <CardHeader className="text-center space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="size-12 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-              <Shield className="size-8" />
-            </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background-dark p-4 relative overflow-hidden">
+
+      {/* ── Decoración de fondo ── */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-md">
+
+        {/* ── Brand header (fuera de la card) ── */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center size-16 bg-primary rounded-2xl shadow-lg shadow-primary/30 mb-4">
+            <Shield className="size-9 text-white" />
           </div>
-          <CardTitle className="text-2xl font-black text-white tracking-tight uppercase">RoadWise 360</CardTitle>
-          <CardDescription className="text-text-secondary font-bold text-[10px] uppercase tracking-widest">Gestión Integral PESV & SG-SST</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 size-4 text-text-secondary" />
-                <Input 
-                  type="email" 
-                  placeholder="email@empresa.com" 
-                  className="pl-10 bg-background-dark border-border-dark text-white placeholder:text-slate-600" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 size-4 text-text-secondary" />
-                <Input 
-                  type="password" 
-                  placeholder="Contraseña" 
-                  className="pl-10 bg-background-dark border-border-dark text-white placeholder:text-slate-600" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3">
-            <Button className="w-full font-bold h-11" type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Iniciar Sesión
-            </Button>
-            <Button variant="ghost" className="w-full text-text-secondary hover:text-white text-xs uppercase font-bold tracking-widest" onClick={handleDemoLogin} type="button">
-              Entrar como Invitado
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-      
-      <div className="mt-8 text-center space-y-2">
-        <p className="text-[10px] text-text-secondary uppercase font-bold tracking-[0.2em]">
-          Todos los derechos reservados © www.datenova.io
-        </p>
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-[10px] text-text-secondary uppercase font-bold tracking-widest opacity-50">Desarrollado por</span>
-          <a href="https://www.datenova.io" target="_blank" className="text-[10px] font-black text-primary hover:underline flex items-center gap-1">
-            DATENOVA <ExternalLink className="size-2.5" />
-          </a>
+          <h1 className="text-3xl font-black text-white tracking-tight">RoadWise 360</h1>
+          <p className="text-[11px] text-text-secondary font-bold uppercase tracking-[0.25em] mt-1">
+            Gestión Integral PESV & SG-SST
+          </p>
         </div>
+
+        {/* ── Card principal ── */}
+        <div className="bg-surface-dark border border-border-dark rounded-2xl shadow-2xl p-8">
+
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-white">Iniciar sesión</h2>
+            <p className="text-sm text-text-secondary mt-0.5">
+              Accede a tu panel de gestión de seguridad vial
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4" noValidate>
+
+            {/* Error inline */}
+            {error && (
+              <div
+                role="alert"
+                aria-live="polite"
+                className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg px-3 py-2.5"
+              >
+                <AlertCircle className="size-4 mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="email"
+                className="text-xs font-bold text-text-secondary uppercase tracking-wider"
+              >
+                Correo electrónico
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-secondary pointer-events-none" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@empresa.com"
+                  autoComplete="email"
+                  className="pl-10 bg-background-dark border-border-dark text-white placeholder:text-slate-600 focus:border-primary/50 h-11"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor="password"
+                  className="text-xs font-bold text-text-secondary uppercase tracking-wider"
+                >
+                  Contraseña
+                </Label>
+                {/* Aquí puedes conectar tu flujo de reset cuando lo implementes */}
+                <button
+                  type="button"
+                  className="text-[11px] text-primary hover:underline font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
+                  tabIndex={0}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-secondary pointer-events-none" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className="pl-10 bg-background-dark border-border-dark text-white placeholder:text-slate-600 focus:border-primary/50 h-11"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            {/* Submit */}
+            <Button
+              className="w-full font-bold h-11 mt-2 shadow-lg shadow-primary/20"
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <><Loader2 className="mr-2 size-4 animate-spin" /> Verificando...</>
+              ) : (
+                'Iniciar sesión'
+              )}
+            </Button>
+          </form>
+
+          {/* Separador visual */}
+          <div className="relative my-5">
+            <Separator className="bg-border-dark" />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface-dark px-3 text-[10px] text-text-secondary uppercase tracking-widest font-bold select-none">
+              o
+            </span>
+          </div>
+
+          {/* Acceso demo */}
+          <Button
+            variant="outline"
+            className="w-full text-text-secondary hover:text-white text-xs uppercase font-bold tracking-widest border-border-dark bg-transparent hover:bg-white/5 h-10"
+            onClick={handleDemoLogin}
+            type="button"
+            disabled={isLoading}
+          >
+            Entrar como invitado (Demo)
+          </Button>
+
+          {/* Nota de seguridad */}
+          <p className="text-center text-[10px] text-text-secondary/40 mt-5 flex items-center justify-center gap-1.5">
+            <Lock className="size-3" />
+            Conexión cifrada SSL · Datos protegidos por Firebase
+          </p>
+
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="mt-6 text-center space-y-1.5">
+          <p className="text-[10px] text-text-secondary/50 uppercase font-bold tracking-[0.2em]">
+            © 2024 Todos los derechos reservados
+          </p>
+          <div className="flex items-center justify-center gap-1.5">
+            <span className="text-[10px] text-text-secondary/50 uppercase font-bold tracking-widest">
+              Desarrollado por
+            </span>
+            <a
+              href="https://www.datenova.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-black text-primary hover:underline flex items-center gap-1 focus:outline-none focus:ring-1 focus:ring-primary/50 rounded"
+            >
+              DATENOVA <ExternalLink className="size-2.5" />
+            </a>
+          </div>
+        </div>
+
       </div>
     </div>
   );
