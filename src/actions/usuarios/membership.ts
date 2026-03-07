@@ -11,7 +11,6 @@ import {
   getDocs,
   query,
   where,
-  serverTimestamp,
   addDoc
 } from 'firebase/firestore';
 
@@ -79,8 +78,7 @@ export async function logPermissionErrorAction(errorData: any) {
     const { firestore } = initializeFirebase();
     await addDoc(collection(firestore, '_audit_errors'), {
       ...errorData,
-      timestamp: new Date().toISOString(),
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server'
+      timestamp: new Date().toISOString()
     });
     return { success: true };
   } catch (e) {
@@ -103,7 +101,6 @@ export async function getUserDiagnosticAction(email: string) {
     const user = snap.docs[0].data();
     const uid = snap.docs[0].id;
 
-    // Verificar membresía en empresa
     let membership = null;
     if (user.empresaId && user.empresaId !== 'system') {
       const memRef = doc(firestore, 'empresas', user.empresaId, 'usuarios', uid);
@@ -126,7 +123,7 @@ export async function getUserDiagnosticAction(email: string) {
 }
 
 /**
- * Script de reparación: Sincroniza perfiles inconsistentes.
+ * Script de reparación: Sincroniza perfiles inconsistentes y estampa empresaId en registros.
  */
 export async function repairBrokenUsersAction() {
   try {
@@ -163,7 +160,7 @@ export async function repairBrokenUsersAction() {
 }
 
 /**
- * Sincroniza el campo empresaId en todos los registros.
+ * Sincroniza el campo empresaId en todos los registros de subcolecciones.
  */
 export async function fixTenantRecordsAction() {
   try {
@@ -179,7 +176,8 @@ export async function fixTenantRecordsAction() {
       for (const sub of subcollections) {
         const subSnap = await getDocs(collection(firestore, 'empresas', empId, sub));
         for (const recordDoc of subSnap.docs) {
-          if (recordDoc.data().empresaId !== empId) {
+          const data = recordDoc.data();
+          if (data.empresaId !== empId) {
             const batch = writeBatch(firestore);
             batch.update(recordDoc.ref, { empresaId: empId });
             await batch.commit();
@@ -187,7 +185,7 @@ export async function fixTenantRecordsAction() {
           }
         }
       }
-      report.push(`${empDoc.data().razonSocial}: Procesada.`);
+      report.push(`${empDoc.data().razonSocial}: Sincronizada.`);
     }
 
     return { success: true, totalFixed, report, message: `Total: ${totalFixed} documentos corregidos.` };

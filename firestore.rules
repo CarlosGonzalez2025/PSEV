@@ -15,27 +15,28 @@ service cloud.firestore {
       );
     }
 
-    // El perfil global del usuario (/usuarios/{uid}) es la fuente de verdad absoluta
-    function getUserProfile() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
-    }
-
-    function profileExists() {
-      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
-    }
-
-    // Validación de pertenencia a empresa basada en el perfil raíz
+    // Validación de pertenencia a empresa (Multi-tenancy)
+    // Verifica el perfil raíz (/usuarios/{uid}) como fuente de verdad
     function belongsToCompany(empresaId) {
       return isSignedIn() && (
         isSuperAdmin() ||
-        (profileExists() && getUserProfile().empresaId == empresaId)
+        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.empresaId == empresaId)
       );
     }
 
-    // El usuario debe estar activo en el sistema global
+    // Verifica que el usuario esté activo y tenga un rol válido
     function isActive() {
       return isSuperAdmin() || (
-        profileExists() && getUserProfile().estado == 'Activo'
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == 'Activo'
+      );
+    }
+
+    function hasRole(allowedRoles) {
+      return isSuperAdmin() || (
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in allowedRoles
       );
     }
 
@@ -47,7 +48,7 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // === PERFILES RAÍZ ===
+    // === USUARIOS RAÍZ ===
     match /usuarios/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
       allow create: if isSignedIn() && request.auth.uid == uid;
@@ -55,22 +56,22 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // === EMPRESAS Y SUS DATOS OPERATIVOS ===
+    // === EMPRESAS Y DATOS OPERATIVOS ===
     match /empresas/{empresaId} {
       allow read: if isSignedIn() && belongsToCompany(empresaId) && isActive();
       allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin() || (belongsToCompany(empresaId) && getUserProfile().rol == 'Admin');
+      allow update: if isSuperAdmin() || (belongsToCompany(empresaId) && hasRole(['Admin', 'Lider_PESV']));
       allow delete: if isSuperAdmin();
 
-      // Regla recursiva para todas las subcolecciones (vehiculos, mantenimientos, etc.)
+      // Regla para todas las subcolecciones operativas
       match /{allSubcollections=**} {
         allow read: if isSignedIn() && belongsToCompany(empresaId) && isActive();
         allow write: if isSignedIn() && belongsToCompany(empresaId) && isActive() &&
-                     getUserProfile().rol in ['Admin', 'Lider_PESV', 'Auditor', 'Conductor'];
+                     hasRole(['Admin', 'Lider_PESV', 'Auditor', 'Conductor']);
       }
     }
 
-    // === LOGS Y DEPURE ===
+    // === AUDITORÍA ===
     match /_audit_log/{doc} {
       allow create: if isSignedIn();
       allow read: if isSuperAdmin();
