@@ -5,7 +5,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useFirestore, useAuth } from '@/firebase';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,20 +53,31 @@ function ActivationForm() {
 
     setSubmitting(true);
     try {
-      // 1. Crear usuario en Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, invitation.email, password);
-      const uid = userCredential.user.uid;
+      let uid = '';
+      try {
+        // 1. Intentar crear usuario en Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, invitation.email, password);
+        uid = userCredential.user.uid;
+      } catch (authError: any) {
+        // Si el correo ya existe, intentamos iniciar sesión para verificar que es el dueño
+        if (authError.code === 'auth/email-already-in-use') {
+          const userCredential = await signInWithEmailAndPassword(auth, invitation.email, password);
+          uid = userCredential.user.uid;
+        } else {
+          throw authError;
+        }
+      }
 
-      // 2. Crear perfil raíz (Security Lookup)
+      // 2. Crear/Actualizar perfil raíz (Security Lookup)
       await setDoc(doc(firestore, 'usuarios', uid), {
         id: uid,
         empresaId: invitation.empresaId,
         rol: invitation.rol,
         nombreCompleto: invitation.nombreCompleto,
         email: invitation.email,
-        fechaCreacion: new Date().toISOString(),
+        fechaActualizacion: new Date().toISOString(),
         estado: 'Activo'
-      });
+      }, { merge: true });
 
       // 3. Crear perfil dentro de la empresa
       await setDoc(doc(firestore, 'empresas', invitation.empresaId, 'usuarios', uid), {
@@ -77,7 +88,7 @@ function ActivationForm() {
         email: invitation.email,
         fechaCreacion: new Date().toISOString(),
         estado: 'Activo'
-      });
+      }, { merge: true });
 
       // 4. Marcar invitación como usada
       await updateDoc(doc(firestore, 'invitaciones', token!), {
@@ -90,7 +101,11 @@ function ActivationForm() {
       toast({ title: "Cuenta Activada", description: "Bienvenido a RoadWise 360." });
       setTimeout(() => router.push('/dashboard'), 2000);
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      console.error(error);
+      const message = error.code === 'auth/wrong-password' 
+        ? "El correo ya está registrado pero la contraseña es incorrecta." 
+        : error.message;
+      toast({ variant: "destructive", title: "Error de Activación", description: message });
     } finally {
       setSubmitting(false);
     }

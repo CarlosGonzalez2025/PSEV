@@ -19,16 +19,19 @@ service cloud.firestore {
       return isSignedIn() && (isSuperAdmin() || getUserData().empresaId == empresaId);
     }
 
-    // Reglas para Invitaciones (Necesarias para el flujo de activación)
+    // Reglas para Invitaciones
     match /invitaciones/{tokenId} {
-      allow read: if true; // Permitir lectura pública para validación de token
+      allow read: if true; 
+      // Permitir que el usuario invitado marque su invitación como usada
+      allow update: if isSignedIn() && (resource.data.email == request.auth.token.email || isSuperAdmin());
       allow write: if isSuperAdmin();
     }
 
     // Reglas de Usuarios Raíz
     match /usuarios/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
-      allow write: if isSuperAdmin() || (isSignedIn() && request.auth.uid == uid && !exists(/databases/$(database)/documents/usuarios/$(uid)));
+      // Permitir creación inicial por el propio usuario durante activación
+      allow write: if isSuperAdmin() || (isSignedIn() && request.auth.uid == uid);
     }
 
     // Reglas Multi-tenant
