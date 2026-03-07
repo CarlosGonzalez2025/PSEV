@@ -9,7 +9,8 @@ import {
   collection, 
   getDocs,
   query,
-  where
+  where,
+  serverTimestamp
 } from 'firebase/firestore';
 
 const MembershipInputSchema = z.object({
@@ -32,7 +33,7 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
     const rootUserRef = doc(firestore, 'usuarios', validated.uid);
     const companyUserRef = doc(firestore, 'empresas', validated.empresaId, 'usuarios', validated.uid);
 
-    batch.set(rootUserRef, {
+    const payload = {
       id: validated.uid,
       empresaId: validated.empresaId,
       rol: validated.rol,
@@ -40,18 +41,15 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
       email: validated.email,
       estado: 'Activo',
       fechaActualizacion: new Date().toISOString()
-    }, { merge: true });
+    };
+
+    batch.set(rootUserRef, payload, { merge: true });
 
     batch.set(companyUserRef, {
-      id: validated.uid,
-      empresaId: validated.empresaId,
-      rol: validated.rol,
-      nombreCompleto: validated.nombreCompleto,
-      email: validated.email,
-      estado: 'Activo',
+      ...payload,
       asignadoPor: validated.assignedBy,
       fechaCreacion: new Date().toISOString()
-    });
+    }, { merge: true });
 
     const auditRef = doc(collection(firestore, '_audit_log'));
     batch.set(auditRef, {
@@ -71,7 +69,6 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
 
 /**
  * Script 1: Reparar membresías de usuarios.
- * Asegura la existencia de documentos tanto en /usuarios/{uid} como en /empresas/{id}/usuarios/{uid}
  */
 export async function repairBrokenUsersAction() {
   try {
@@ -85,11 +82,11 @@ export async function repairBrokenUsersAction() {
       const data = userDoc.data();
       if (!data.empresaId || data.empresaId === 'system') continue;
 
-      const batch = writeBatch(firestore);
       const companyUserRef = doc(firestore, 'empresas', data.empresaId, 'usuarios', userDoc.id);
       const companyUserSnap = await getDoc(companyUserRef);
 
       if (!companyUserSnap.exists()) {
+        const batch = writeBatch(firestore);
         batch.set(companyUserRef, {
           id: userDoc.id,
           empresaId: data.empresaId,
@@ -119,7 +116,6 @@ export async function repairBrokenUsersAction() {
 
 /**
  * Script 2: Corregir empresaId en registros operativos.
- * Recorre subcolecciones y asegura que el campo empresaId exista para que las reglas funcionen.
  */
 export async function fixTenantRecordsAction() {
   try {
