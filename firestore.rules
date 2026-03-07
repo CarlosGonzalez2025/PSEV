@@ -8,7 +8,7 @@ service cloud.firestore {
     }
 
     function isSuperAdmin() {
-      return isSignedIn() && request.auth.uid == 'I9Al3kS46rcTAbylTHgufUFke8b2';
+      return isSignedIn() && (request.auth.uid == 'I9Al3kS46rcTAbylTHgufUFke8b2' || request.auth.token.email == 'info@datnova.io');
     }
 
     function getUserData() {
@@ -21,8 +21,7 @@ service cloud.firestore {
       if (isSuperAdmin()) return true;
       
       let userData = getUserData();
-      // Verificamos que el usuario tenga un perfil y que su empresaId coincida
-      // También verificamos si el usuario existe directamente en la subcolección de la empresa como respaldo
+      // Verificamos por perfil global o por presencia en la subcolección de la empresa
       return (userData != null && userData.empresaId == empresaId) || 
              exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid));
     }
@@ -30,7 +29,6 @@ service cloud.firestore {
     // Reglas para Invitaciones
     match /invitaciones/{tokenId} {
       allow read: if true; 
-      // Permitir que el usuario invitado marque su invitación como usada
       allow update: if isSignedIn() && (resource.data.email == request.auth.token.email || isSuperAdmin());
       allow write: if isSuperAdmin();
     }
@@ -38,14 +36,13 @@ service cloud.firestore {
     // Reglas de Usuarios Raíz
     match /usuarios/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
-      // Permitir creación inicial por el propio usuario durante activación
       allow write: if isSuperAdmin() || (isSignedIn() && request.auth.uid == uid);
     }
 
     // Reglas Multi-tenant
     match /empresas/{empresaId} {
       allow read: if belongsToCompany(empresaId);
-      allow write: if isSuperAdmin();
+      allow write: if isSuperAdmin() || belongsToCompany(empresaId);
 
       match /{allSubcollections=**} {
         allow read: if belongsToCompany(empresaId);

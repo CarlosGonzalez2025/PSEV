@@ -78,6 +78,18 @@
       {
         "path": "/empresas/{empresaId}/vehiculos/{vehiculoId}",
         "definition": { "entityName": "Vehiculo", "description": "Company fleet inventory" }
+      },
+      {
+        "path": "/empresas/{empresaId}/conductores/{conductorId}",
+        "definition": { "description": "Drivers directory" }
+      },
+      {
+        "path": "/empresas/{empresaId}/inspeccionesPreoperacionales/{inspeccionId}",
+        "definition": { "description": "Daily pre-operational inspections" }
+      },
+      {
+        "path": "/empresas/{empresaId}/mantenimientos/{mantenimientoId}",
+        "definition": { "description": "Maintenance records" }
       }
     ]
   }
