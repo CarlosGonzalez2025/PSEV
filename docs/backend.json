@@ -33,18 +33,28 @@
       },
       "required": ["id", "empresaId", "nombreCompleto", "email", "rol", "estado", "fechaCreacion"]
     },
-    "Invitacion": {
-      "title": "Invitación de Registro",
+    "Vehiculo": {
+      "title": "Vehículo (Hoja de Vida)",
       "type": "object",
-      "description": "Token temporal para que un administrador de empresa active su cuenta.",
       "properties": {
         "id": { "type": "string" },
-        "email": { "type": "string" },
         "empresaId": { "type": "string" },
-        "rol": { "type": "string" },
-        "token": { "type": "string" },
-        "usada": { "type": "boolean" },
-        "fechaExpiracion": { "type": "string", "format": "date-time" }
+        "placa": { "type": "string" },
+        "vin": { "type": "string" },
+        "numeroMotor": { "type": "string" },
+        "marca": { "type": "string" },
+        "modelo": { "type": "string" },
+        "tipoVehiculo": { "type": "string" },
+        "cilindraje": { "type": "string" },
+        "carroceria": { "type": "string" },
+        "capacidadCarga": { "type": "string" },
+        "propietario": { "type": "string" },
+        "soatVencimiento": { "type": "string", "format": "date" },
+        "rtmVencimiento": { "type": "string", "format": "date" },
+        "polizaVencimiento": { "type": "string", "format": "date" },
+        "kilometrajeActual": { "type": "number" },
+        "kilometrajeMensualEstimado": { "type": "number" },
+        "estadoOperativo": { "type": "string" }
       }
     }
   },
@@ -66,8 +76,8 @@
         "definition": { "entityName": "Invitacion", "description": "Pending invitations for new tenants" }
       },
       {
-        "path": "/empresas/{empresaId}/usuarios/{usuarioId}",
-        "definition": { "entityName": "Usuario", "description": "Company-scoped users" }
+        "path": "/empresas/{empresaId}/vehiculos/{vehiculoId}",
+        "definition": { "entityName": "Vehiculo", "description": "Company fleet inventory" }
       }
     ]
   }
