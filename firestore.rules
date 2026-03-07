@@ -12,11 +12,19 @@ service cloud.firestore {
     }
 
     function getUserData() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+      let userPath = /databases/$(database)/documents/usuarios/$(request.auth.uid);
+      return exists(userPath) ? get(userPath).data : null;
     }
 
     function belongsToCompany(empresaId) {
-      return isSignedIn() && (isSuperAdmin() || getUserData().empresaId == empresaId);
+      if (!isSignedIn()) return false;
+      if (isSuperAdmin()) return true;
+      
+      let userData = getUserData();
+      // Verificamos que el usuario tenga un perfil y que su empresaId coincida
+      // También verificamos si el usuario existe directamente en la subcolección de la empresa como respaldo
+      return (userData != null && userData.empresaId == empresaId) || 
+             exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid));
     }
 
     // Reglas para Invitaciones
@@ -45,6 +53,7 @@ service cloud.firestore {
       }
     }
     
+    // Regla de escape para Superadmin (acceso total)
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }
