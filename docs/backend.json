@@ -2,7 +2,6 @@
 {
   "entities": {
     "EmpresaCliente": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "EmpresaCliente",
       "type": "object",
       "description": "Represents a client company or organization implementing the PESV.",
@@ -47,7 +46,6 @@
         "tipoVehiculo": { "type": "string" },
         "cilindraje": { "type": "string" },
         "carroceria": { "type": "string" },
-        "capacidadCarga": { "type": "string" },
         "propietario": { "type": "string" },
         "soatVencimiento": { "type": "string", "format": "date" },
         "rtmVencimiento": { "type": "string", "format": "date" },
@@ -55,6 +53,23 @@
         "kilometrajeActual": { "type": "number" },
         "kilometrajeMensualEstimado": { "type": "number" },
         "estadoOperativo": { "type": "string" }
+      }
+    },
+    "Mantenimiento": {
+      "title": "Mantenimiento",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "empresaId": { "type": "string" },
+        "vehiculoId": { "type": "string" },
+        "tipo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "costo": { "type": "number" },
+        "fechaEjecucion": { "type": "string" },
+        "taller": { "type": "string" },
+        "tecnicoResponsable": { "type": "string" },
+        "repuestosUtilizados": { "type": "string" },
+        "estado": { "type": "string" }
       }
     }
   },
@@ -69,27 +84,27 @@
       },
       {
         "path": "/usuarios/{usuarioId}",
-        "definition": { "entityName": "Usuario", "description": "Global user lookup table for security rules" }
+        "definition": { "entityName": "Usuario", "description": "Global user lookup table" }
       },
       {
         "path": "/invitaciones/{invitacionId}",
-        "definition": { "entityName": "Invitacion", "description": "Pending invitations for new tenants" }
+        "definition": { "description": "Pending invitations" }
       },
       {
         "path": "/empresas/{empresaId}/vehiculos/{vehiculoId}",
-        "definition": { "entityName": "Vehiculo", "description": "Company fleet inventory" }
-      },
-      {
-        "path": "/empresas/{empresaId}/conductores/{conductorId}",
-        "definition": { "description": "Drivers directory" }
-      },
-      {
-        "path": "/empresas/{empresaId}/inspeccionesPreoperacionales/{inspeccionId}",
-        "definition": { "description": "Daily pre-operational inspections" }
+        "definition": { "entityName": "Vehiculo", "description": "Company fleet" }
       },
       {
         "path": "/empresas/{empresaId}/mantenimientos/{mantenimientoId}",
-        "definition": { "description": "Maintenance records" }
+        "definition": { "entityName": "Mantenimiento", "description": "Maintenance records" }
+      },
+      {
+        "path": "/empresas/{empresaId}/inspeccionesPreoperacionales/{inspeccionId}",
+        "definition": { "description": "Daily inspections" }
+      },
+      {
+        "path": "/empresas/{empresaId}/usuarios/{uid}",
+        "definition": { "description": "Company members" }
       }
     ]
   }

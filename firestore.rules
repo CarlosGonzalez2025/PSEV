@@ -15,30 +15,30 @@ service cloud.firestore {
       );
     }
 
-    // Función crítica para el aislamiento de datos entre empresas (Multi-tenancy)
+    // Validación de pertenencia a empresa (Multi-tenancy)
+    // Se utiliza una ruta absoluta para asegurar consistencia en operaciones de listado
     function belongsToCompany(empresaId) {
       if (!isSignedIn()) return false;
       if (isSuperAdmin()) return true;
       
       let uid = request.auth.uid;
       let rootProfilePath = /databases/$(database)/documents/usuarios/$(uid);
-      let companyMembershipPath = /databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(uid);
+      let companyUserPath = /databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(uid);
       
-      // El usuario pertenece a la empresa si:
-      // 1. Su perfil global tiene el empresaId asignado (Security Lookup)
-      // 2. O si ya existe un registro de membresía dentro de la subcolección de la empresa
+      // El acceso se concede si:
+      // 1. El documento de usuario raíz apunta a esta empresa
+      // 2. O si el usuario existe explícitamente en la subcolección de la empresa
       return (exists(rootProfilePath) && get(rootProfilePath).data.empresaId == empresaId) || 
-             exists(companyMembershipPath);
+             exists(companyUserPath);
     }
 
     // Reglas para el sistema de Invitaciones
     match /invitaciones/{tokenId} {
-      allow read: if true; // Necesario para que el cliente valide el token antes de loguearse
-      allow update: if isSignedIn() && (resource.data.email == request.auth.token.email || isSuperAdmin());
-      allow write: if isSuperAdmin();
+      allow read: if true;
+      allow write: if isSuperAdmin() || (isSignedIn() && request.auth.token.email == resource.data.email);
     }
 
-    // Reglas de Usuarios Raíz (Tabla de búsqueda para seguridad)
+    // Reglas de Usuarios Raíz
     match /usuarios/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
       allow write: if isSuperAdmin() || (isSignedIn() && request.auth.uid == uid);
@@ -46,23 +46,12 @@ service cloud.firestore {
 
     // Estructura Multi-tenant Principal
     match /empresas/{empresaId} {
-      // Permite leer/escribir datos institucionales de la empresa
       allow read: if belongsToCompany(empresaId);
       allow write: if isSuperAdmin() || belongsToCompany(empresaId);
 
       // Regla recursiva para todas las subcolecciones (vehiculos, conductores, mantenimientos, inspecciones, etc.)
       match /{allSubcollections=**} {
         allow read, write: if belongsToCompany(empresaId);
-      }
-      
-      // Regla específica para la subcolección de usuarios de la empresa
-      // Permite que un usuario gestione su propia vinculación si tiene la invitación correcta
-      match /usuarios/{uid} {
-        allow read, write: if isSignedIn() && (
-          request.auth.uid == uid || 
-          isSuperAdmin() || 
-          belongsToCompany(empresaId)
-        );
       }
     }
     
