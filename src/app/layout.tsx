@@ -7,6 +7,14 @@ import { FirebaseClientProvider } from '@/firebase';
 export const metadata: Metadata = {
   title: 'RoadWise 360',
   description: 'Sistema Integral de Gestión de Seguridad Vial',
+  manifest: '/manifest.json',
+  themeColor: '#09090b', // matching bg-background-dark
+  viewport: 'minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no, viewport-fit=cover',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'RoadWise 360',
+  },
 };
 
 export default function RootLayout({

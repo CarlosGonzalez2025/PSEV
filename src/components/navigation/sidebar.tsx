@@ -5,16 +5,24 @@ import { usePathname } from "next/navigation";
 import {
   Shield,
   LayoutDashboard,
+  Flame,
   ClipboardList,
   Truck,
+  Handshake,
+  Building2,
   ClipboardCheck,
+  FileArchive,
+  Megaphone,
+  ShieldCheck,
   BarChartBig,
   Settings,
   Users,
+  UserCheck,
   Map,
   FileText,
   AlertTriangle,
   Activity,
+  ListTodo,
   HardHat,
   GraduationCap,
   Wrench,
@@ -29,30 +37,38 @@ import { useUser } from "@/firebase";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
-  
+
   { label: "Planear (Fase 1)", isTitle: true },
+  { href: "/dashboard/liderazgo", icon: UserCheck, label: "Liderazgo y Recursos" },
   { href: "/dashboard/diagnostico", icon: ClipboardList, label: "Diagnóstico PESV" },
   { href: "/dashboard/riesgos", icon: AlertTriangle, label: "Matriz de Riesgos" },
   { href: "/dashboard/rutas", icon: Map, label: "Rutas y Puntos Críticos" },
+  { href: "/dashboard/programas-riesgo", icon: ShieldCheck, label: "Programas de Seguridad" },
   { href: "/dashboard/politica", icon: FileText, label: "Política y Metas" },
-  
+
   { label: "Hacer (Fase 2)", isTitle: true },
   { href: "/dashboard/vehiculos", icon: Truck, label: "Gestión de Flota" },
   { href: "/dashboard/conductores", icon: Users, label: "Talento Humano" },
+  { href: "/dashboard/contratistas", icon: Handshake, label: "Gestión de Contratistas" },
   { href: "/dashboard/inspecciones", icon: ClipboardCheck, label: "Inspecciones Diarias" },
+  { href: "/dashboard/infraestructura", icon: Building2, label: "Infraestructura Física" },
   { href: "/dashboard/mantenimiento", icon: Wrench, label: "Mantenimiento" },
   { href: "/dashboard/viajes", icon: Activity, label: "Planificación Viajes" },
+  { href: "/dashboard/emergencias", icon: Flame, label: "Emergencias Viales" },
+  { href: "/dashboard/documental", icon: FileArchive, label: "Retención Documental" },
+  { href: "/dashboard/plan-trabajo", icon: ListTodo, label: "Plan de Trabajo" },
   { href: "/dashboard/formacion", icon: GraduationCap, label: "Plan de Formación" },
   { href: "/dashboard/combustible", icon: Fuel, label: "Eficiencia Energética" },
-  
+
   { label: "Verificar (Fase 3)", isTitle: true },
   { href: "/dashboard/siniestros", icon: AlertTriangle, label: "Siniestralidad" },
   { href: "/dashboard/indicadores", icon: BarChartBig, label: "Indicadores SISI" },
   { href: "/dashboard/auditorias", icon: Shield, label: "Auditorías Internas" },
-  
+
   { label: "Actuar (Fase 4)", isTitle: true },
-  { href: "/dashboard/planes-accion", icon: HardHat, label: "Planes de Acción" },
-  
+  { href: "/dashboard/comunicacion", icon: Megaphone, label: "Campañas y Boletines" },
+  { href: "/dashboard/revision-gerencial", icon: ShieldCheck, label: "Revisión Gerencial" },
+
   { isSeparator: true },
   { href: "/dashboard/configuracion", icon: Settings, label: "Configuración" },
 ];
@@ -113,14 +129,14 @@ export function Sidebar() {
                     : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
                 )}
               >
-                <item.icon className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-primary-foreground" : "text-primary")} />
+                {item.icon && <item.icon className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-primary-foreground" : "text-primary")} />}
                 <p className="text-sm">{item.label}</p>
               </Link>
             );
           })}
         </nav>
       </div>
-      
+
       <div className="flex flex-col gap-2 mt-8">
         <div className="flex items-center gap-3 px-3 py-4 border border-border-dark bg-secondary/20 rounded-xl">
           {userAvatar ? (
@@ -146,9 +162,9 @@ export function Sidebar() {
           </div>
         </div>
         <div className="px-2 pt-4">
-          <a 
-            href="https://www.datenova.io" 
-            target="_blank" 
+          <a
+            href="https://www.datenova.io"
+            target="_blank"
             className="flex items-center justify-between group px-3 py-2 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors"
           >
             <span className="text-[10px] font-black text-primary tracking-widest">WWW.DATENOVA.IO</span>

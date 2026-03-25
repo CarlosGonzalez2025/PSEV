@@ -2,17 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { initializeFirebase } from '@/firebase';
-import { 
-  doc, 
-  writeBatch, 
-  getDoc, 
-  collection, 
-  getDocs,
-  query,
-  where,
-  addDoc
-} from 'firebase/firestore';
+import { getAdminDb } from '@/firebase/admin';
 
 const MembershipInputSchema = z.object({
   uid: z.string(),
@@ -27,15 +17,13 @@ export type MembershipInput = z.infer<typeof MembershipInputSchema>;
 
 /**
  * Vincula un usuario a una empresa de forma atómica (Passport + Visa).
+ * Usa Admin SDK — no está sujeto a Security Rules.
  */
 export async function assignUserToCompanyAction(input: MembershipInput) {
   try {
     const validated = MembershipInputSchema.parse(input);
-    const { firestore } = initializeFirebase();
-    const batch = writeBatch(firestore);
-
-    const rootUserRef = doc(firestore, 'usuarios', validated.uid);
-    const companyUserRef = doc(firestore, 'empresas', validated.empresaId, 'usuarios', validated.uid);
+    const db = getAdminDb();
+    const batch = db.batch();
 
     const payload = {
       id: validated.uid,
@@ -47,15 +35,13 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
       fechaActualizacion: new Date().toISOString()
     };
 
-    batch.set(rootUserRef, payload, { merge: true });
-    batch.set(companyUserRef, {
+    batch.set(db.doc(`usuarios/${validated.uid}`), payload, { merge: true });
+    batch.set(db.doc(`empresas/${validated.empresaId}/usuarios/${validated.uid}`), {
       ...payload,
       asignadoPor: validated.assignedBy,
       fechaCreacion: new Date().toISOString()
     }, { merge: true });
-
-    const auditRef = doc(collection(firestore, '_audit_log'));
-    batch.set(auditRef, {
+    batch.set(db.collection('_audit_log').doc(), {
       accion: 'user.assigned_to_company',
       targetUid: validated.uid,
       empresaId: validated.empresaId,
@@ -71,12 +57,64 @@ export async function assignUserToCompanyAction(input: MembershipInput) {
 }
 
 /**
- * Registra un error de permisos detectado en el cliente para auditoría del Superadmin.
+ * Activa una invitación: crea Passport + Visa atómicamente via Admin SDK.
+ * Llamado desde /activar después de que el usuario se autentica en el cliente.
+ */
+export async function activateInvitationAction(uid: string, token: string) {
+  try {
+    const db = getAdminDb();
+    const invRef = db.doc(`invitaciones/${token}`);
+    const invSnap = await invRef.get();
+
+    if (!invSnap.exists || invSnap.data()?.usada) {
+      return { success: false, message: "Invitación inválida o ya utilizada." };
+    }
+
+    const invitation = invSnap.data()!;
+    const batch = db.batch();
+
+    const payload = {
+      id: uid,
+      empresaId: invitation.empresaId,
+      rol: invitation.rol,
+      nombreCompleto: invitation.nombreCompleto,
+      email: invitation.email,
+      estado: 'Activo'
+    };
+
+    // Passport (perfil global)
+    batch.set(db.doc(`usuarios/${uid}`), {
+      ...payload,
+      fechaActualizacion: new Date().toISOString()
+    }, { merge: true });
+
+    // Visa (membresía de empresa)
+    batch.set(db.doc(`empresas/${invitation.empresaId}/usuarios/${uid}`), {
+      ...payload,
+      fechaCreacion: new Date().toISOString()
+    }, { merge: true });
+
+    // Consumir invitación
+    batch.update(invRef, {
+      usada: true,
+      fechaActivacion: new Date().toISOString(),
+      usuarioUid: uid
+    });
+
+    await batch.commit();
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Registra un error de permisos detectado en el cliente para auditoría.
  */
 export async function logPermissionErrorAction(input: { uid: string, email: string | null, error: string, profile: any }) {
   try {
-    const { firestore } = initializeFirebase();
-    await addDoc(collection(firestore, '_audit_errors'), {
+    const db = getAdminDb();
+    await db.collection('_audit_errors').add({
       ...input,
       fecha: new Date().toISOString(),
       tipo: 'AuthGuard_Validation_Failure'
@@ -89,27 +127,26 @@ export async function logPermissionErrorAction(input: { uid: string, email: stri
 }
 
 /**
- * Script de reparación integral (Fase 3).
- * Sincroniza perfiles raíz con subcolecciones y viceversa.
+ * Sincroniza perfiles globales (Passport) con subcolecciones de empresa (Visa).
  */
 export async function repairMultitenancyAction() {
   try {
-    const { firestore } = initializeFirebase();
-    const usersSnap = await getDocs(collection(firestore, 'usuarios'));
-    
+    const db = getAdminDb();
+    const usersSnap = await db.collection('usuarios').get();
+
     let repairedCount = 0;
     const log: string[] = [];
 
-    // 1. Passport -> Visa
+    // Passport -> Visa
     for (const userDoc of usersSnap.docs) {
       const data = userDoc.data();
       if (!data.empresaId || data.empresaId === 'system') continue;
 
-      const companyUserRef = doc(firestore, 'empresas', data.empresaId, 'usuarios', userDoc.id);
-      const companyUserSnap = await getDoc(companyUserRef);
+      const companyUserRef = db.doc(`empresas/${data.empresaId}/usuarios/${userDoc.id}`);
+      const companyUserSnap = await companyUserRef.get();
 
-      if (!companyUserSnap.exists()) {
-        const batch = writeBatch(firestore);
+      if (!companyUserSnap.exists) {
+        const batch = db.batch();
         batch.set(companyUserRef, {
           ...data,
           fechaCreacion: new Date().toISOString(),
@@ -122,17 +159,17 @@ export async function repairMultitenancyAction() {
       }
     }
 
-    // 2. Visa -> Passport (Sincronización de vuelta)
-    const empresasSnap = await getDocs(collection(firestore, 'empresas'));
+    // Visa -> Passport
+    const empresasSnap = await db.collection('empresas').get();
     for (const empDoc of empresasSnap.docs) {
-      const visasSnap = await getDocs(collection(firestore, 'empresas', empDoc.id, 'usuarios'));
+      const visasSnap = await db.collection(`empresas/${empDoc.id}/usuarios`).get();
       for (const visaDoc of visasSnap.docs) {
         const visaData = visaDoc.data();
-        const rootRef = doc(firestore, 'usuarios', visaDoc.id);
-        const rootSnap = await getDoc(rootRef);
-        
-        if (!rootSnap.exists() || rootSnap.data().empresaId !== empDoc.id) {
-          const batch = writeBatch(firestore);
+        const rootRef = db.doc(`usuarios/${visaDoc.id}`);
+        const rootSnap = await rootRef.get();
+
+        if (!rootSnap.exists || rootSnap.data()?.empresaId !== empDoc.id) {
+          const batch = db.batch();
           batch.set(rootRef, {
             ...visaData,
             empresaId: empDoc.id,
@@ -152,38 +189,30 @@ export async function repairMultitenancyAction() {
 }
 
 /**
- * Sincroniza el campo empresaId en todos los registros operativos para aislamiento total.
+ * Estampa empresaId en todos los registros operativos para aislamiento total.
  */
 export async function fixTenantRecordsAction() {
   try {
-    const { firestore } = initializeFirebase();
-    const empresasSnap = await getDocs(collection(firestore, 'empresas'));
-    
+    const db = getAdminDb();
+    const empresasSnap = await db.collection('empresas').get();
+
     let totalFixed = 0;
     const report: string[] = [];
     const subcollections = [
-      'vehiculos', 
-      'mantenimientos', 
-      'inspeccionesPreoperacionales', 
-      'conductores', 
-      'rutas', 
-      'siniestros', 
-      'capacitaciones',
-      'indicadoresMedicion',
-      'auditorias',
-      'planesAccion'
+      'vehiculos', 'mantenimientos', 'inspeccionesPreoperacionales', 'conductores',
+      'rutas', 'siniestros', 'capacitaciones', 'indicadoresMedicion', 'auditorias', 'planesAccion'
     ];
 
     for (const empDoc of empresasSnap.docs) {
       const empId = empDoc.id;
       let empFixed = 0;
       for (const sub of subcollections) {
-        const subSnap = await getDocs(collection(firestore, 'empresas', empId, sub));
+        const subSnap = await db.collection(`empresas/${empId}/${sub}`).get();
         for (const recordDoc of subSnap.docs) {
           const data = recordDoc.data();
           if (data.empresaId !== empId) {
-            const batch = writeBatch(firestore);
-            batch.update(recordDoc.ref, { 
+            const batch = db.batch();
+            batch.update(recordDoc.ref, {
               empresaId: empId,
               reparadoAuto: true,
               fechaSincronizacion: new Date().toISOString()
@@ -203,12 +232,13 @@ export async function fixTenantRecordsAction() {
   }
 }
 
+/**
+ * Diagnostica si un usuario tiene Passport y Visa correctamente configurados.
+ */
 export async function getUserDiagnosticAction(email: string) {
   try {
-    const { firestore } = initializeFirebase();
-    const usersRef = collection(firestore, 'usuarios');
-    const q = query(usersRef, where('email', '==', email));
-    const snap = await getDocs(q);
+    const db = getAdminDb();
+    const snap = await db.collection('usuarios').where('email', '==', email).get();
 
     if (snap.empty) return { success: false, message: "Usuario no encontrado." };
 
@@ -217,13 +247,12 @@ export async function getUserDiagnosticAction(email: string) {
 
     let membership = null;
     if (user.empresaId && user.empresaId !== 'system') {
-      const memRef = doc(firestore, 'empresas', user.empresaId, 'usuarios', uid);
-      const memSnap = await getDoc(memRef);
-      membership = memSnap.exists() ? memSnap.data() : "VISADO FALTANTE";
+      const memSnap = await db.doc(`empresas/${user.empresaId}/usuarios/${uid}`).get();
+      membership = memSnap.exists ? memSnap.data() : "VISADO FALTANTE";
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
         uid,
         rootProfile: user,

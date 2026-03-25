@@ -19,6 +19,7 @@ interface UserProfile {
   rol: 'Admin' | 'Lider_PESV' | 'Conductor' | 'Auditor' | 'Superadmin';
   nombreCompleto: string;
   email: string;
+  estado: string;
 }
 
 interface UserAuthState {
@@ -76,7 +77,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
                   empresaId: 'system',
                   rol: 'Superadmin',
                   nombreCompleto: 'Super Admin',
-                  email: firebaseUser.email || ''
+                  email: firebaseUser.email || '',
+                  estado: 'Activo'
                 } : null,
                 isUserLoading: false,
                 userError: null,

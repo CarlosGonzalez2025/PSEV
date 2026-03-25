@@ -4,8 +4,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { AlertTriangle, Loader2, ShieldAlert, Terminal, Info } from 'lucide-react';
+import { doc, getDocFromServer } from 'firebase/firestore';
+import { Loader2, ShieldAlert, Terminal, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { logPermissionErrorAction } from '@/actions/usuarios/membership';
 
@@ -30,7 +30,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       console.log("👤 Usuario Auth:", user.email, `(UID: ${user.uid})`);
 
       // Superadmin bypass
-      if (user.uid === 'I9Al3kS46rcTAbylTHgufUFke8b2' || user.email === 'info@datnova.io') {
+      if (user.uid === 'I9Al3kS46rcTAbylTHgufUFke8b2' || user.email === 'info@datenova.io') {
         console.log("🚀 Acceso concedido: PERFIL SUPERADMIN");
         console.groupEnd();
         setIsValidatingMembership(false);
@@ -76,7 +76,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       // Verificación de Membresía Local (Visa)
       try {
         const memRef = doc(firestore, 'empresas', profile.empresaId, 'usuarios', user.uid);
-        const memSnap = await getDoc(memRef);
+        const memSnap = await getDocFromServer(memRef);
         
         if (!memSnap.exists()) {
           console.error(`❌ ERROR CRÍTICO: Falta registro de membresía en /empresas/${profile.empresaId}/usuarios/${user.uid}`);

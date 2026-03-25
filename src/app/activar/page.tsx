@@ -3,8 +3,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useFirestore, useAuth } from '@/firebase';
-import { doc, getDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { activateInvitationAction } from '@/actions/usuarios/membership';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,41 +66,10 @@ function ActivationForm() {
         }
       }
 
-      // USO DE BATCH PARA GARANTIZAR ATOMICIDAD (MULTI-TENANCY ROBUSTA)
-      const batch = writeBatch(firestore);
-      
-      const userPayload = {
-        id: uid,
-        empresaId: invitation.empresaId,
-        rol: invitation.rol,
-        nombreCompleto: invitation.nombreCompleto,
-        email: invitation.email,
-        estado: 'Activo'
-      };
-
-      // 1. Perfil Raíz
-      const rootRef = doc(firestore, 'usuarios', uid);
-      batch.set(rootRef, { 
-        ...userPayload, 
-        fechaActualizacion: new Date().toISOString() 
-      }, { merge: true });
-
-      // 2. Membresía de Empresa
-      const companyUserRef = doc(firestore, 'empresas', invitation.empresaId, 'usuarios', uid);
-      batch.set(companyUserRef, { 
-        ...userPayload, 
-        fechaCreacion: new Date().toISOString() 
-      }, { merge: true });
-
-      // 3. Consumir Invitación
-      const invRef = doc(firestore, 'invitaciones', token!);
-      batch.update(invRef, {
-        usada: true,
-        fechaActivacion: new Date().toISOString(),
-        usuarioUid: uid
-      });
-
-      await batch.commit();
+      // Admin SDK server action: crea Passport + Visa + consume invitación de forma
+      // atómica en el servidor, sin depender de offline persistence ni de Security Rules.
+      const result = await activateInvitationAction(uid, token!);
+      if (!result.success) throw new Error(result.message);
 
       setSuccess(true);
       toast({ title: "Cuenta Activada", description: "Bienvenido a RoadWise 360." });

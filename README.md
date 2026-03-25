@@ -1,91 +1,98 @@
 # RoadWise 360 - Sistema Integral de Gestión de Seguridad Vial (PESV)
 
-RoadWise 360 es una plataforma **SaaS (Software as a Service)** diseñada para que múltiples empresas en Colombia gestionen, monitoreen y den cumplimiento al **Plan Estratégico de Seguridad Vial (PESV)**, conforme a la **Resolución 40595 de 2022** y articulado con el **SG-SST**.
+RoadWise 360 es una plataforma **SaaS (Software as a Service)** de última generación diseñada para que empresas en Colombia gestionen, monitoreen y den cumplimiento al **Plan Estratégico de Seguridad Vial (PESV)**, conforme a la **Resolución 40595 de 2022** y articulado con el **SG-SST**.
 
 ## 🚀 Propuesta de Valor
-Acompañamos a las organizaciones en todo el ciclo **PHVA** (Planear, Hacer, Verificar, Actuar), automatizando la recolección de datos, el cálculo de indicadores de ley y la gestión de riesgos para reducir la siniestralidad vial.
-
----
-
-## 🛠️ Configuración de Repositorio (GitHub)
-
-Si al ejecutar `git commit` recibes el mensaje **"nothing to commit, working tree clean"**, significa que tus archivos ya están guardados en el historial local de Git. Puedes saltar directamente al paso 4.
-
-Para vincular este proyecto con el repositorio oficial, ejecuta estos comandos en tu terminal:
-
-1. **Inicializar Git**: `git init`
-2. **Agregar Archivos**: `git add .`
-3. **Commit Inicial**: `git commit -m "Initial commit: RoadWise 360 Architecture"` (Si ya lo hiciste, continúa al siguiente paso)
-4. **Rama Principal**: `git branch -M main`
-5. **Vincular Remoto**: `git remote add origin https://github.com/CarlosGonzalez2025/PSEV.git`
-   * *Si el remoto ya existe, usa: `git remote set-url origin https://github.com/CarlosGonzalez2025/PSEV.git`*
-6. **Subir a GitHub**: `git push -u origin main`
+Acompañamos a las organizaciones en todo el ciclo **PHVA** (Planear, Hacer, Verificar, Actuar), automatizando la recolección de datos en campo, el cálculo de indicadores de ley y la gestión de riesgos críticos para reducir la siniestralidad vial.
 
 ---
 
 ## 🏗️ Arquitectura del Sistema
 
-### Multi-tenancy & Seguridad
-El sistema utiliza una arquitectura de **aislamiento de datos por empresa**:
-- **Aislamiento Total**: Cada empresa (`tenant`) solo tiene acceso a sus propios datos (Vehículos, Conductores, Inspecciones, etc.).
-- **Reglas de Firebase**: La seguridad está garantizada a nivel de base de datos mediante reglas de Firestore que validan el `empresaId` del usuario autenticado.
-- **Perfil de Superadmin**: Acceso maestro (`UID: I9Al3kS46rcTAbylTHgufUFke8b2`) para la creación de nuevas empresas y gestión global de la plataforma.
+### Stack Tecnológico
+- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router & Turbopack), [React 19](https://react.dev/).
+- **Estilo y UI**: [Tailwind CSS](https://tailwindcss.com/), [ShadCN UI](https://ui.shadcn.com/), [Lucide Icons](https://lucide.dev/).
+- **Backend & DB**: [Firebase](https://firebase.google.com/) (Authentication, Cloud Firestore).
+- **Inteligencia Artificial**: [Google Genkit](https://firebase.google.com/docs/genkit) (Gemini 2.0 Flash) para análisis de riesgos y automatización de reportes.
+- **PWA**: Configurado para instalación en dispositivos móviles y soporte offline nativo (IndexedDB Persistence).
 
-### Tecnologías Utilizadas
-- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS.
-- **Componentes**: ShadCN UI + Lucide React Icons.
-- **Backend**: Firebase Authentication & Cloud Firestore.
-- **IA**: Google Genkit (Gemini 2.5 Flash) para análisis de riesgos y resúmenes de siniestros.
+### Multi-tenancy & Seguridad
+El sistema opera bajo un modelo de **aislamiento estricto por empresa**:
+- **Tenant Isolation**: Cada empresa tiene su propio espacio de datos. Un usuario de la "Empresa A" jamás podrá ver registros de la "Empresa B".
+- **Reglas de Firestore**: Seguridad validada por el servidor mediante `empresaId`.
+- **Acceso Superadmin**: Control centralizado para gestión de clientes e infraestructura (`info@datenova.io`).
 
 ---
 
 ## 📦 Módulos Implementados (Ciclo PHVA)
 
-### 1. Fase: PLANEAR
-- **Determinación de Nivel**: Clasificación automática (Básico, Estándar, Avanzado) según misionalidad y tamaño de flota.
-- **Política y Metas**: Editor de política institucional y carga de documentos firmados.
-- **Matriz de Riesgos**: Visualización interactiva 5x5 para la eidentificación y valoración de riesgos viales.
-- **Rutas y Puntos Críticos**: Mapeo de trayectos seguros y detección de zonas de alta accidentalidad.
+### 1. Fase: PLANEAR (P)
+Organización y fundamentación del sistema.
+- **Paso 5: Diagnóstico**: Línea base de seguridad vial y caracterización de la empresa.
+- **Paso 7: Política y Metas**: Gestión documental de políticas institucionales.
+- **Paso 8: Gestión de Riesgos**: Matriz interactiva de identificación y valoración de riesgos.
+- **Paso 15: Rutas y Puntos Críticos**: Planificación de desplazamientos seguros y geocodificación de riesgos.
 
-### 2. Fase: HACER
-- **Gestión de Flota (Paso 16)**: Hoja de vida digital de vehículos con alertas de vencimiento de SOAT y RTM.
-- **Talento Humano (Paso 10)**: Directorio de conductores con sistema de gamificación y score de seguridad.
-- **Inspecciones Diarias**: Registro preoperacional digital con lógica de bloqueo para vehículos no aptos.
-- **Mantenimiento (Paso 17)**: Control de servicios preventivos y correctivos con trazabilidad de costos.
-- **Plan de Formación**: Cronograma de capacitaciones y seguimiento de cobertura.
+### 2. Fase: HACER (H)
+Operación diaria y control de riesgos.
+- **Paso 16: Gestión de Flota**: Hoja de vida digital de vehículos.
+- **Paso 10: Talento Humano**: Gestión de conductores, licencias y perfiles de riesgo.
+- **Paso 17: Mantenimiento**: Control preventivo y correctivo de vehículos (vinculado a odómetros).
+- **Paso 16: Inspecciones Preoperacionales**: App móvil para revisión diaria de seguridad.
+- **Paso 15 & 8: Viajes y Telemetría**: Registro de desplazamientos, fatiga (conducción/descanso) y alertas de telemetría (frenados bruscos, velocidad).
+- **Carga Masiva (Excel)**: Importación y exportación de vehículos y conductores mediante plantillas inteligentes con validación Zod.
 
-### 3. Fase: VERIFICAR
-- **Siniestralidad**: Registro y seguimiento de accidentes con análisis de causas.
-- **Indicadores SISI (Paso 20)**: Dashboard con cálculo automático de los 13 indicadores mínimos de ley.
-- **Auditorías Internas**: Módulo de autodiagnóstico basado en la Resolución 40595.
+### 3. Fase: VERIFICAR (V)
+Monitoreo de resultados e indicadores.
+- **Paso 20: Indicadores SISI**: Cálculo en tiempo real de los 14 indicadores mínimos de ley (Tasa Siniestralidad, Kilometraje, etc.).
+- **Paso 21: Auditorías Internas**: Autodiagnóstico anual y verificación de cumplimiento normativo.
+- **Investigación de Siniestros**: Registro detallado de accidentes con análisis de causas soportado por IA.
 
-### 4. Fase: ACTUAR
-- **Planes de Acción**: Gestión de No Conformidades, asignación de responsables y seguimiento de cierres eficaces.
-
----
-
-## 🔑 Guía para el Superadmin
-
-### Acceso al Panel Maestro
-1. Inicie sesión en `/login` con la cuenta de superusuario (`info@datnova.io`).
-2. Diríjase a la ruta `/admin` (solo visible para este UID).
-3. **Mantenimiento**: Use la pestaña "Infraestructura" para reparar membresías y sincronizar registros antiguos.
-
-### Registro de Nuevos Clientes (Empresas)
-1. En el Panel Maestro, complete los datos de la nueva empresa (NIT, Razón Social).
-2. Ingrese el correo del administrador del cliente.
-3. El sistema generará un **Link de Activación**.
-4. Envíe ese link al cliente. Al abrirlo, el cliente podrá crear su contraseña y activar su instancia privada de RoadWise 360.
+### 4. Fase: ACTUAR (A)
+Mejora continua.
+- **Planes de Acción**: Gestión de hallazgos, No Conformidades y seguimiento a cierres eficaces.
 
 ---
 
-## 🛠️ Estructura de Datos (Firestore)
-- `/usuarios/{uid}`: Perfiles globales y roles (Passport).
-- `/invitaciones/{token}`: Tokens temporales para activación.
-- `/empresas/{empresaId}`: Datos institucionales de cada cliente.
-- `/empresas/{empresaId}/usuarios/{uid}`: Membresía local (Visa).
-- `/empresas/{empresaId}/vehiculos`: Inventario de flota del cliente.
-- `/empresas/{empresaId}/conductores`: Talento humano vial del cliente.
+## 🛠️ Estructura del Proyecto
+
+```text
+src/
+├── app/                      # Next.js App Router
+│   ├── dashboard/            # Consola de gestión (PHVA)
+│   │   ├── (planear)/        # Pasos 1 a 9
+│   │   ├── (hacer)/          # Pasos 10 a 19 (Vehículos, Conductores, Viajes)
+│   │   ├── (verificar)/      # Pasos 20 a 22 (Indicadores, Accidentes)
+│   │   └── (actuar)/         # Mejora continua
+│   ├── admin/                # Panel de control de Superadmin
+│   └── (auth)/               # Login y activación de cuentas
+├── components/               # UI Components reutilizables (ShadCN)
+├── firebase/                 # Configuración de Firestore y Auth
+├── lib/                      # Lógica compartida y validaciones
+└── utils/                    # Helpers (Excel, fechas, formateo)
+```
 
 ---
-© 2024 RoadWise 360 - Desarrollado por [DateNova](https://www.datenova.io). Todos los derechos reservados.
+
+## ⚙️ Estructura de Datos (Firestore)
+
+- `/usuarios/{uid}`: Perfiles globales y roles.
+- `/empresas/{empresaId}`: Datos institucionales.
+- `/empresas/{empresaId}/vehiculos`: Hoja de vida técnica y legal.
+- `/empresas/{empresaId}/conductores`: Información del talento humano vial.
+- `/empresas/{empresaId}/inspecciones`: Registros diarios preoperacionales.
+- `/empresas/{empresaId}/mantenimientos`: Ordenes de servicio y bitácora.
+- `/empresas/{empresaId}/viajes`: Registro transaccional de rutas y telemetría.
+- `/empresas/{empresaId}/indicadores`: Consolidado mensual/anual de KPIs.
+
+---
+
+## 🚦 Primeros Pasos para Desarrolladores
+
+1. **Instalación**: `npm install`
+2. **Setup**: Configura el `.env` con las credenciales de Firebase de tu proyecto.
+3. **Ejecución**: `npm run dev`
+4. **Despliegue**: `npm run build`
+
+---
+© 2025 RoadWise 360 - Desarrollado por [DateNova](https://www.datenova.io). Todos los derechos reservados.

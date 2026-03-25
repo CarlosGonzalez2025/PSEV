@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -11,50 +10,43 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isSignedIn() && (
         request.auth.uid == 'I9Al3kS46rcTAbylTHgufUFke8b2' ||
-        request.auth.token.email == 'info@datnova.io'
+        request.auth.token.email == 'info@datenova.io'
       );
     }
 
-    // Validación optimizada de pertenencia a empresa
     function belongsToCompany(empresaId) {
-      let uid = request.auth.uid;
-      let rootProfilePath = /databases/$(database)/documents/usuarios/$(uid);
-      let companyMembershipPath = /databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(uid);
-      
       return isSignedIn() && (
         isSuperAdmin() ||
-        // Opción 1: Existe en la subcolección de la empresa (Visa)
-        exists(companyMembershipPath) ||
-        // Opción 2: El perfil raíz tiene el empresaId correcto (Passport)
-        (exists(rootProfilePath) && get(rootProfilePath).data.empresaId == empresaId)
+        exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid))
       );
     }
 
     function isActiveInCompany(empresaId) {
-      let uid = request.auth.uid;
-      let rootProfilePath = /databases/$(database)/documents/usuarios/$(uid);
-      
       return belongsToCompany(empresaId) && (
         isSuperAdmin() ||
-        (exists(rootProfilePath) && get(rootProfilePath).data.estado == 'Activo')
+        get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.estado == 'Activo'
       );
     }
 
     function hasRoleInCompany(empresaId, roles) {
-      let uid = request.auth.uid;
-      let rootProfilePath = /databases/$(database)/documents/usuarios/$(uid);
-      
       return isActiveInCompany(empresaId) && (
         isSuperAdmin() ||
-        (exists(rootProfilePath) && get(rootProfilePath).data.rol in roles)
+        get(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid)).data.rol in roles
       );
+    }
+
+    // ============================================================
+    // SUPERADMIN GLOBAL — Evaluado primero, acceso total
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if isSuperAdmin();
     }
 
     // === USUARIOS GLOBALES (Passport) ===
     match /usuarios/{uid} {
-      allow read: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
+      allow read: if isSignedIn() && request.auth.uid == uid;
       allow create: if isSignedIn() && request.auth.uid == uid;
-      allow update: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin());
+      allow update: if isSignedIn() && request.auth.uid == uid;
       allow delete: if isSuperAdmin();
     }
 
@@ -68,7 +60,6 @@ service cloud.firestore {
 
     // === EMPRESAS Y SUBCOLECCIONES ===
     match /empresas/{empresaId} {
-      // Permitir lectura del documento de la empresa si el usuario pertenece a ella
       allow read: if belongsToCompany(empresaId);
       allow create: if isSuperAdmin();
       allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
@@ -82,42 +73,121 @@ service cloud.firestore {
         allow delete: if isSuperAdmin();
       }
 
-      // Datos operativos
+      // Datos operativos — Vehículos
       match /vehiculos/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor", "Conductor"]);
-        allow update: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor", "Conductor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
         allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
       }
 
+      // Datos operativos — Mantenimientos
       match /mantenimientos/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
-        allow update: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
         allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
       }
 
+      // Datos operativos — Inspecciones Preoperacionales
       match /inspeccionesPreoperacionales/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Conductor"]);
-        allow update: if isActiveInCompany(empresaId) && hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Conductor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
         allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
       }
 
-      // Catch-all para cualquier otra subcolección bajo la empresa
-      match /{anySubcollection}/{docId} {
+      // Datos operativos — Conductores
+      match /conductores/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow write: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin();
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Datos operativos — Rutas
+      match /rutas/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Datos operativos — Siniestros
+      match /siniestros/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Conductor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Datos operativos — Capacitaciones
+      match /capacitaciones/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Datos operativos — Indicadores
+      match /indicadoresMedicion/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Datos operativos — Auditorías
+      match /auditorias/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Auditor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Auditor"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Datos operativos — Planes de Acción
+      match /planesAccion/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Datos operativos — Combustible
+      match /combustible/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Conductor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Datos operativos — Política PESV
+      match /politica/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+      // Datos operativos — Riesgos
+      match /riesgos/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+      // Datos operativos — Diagnóstico
+      match /diagnostico/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
       }
     }
 
     // === AUDITORÍA ===
-    match /_audit_log/{doc} { allow create: if isSignedIn(); allow read: if isSuperAdmin(); }
-    match /_audit_errors/{doc} { allow create: if isSignedIn(); allow read: if isSuperAdmin(); }
-
-    // === SUPERADMIN GLOBAL ===
-    match /{document=**} {
-      allow read, write: if isSuperAdmin();
+    match /_audit_log/{doc} {
+      allow create: if isSignedIn();
+      allow read: if isSuperAdmin();
+    }
+    match /_audit_errors/{doc} {
+      allow create: if isSignedIn();
+      allow read: if isSuperAdmin();
     }
   }
 }
