@@ -3,7 +3,7 @@
 RoadWise 360 es una plataforma **SaaS (Software as a Service)** de última generación diseñada para que empresas en Colombia gestionen, monitoreen y den cumplimiento al **Plan Estratégico de Seguridad Vial (PESV)**, conforme a la **Resolución 40595 de 2022** y articulado con el **SG-SST**.
 
 ## 🚀 Propuesta de Valor
-Acompañamos a las organizaciones en todo el ciclo **PHVA** (Planear, Hacer, Verificar, Actuar), automatizando la recolección de datos en campo, el cálculo de indicadores de ley y la gestión de riesgos críticos para reducir la siniestralidad vial.
+Acompañamos a las organizaciones en todo el ciclo **PHVA** (Planear, Hacer, Verificar, Actuar), automatizando la recolección de datos en campo, el cálculo de indicadores de ley y la gestión de riesgos críticos para reducir la siniestralidad vial..
 
 ---
 
