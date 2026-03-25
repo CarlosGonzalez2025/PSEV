@@ -132,6 +132,7 @@ export default function ViajesTelemetriaPage() {
             // 1. Validar Preoperacional si hay vehículo seleccionado
             if (watchVehiculo) {
                 const v = vehiculos?.find(veh => veh.placa === watchVehiculo);
+                const c = conductores?.find(cond => cond.nombreCompleto === watchConductor);
                 if (v) {
                     formApertura.setValue("kmInicial", v.kilometrajeActual || 0);
                     // Aquí se debería validar si existe inspección para hoy
@@ -142,12 +143,12 @@ export default function ViajesTelemetriaPage() {
                 if (v?.contratistaId) {
                     setIsValidatingContratista(true);
                     try {
-                        const validation = await validarContratistaParaDespacho(v.contratistaId);
-                        if (!validation.canDispatch) {
+                        const validation = await validarContratistaParaDespacho(v.contratistaId, v.id, c?.id);
+                        if (validation.bloqueado) {
                             toast({
                                 variant: "destructive",
                                 title: "BLOQUEO PASO 18",
-                                description: `El contratista "${validation.nombreContratista}" está bloqueado: ${validation.reason}`
+                                description: validation.motivo
                             });
                             setPreopValid(false);
                         }

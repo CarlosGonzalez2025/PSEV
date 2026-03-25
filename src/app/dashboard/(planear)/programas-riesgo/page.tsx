@@ -28,7 +28,7 @@ import {
     Check
 } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, serverTimestamp, addDoc, updateDoc, doc, deleteDoc, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, serverTimestamp, addDoc, updateDoc, setDoc, doc, deleteDoc, where, orderBy, limit } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -5,27 +5,63 @@ import { Contratista, GestionCambioVial } from "@/types/contratistas";
 import { addDays, isAfter } from "date-fns";
 import { Timestamp } from "firebase-admin/firestore";
 
+type CreateContratistaInput = Partial<Contratista> & {
+  empresaId?: string;
+  nombreEmpresa?: string;
+  nit?: string;
+  email?: string;
+  contactoNombre?: string;
+};
+
+type CreateGestionCambioInput = Partial<GestionCambioVial> & {
+  empresaId?: string;
+  tipoCambio?: string;
+  descripcion?: string;
+  impactoRiesgo?: "Alto" | "Medio" | "Bajo";
+  fechaImplementacion?: string;
+};
+
 // Helper for generating tokens
 const generateToken = () => {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 };
 
+const mapEstadoContratista = (estado: Contratista["estadoAprobacionGeneral"]) => {
+  if (estado === "Aprobado") return "Aprobado";
+  if (estado === "Bloqueado/Rechazado") return "Bloqueado";
+  return "Pendiente";
+};
+
 /**
  * Crea un nuevo contratista y genera un token único para el portal.
  */
-export async function createContratista(data: Partial<Contratista>, empresaId: string) {
+export async function createContratista(data: CreateContratistaInput, empresaIdArg?: string) {
   try {
     const db = getAdminDb();
     const docRef = db.collection("contratistas").doc();
     const id = docRef.id;
     const portalToken = generateToken();
+    const empresaId = empresaIdArg ?? data.empresaId;
+
+    if (!empresaId) {
+      throw new Error("empresaId es requerido para crear el contratista");
+    }
+
+    const razonSocialONombre = data.razonSocialONombre ?? data.nombreEmpresa ?? "";
+    const nitCedula = data.nitCedula ?? data.nit ?? "";
+    const estadoAprobacionGeneral = data.estadoAprobacionGeneral ?? "Pendiente de revisión";
     
     const contratista = {
       ...data,
       id,
       empresaId,
+      razonSocialONombre,
+      nitCedula,
+      nombreEmpresa: data.nombreEmpresa ?? razonSocialONombre,
+      nit: data.nit ?? nitCedula,
       portalToken,
-      estadoAprobacionGeneral: 'Pendiente de revisión',
+      estadoAprobacionGeneral,
+      estado: mapEstadoContratista(estadoAprobacionGeneral),
       creadoEn: Timestamp.now(),
       actualizadoEn: Timestamp.now(),
     };
@@ -119,14 +155,14 @@ export async function calcularEstadoContratista(contratistaId: string) {
 /**
  * Hard Stop: Valida si un contratista/vehículo/conductor puede ser despachado.
  */
-export async function validarContratistaParaDespacho(contratistaId: string, vehiculoId: string, conductorId: string) {
+export async function validarContratistaParaDespacho(contratistaId: string, vehiculoId?: string, conductorId?: string) {
   try {
     const db = getAdminDb();
     
     const [contratistaSnap, vehiculoSnap, conductorSnap] = await Promise.all([
       db.collection("contratistas").doc(contratistaId).get(),
-      db.collection("vehiculosContratistas").doc(vehiculoId).get(),
-      db.collection("conductoresContratistas").doc(conductorId).get()
+      vehiculoId ? db.collection("vehiculosContratistas").doc(vehiculoId).get() : Promise.resolve(null),
+      conductorId ? db.collection("conductoresContratistas").doc(conductorId).get() : Promise.resolve(null)
     ]);
 
     if (!contratistaSnap.exists) return { bloqueado: true, motivo: "Contratista inexistente" };
@@ -136,7 +172,7 @@ export async function validarContratistaParaDespacho(contratistaId: string, vehi
       return { bloqueado: true, motivo: "El contratista se encuentra BLOQUEADO por incumplimiento documental general." };
     }
 
-    if (vehiculoSnap.exists) {
+    if (vehiculoSnap?.exists) {
       const v = vehiculoSnap.data();
       if (!v) return { bloqueado: true, motivo: "Error al leer datos del vehículo" };
       const hoy = new Date();
@@ -145,7 +181,7 @@ export async function validarContratistaParaDespacho(contratistaId: string, vehi
       if (!v.aptoParaRodar) return { bloqueado: true, motivo: `El vehículo ${v.placa} no cuenta con certificación de mantenimiento preventivo vigente.` };
     }
 
-    if (conductorSnap.exists) {
+    if (conductorSnap?.exists) {
       const c = conductorSnap.data();
       if (!c) return { bloqueado: true, motivo: "Error al leer datos del conductor" };
       const hoy = new Date();
@@ -162,27 +198,46 @@ export async function validarContratistaParaDespacho(contratistaId: string, vehi
 /**
  * Registra un evento de Gestión del Cambio y alerta a la Matriz de Riesgos.
  */
-export async function createGestionCambio(data: Partial<GestionCambioVial>, empresaId: string) {
+export async function createGestionCambio(data: CreateGestionCambioInput, empresaIdArg?: string) {
   try {
     const db = getAdminDb();
     const docRef = db.collection("gestionCambiosViales").doc();
     const id = docRef.id;
+    const empresaId = empresaIdArg ?? data.empresaId;
+
+    if (!empresaId) {
+      throw new Error("empresaId es requerido para registrar la gestión del cambio");
+    }
+
+    const tipoDeCambio = data.tipoDeCambio ?? data.tipoCambio ?? "Nueva ruta";
+    const descripcionCambio = data.descripcionCambio ?? data.descripcion ?? "";
+    const impactoSeguridadVial = data.impactoSeguridadVial ?? data.impactoRiesgo ?? "Bajo";
+    const requiereActualizarMatrizRiesgos = data.requiereActualizarMatrizRiesgos ?? true;
     
     const registro = {
       ...data,
       id,
       empresaId,
+      tipoDeCambio,
+      tipoCambio: data.tipoCambio ?? tipoDeCambio,
+      descripcionCambio,
+      descripcion: data.descripcion ?? descripcionCambio,
+      impactoSeguridadVial,
+      impactoRiesgo: data.impactoRiesgo ?? impactoSeguridadVial,
+      requiereActualizarMatrizRiesgos,
+      fechaImplementacion: data.fechaImplementacion ?? new Date().toISOString().split("T")[0],
+      estado: data.estado ?? "Pendiente",
       creadoEn: Timestamp.now(),
       actualizadoEn: Timestamp.now(),
     };
 
     await docRef.set(registro);
 
-    if (registro.requiereActualizarMatrizRiesgos) {
+    if (requiereActualizarMatrizRiesgos) {
       await db.collection("empresas").doc(empresaId).collection("alertas").add({
         tipo: 'GESTION_CAMBIO_RIESGO',
-        mensaje: `Nueva Gestión del Cambio: ${registro.tipoDeCambio}. Requiere revisión de la Matriz de Riesgos (Paso 6).`,
-        impacto: registro.impactoSeguridadVial,
+        mensaje: `Nueva Gestión del Cambio: ${tipoDeCambio}. Requiere revisión de la Matriz de Riesgos (Paso 6).`,
+        impacto: impactoSeguridadVial,
         fecha: Timestamp.now(),
         leida: false,
         modulo: 'Paso 6'

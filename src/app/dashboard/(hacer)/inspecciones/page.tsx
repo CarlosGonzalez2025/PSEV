@@ -198,28 +198,6 @@ export default function InspeccionesPage() {
 
     setSelectedVehicleType(resolvedVehicle.internalType);
     setSelectedTemplateKey(resolvedVehicle.templateKey);
-    return;
-
-    if (watchVehiculo && vehiculos) {
-      const v = vehiculos.find(v => v.placa === watchVehiculo);
-      if (v) {
-        const type = v.tipoVehiculo || "";
-        const lowerType = type.toLowerCase();
-
-        if (lowerType.includes('moto')) setSelectedVehicleType('MOTO');
-        else if (lowerType.includes('tracto')) setSelectedVehicleType('TRACTO');
-        else if (lowerType.includes('buseta') || lowerType.includes('bus')) setSelectedVehicleType('BUS');
-        else if (lowerType.includes('micro')) setSelectedVehicleType('MINIBUS');
-        else if (lowerType.includes('furgon') || lowerType.includes('van')) setSelectedVehicleType('FURGON');
-        else if (lowerType.includes('rígido') || lowerType.includes('rigido') || lowerType.includes('volqueta')) setSelectedVehicleType('CAMION');
-        else if (lowerType.includes('maquinaria') || lowerType.includes('amarilla')) setSelectedVehicleType('MAQUINARIA');
-        else if (lowerType.includes('mini')) setSelectedVehicleType('MINICARGADOR');
-        else if (lowerType.includes('ambulancia')) setSelectedVehicleType('AMBULANCIA');
-        else if (lowerType.includes('grua') || lowerType.includes('izaje')) setSelectedVehicleType('GRUA');
-        else if (lowerType.includes('golf') || lowerType.includes('electro')) setSelectedVehicleType('GOLF');
-        else setSelectedVehicleType('LIVIANO'); // Fallback
-      }
-    }
   }, [watchVehiculo, vehiculos]);
 
 

@@ -22,6 +22,8 @@ interface UserProfile {
   email: string;
   estado: string;
   nivel?: 'Básico' | 'Estándar' | 'Avanzado';
+  nivelPesv?: 'Básico' | 'Estándar' | 'Avanzado';
+  nivelPESV?: 'Básico' | 'Estándar' | 'Avanzado';
 }
 
 interface UserAuthState {

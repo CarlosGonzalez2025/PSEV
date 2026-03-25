@@ -1,8 +1,11 @@
+'use client';
+
 /**
  * /admin — Panel Maestro SaaS (solo Superadmin)
  *
- * Se importa con ssr: false para evitar que Next.js intente prerenderizar
- * el componente en build time, donde Firebase no está inicializado.
+ * Este page se declara como Client Component para poder usar
+ * `next/dynamic({ ssr: false })` sin que Next 15 intente prerenderizar
+ * el panel admin durante el build.
  */
 import dynamic from 'next/dynamic';
 

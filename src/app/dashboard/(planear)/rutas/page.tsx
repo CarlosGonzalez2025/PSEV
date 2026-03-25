@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Clock,
   ShieldCheck,
+  ChevronRight,
   Save,
   Trash2,
   Edit,

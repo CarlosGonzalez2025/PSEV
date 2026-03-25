@@ -64,7 +64,7 @@ export default function LiderazgoPage() {
     const [isActaOpen, setIsActaOpen] = useState(false);
 
     // --- DATOS EMPRESA (NIVEL PESV) ---
-    const nivelPESV = profile?.nivelPESV || "Básico"; // Básico, Estándar, Avanzado
+    const nivelPESV = profile?.nivelPESV ?? profile?.nivelPesv ?? profile?.nivel ?? "Básico"; // Básico, Estándar, Avanzado
 
     // --- 1. LIDER PESV (Paso 1) ---
     const liderRef = useMemoFirebase(() => {

@@ -23,6 +23,7 @@ import {
     Clock,
     UserPlus,
     Car,
+    Users,
     FileText,
     TrendingUp,
     ArrowRightLeft
@@ -36,6 +37,7 @@ import {
     TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -71,6 +73,7 @@ const changeSchema = z.object({
 export default function ContratistasPage() {
     const firestore = useFirestore();
     const { profile } = useUser();
+    const nivelPESV = profile?.nivelPESV ?? profile?.nivelPesv ?? profile?.nivel ?? 'Básico';
     const [isAddContractorOpen, setIsAddContractorOpen] = useState(false);
     const [isAddChangeOpen, setIsAddChangeOpen] = useState(false);
 
@@ -164,7 +167,7 @@ export default function ContratistasPage() {
                     <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Gestión de Contratistas y Cambio</h1>
                     <p className="text-text-secondary mt-1">Control de terceros y evaluación de impactos viales (Paso 18)</p>
                 </div>
-                {profile?.nivelPESV !== 'Básico' && (
+                {nivelPESV !== 'Básico' && (
                     <div className="flex gap-2">
                         <ExcelBulkActions
                             data={contratistas || []}
