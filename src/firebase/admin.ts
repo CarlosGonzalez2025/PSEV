@@ -13,7 +13,19 @@ export function initAdmin() {
         if (process.env.FIREBASE_SERVICE_ACCOUNT) {
             // Opción A: clave de cuenta de servicio explícita en variable de entorno
             try {
-                const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+                let saString = process.env.FIREBASE_SERVICE_ACCOUNT;
+                // Eliminar comillas simples si dotenv las incluyó accidentalmente
+                if (saString.startsWith("'") && saString.endsWith("'")) {
+                    saString = saString.slice(1, -1);
+                }
+                
+                const serviceAccount = JSON.parse(saString);
+                
+                // Asegurar que los saltos de línea literales en la clave privada sean reales
+                if (serviceAccount.private_key) {
+                    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+                }
+                
                 initializeApp({ credential: cert(serviceAccount), projectId: PROJECT_ID });
             } catch (e) {
                 console.error("Error parsing FIREBASE_SERVICE_ACCOUNT:", e);

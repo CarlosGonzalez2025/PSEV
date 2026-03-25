@@ -194,6 +194,34 @@ service cloud.firestore {
         allow read: if belongsToCompany(empresaId);
         allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
       }
+
+      // Liderazgo PESV — Designación del Líder
+      match /pesv_liderazgo/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+      // Liderazgo PESV — Comité de Seguridad Vial
+      match /pesv_comite_miembros/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+        allow delete: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+      // Liderazgo PESV — Actas de Reuniones
+      match /pesv_actas/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Liderazgo PESV — Presupuesto y Recursos
+      match /pesv_recursos/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
     }
 
     // === CONTRATISTAS Y GESTIÓN DEL CAMBIO (Paso 18) ===

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, collectionGroup } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -129,12 +129,20 @@ export default function UsuariosPage() {
 
   // ─── Data: usuarios de la empresa ─────────────────────────────────────────
   const usuariosRef = useMemoFirebase(() => {
-    if (!firestore || !empresaId || empresaId === 'system') return null;
+    if (!firestore) return null;
+    if (isSuperadmin) {
+      // Superadmin ve TODOS los usuarios del sistema sin ordenar aquí 
+      // para evitar problemas de índices compuestos no creados
+      return query(collectionGroup(firestore, 'usuarios'));
+    }
+    
+    if (!empresaId || empresaId === 'system') return null;
+    // Usuarios normales ven los de su empresa
     return query(
       collection(firestore, 'empresas', empresaId, 'usuarios'),
       orderBy('nombreCompleto')
     );
-  }, [firestore, empresaId]);
+  }, [firestore, empresaId, isSuperadmin]);
 
   const { data: usuarios, isLoading } = useCollection(usuariosRef);
 
@@ -149,12 +157,16 @@ export default function UsuariosPage() {
   // ─── Filtro ────────────────────────────────────────────────────────────────
   const filteredUsuarios = useMemo(() => {
     if (!usuarios) return [];
-    return usuarios.filter(u =>
+    const arr = usuarios.filter(u =>
       u.nombreCompleto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.rol?.toLowerCase().includes(searchTerm.toLowerCase())
+      u.rol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (isSuperadmin && u.empresaId?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-  }, [usuarios, searchTerm]);
+
+    // Ordenar alfabéticamente en cliente (necesario por collectionGroup sin orderBy local)
+    return arr.sort((a, b) => (a.nombreCompleto || '').localeCompare(b.nombreCompleto || ''));
+  }, [usuarios, searchTerm, isSuperadmin]);
 
   // ─── Stats ─────────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -311,6 +323,7 @@ export default function UsuariosPage() {
                 <TableHead className="text-[10px] font-black uppercase">Usuario</TableHead>
                 <TableHead className="text-[10px] font-black uppercase">Correo</TableHead>
                 <TableHead className="text-[10px] font-black uppercase">Rol</TableHead>
+                {isSuperadmin && <TableHead className="text-[10px] font-black uppercase">Empresa</TableHead>}
                 <TableHead className="text-[10px] font-black uppercase text-center">Estado</TableHead>
                 {canCreate && <TableHead className="text-right text-[10px] font-black uppercase">Acciones</TableHead>}
               </TableRow>
@@ -349,6 +362,13 @@ export default function UsuariosPage() {
                     <TableCell>
                       <RolBadge rol={u.rol} />
                     </TableCell>
+                    {isSuperadmin && (
+                      <TableCell>
+                        <span className="text-sm font-medium text-foreground">
+                          {empresas?.find(e => e.id === u.empresaId)?.razonSocial || u.empresaId || 'Global'}
+                        </span>
+                      </TableCell>
+                    )}
                     <TableCell className="text-center">
                       {u.estado === 'Activo' ? (
                         <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] uppercase gap-1">
@@ -552,6 +572,7 @@ export default function UsuariosPage() {
                               {emp.razonSocial || emp.id}
                             </SelectItem>
                           ))}
+                          <SelectItem value="system">DateNova Global (DateNova)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
