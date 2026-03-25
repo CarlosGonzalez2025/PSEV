@@ -68,48 +68,62 @@ service cloud.firestore {
       // Membresía de usuarios en la empresa (Visa)
       match /usuarios/{uid} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if (isSignedIn() && request.auth.uid == uid) || hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin();
-        allow update: if hasRoleInCompany(empresaId, ["Admin"]) || isSuperAdmin() || (isSignedIn() && request.auth.uid == uid);
+        allow create: if (isSignedIn() && request.auth.uid == uid)
+                      || hasRoleInCompany(empresaId, ["Admin", "RRHH"])
+                      || isSuperAdmin();
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "RRHH"])
+                      || isSuperAdmin()
+                      || (isSignedIn() && request.auth.uid == uid);
         allow delete: if isSuperAdmin();
       }
 
       // Datos operativos — Vehículos
+      // Gestor_Flota: acceso total | Lider_PESV: lectura + creación | Conductor: solo lectura
       match /vehiculos/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor", "Conductor"]);
-        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
-        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota", "Conductor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin", "Gestor_Flota"]);
       }
 
       // Datos operativos — Mantenimientos
       match /mantenimientos/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
-        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Supervisor"]);
-        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin", "Gestor_Flota"]);
       }
 
       // Datos operativos — Inspecciones Preoperacionales
       match /inspeccionesPreoperacionales/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Conductor"]);
-        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota", "Conductor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
         allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
       }
 
-      // Datos operativos — Conductores
+      // Datos operativos — Inspecciones generales (colección inspecciones)
+      match /inspecciones/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota", "Conductor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Datos operativos — Conductores / Talento Humano
+      // RRHH: acceso total | Lider_PESV: lectura + escritura | Gestor_Flota: solo lectura
       match /conductores/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
-        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
-        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "RRHH"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "RRHH"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin", "RRHH"]);
       }
 
       // Datos operativos — Rutas
       match /rutas/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
-        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
         allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
       }
 
@@ -121,12 +135,13 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
       }
 
-      // Datos operativos — Capacitaciones
+      // Datos operativos — Capacitaciones / Formación
+      // RRHH: acceso total (responsable de formación)
       match /capacitaciones/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
-        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
-        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "RRHH"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "RRHH"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin", "RRHH"]);
       }
 
       // Datos operativos — Indicadores
@@ -153,12 +168,13 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
       }
 
-      // Datos operativos — Combustible
+      // Datos operativos — Combustible / Eficiencia energética
+      // Gestor_Flota: acceso total | Conductor: registro
       match /combustible/{docId} {
         allow read: if belongsToCompany(empresaId);
-        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Conductor"]);
-        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
-        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota", "Conductor"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin", "Gestor_Flota"]);
       }
 
       // Datos operativos — Política PESV
@@ -178,6 +194,48 @@ service cloud.firestore {
         allow read: if belongsToCompany(empresaId);
         allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
       }
+    }
+
+    // === CONTRATISTAS Y GESTIÓN DEL CAMBIO (Paso 18) ===
+
+    function isValidPortalToken(contratistaId, token) {
+      return token != null && token == get(/databases/$(database)/documents/contratistas/$(contratistaId)).data.portalToken;
+    }
+
+    match /contratistas/{contratistaId} {
+      allow read: if (isSignedIn() && belongsToCompany(resource.data.empresaId)) || (request.query.limit <= 1 && request.query.token != null);
+      allow create: if hasRoleInCompany(request.resource.data.empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+      allow update: if hasRoleInCompany(resource.data.empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+      allow delete: if isSuperAdmin();
+      allow get: if true;
+    }
+
+    match /conductoresContratistas/{conductorId} {
+      allow read: if belongsToCompany(resource.data.empresaId);
+      allow create: if (isSignedIn() && belongsToCompany(request.resource.data.empresaId)) ||
+                      isValidPortalToken(request.resource.data.contratistaId, request.resource.data.portalToken);
+      allow update: if (isSignedIn() && belongsToCompany(resource.data.empresaId)) ||
+                      isValidPortalToken(resource.data.contratistaId, request.resource.data.portalToken);
+      allow delete: if belongsToCompany(resource.data.empresaId);
+    }
+
+    match /vehiculosContratistas/{vehiculoId} {
+      allow read: if belongsToCompany(resource.data.empresaId);
+      allow create: if (isSignedIn() && belongsToCompany(request.resource.data.empresaId)) ||
+                      isValidPortalToken(request.resource.data.contratistaId, request.resource.data.portalToken);
+      allow update: if (isSignedIn() && belongsToCompany(resource.data.empresaId)) ||
+                      isValidPortalToken(resource.data.contratistaId, request.resource.data.portalToken);
+      allow delete: if belongsToCompany(resource.data.empresaId);
+    }
+
+    match /controlOperativoContratistas/{controlId} {
+      allow read: if belongsToCompany(resource.data.empresaId);
+      allow write: if hasRoleInCompany(request.resource.data.empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+    }
+
+    match /gestionCambiosViales/{cambioId} {
+      allow read: if belongsToCompany(resource.data.empresaId);
+      allow write: if hasRoleInCompany(request.resource.data.empresaId, ["Admin", "Lider_PESV"]);
     }
 
     // === AUDITORÍA ===

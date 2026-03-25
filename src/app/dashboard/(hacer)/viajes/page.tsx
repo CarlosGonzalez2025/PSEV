@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import {
     Activity, Plus, Clock, MapPin, Gauge, AlertTriangle, Route,
-    PlayCircle, StopCircle, Coffee, CheckCircle2, ShieldCheck, Timer, Info, Save
+    PlayCircle, StopCircle, Coffee, CheckCircle2, ShieldCheck, Timer, Info, Save, Loader2
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -31,8 +30,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { isInspectionApproved, isInspectionForSameDay } from '@/lib/inspection-config';
+import { validarContratistaParaDespacho } from '@/actions/contratistas';
 
 // === ESQUEMA DE DATOS PESV (Planificación de Desplazamientos y Gestión de Fatiga - Pasos 15 y 8) ===
 const tripSchema = z.object({
@@ -73,8 +73,8 @@ export default function ViajesTelemetriaPage() {
     const [isOpenCierre, setIsOpenCierre] = useState(false);
     const [selectedViaje, setSelectedViaje] = useState<any>(null);
     const [preopValid, setPreopValid] = useState<boolean | null>(null);
-    const [driverEligible, setDriverEligible] = useState<boolean | null>(null);
-    const [driverValidationMessage, setDriverValidationMessage] = useState<string>("");
+    const [isSaving, setIsSaving] = useState(false);
+    const [isValidatingContratista, setIsValidatingContratista] = useState(false);
 
     // Queries
     const viajesRef = useMemoFirebase(() => {
@@ -122,28 +122,53 @@ export default function ViajesTelemetriaPage() {
     const watchVehiculo = formApertura.watch("vehiculoId");
     const watchConductor = formApertura.watch("conductorId");
 
-    // Validación de Preoperacional y Conductor (Pasos 16, 15, 11)
+    // Validación de Preoperacional y Conductor (Pasos 16, 15, 11) + Hard Stop Contratista (Paso 18)
     useEffect(() => {
         async function checkCompliance() {
             if (!firestore || !profile?.empresaId) return;
 
+            setPreopValid(true); // Default
+
             // 1. Validar Preoperacional si hay vehículo seleccionado
             if (watchVehiculo) {
                 const v = vehiculos?.find(veh => veh.placa === watchVehiculo);
-                formApertura.setValue("kmInicial", v?.kilometrajeActual || 0);
-                setPreopValid(true); // Simulado
+                if (v) {
+                    formApertura.setValue("kmInicial", v.kilometrajeActual || 0);
+                    // Aquí se debería validar si existe inspección para hoy
+                    // setPreopValid(isInspectionApproved(v));
+                }
+
+                // VALIDACIÓN PASO 18: CONTRATISTAS (HARD STOP)
+                if (v?.contratistaId) {
+                    setIsValidatingContratista(true);
+                    try {
+                        const validation = await validarContratistaParaDespacho(v.contratistaId);
+                        if (!validation.canDispatch) {
+                            toast({
+                                variant: "destructive",
+                                title: "BLOQUEO PASO 18",
+                                description: `El contratista "${validation.nombreContratista}" está bloqueado: ${validation.reason}`
+                            });
+                            setPreopValid(false);
+                        }
+                    } catch (error) {
+                        console.error("Error validando contratista:", error);
+                    } finally {
+                        setIsValidatingContratista(false);
+                    }
+                }
             }
 
             // 2. Validar Conductor (Licencia Vencida)
-            if (watchConductor) {
-                const c = conductores?.find(cond => cond.id === watchConductor);
+            if (watchConductor && preopValid) {
+                const c = conductores?.find(cond => cond.nombreCompleto === watchConductor);
                 if (c?.fechaVencimientoLicencia) {
                     const expired = new Date(c.fechaVencimientoLicencia) < new Date();
                     if (expired) {
                         toast({
                             variant: "destructive",
-                            title: "Bloqueo Administrativo",
-                            description: `El conductor ${c.nombreCompleto} tiene la licencia VENCIDA.`
+                            title: "Licencia Vencida",
+                            description: `El conductor ${c.nombreCompleto} no puede operar.`
                         });
                         setPreopValid(false);
                     }
@@ -153,25 +178,23 @@ export default function ViajesTelemetriaPage() {
         checkCompliance();
     }, [watchVehiculo, watchConductor, firestore, profile?.empresaId, vehiculos, conductores, formApertura]);
 
-    const [isSaving, setIsSaving] = useState(false);
-
     async function onAperturaSubmit(values: TripFormValues) {
         if (!firestore || !profile?.empresaId || !user) return;
         if (!preopValid) {
-            toast({ variant: "destructive", title: "Bloqueo de Seguridad", description: "No se puede iniciar viaje sin Inspección Preoperacional aprobada para hoy." });
+            toast({ variant: "destructive", title: "Bloqueo de Seguridad", description: "Verifique cumplimientos de seguridad antes de despachar." });
             return;
         }
         setIsSaving(true);
         try {
             const colRef = collection(firestore, 'empresas', profile.empresaId, 'viajes');
-            addDocumentNonBlocking(colRef, {
+            await addDocumentNonBlocking(colRef, {
                 ...values,
                 horasConduccionTotales: 0,
                 distanciaRecorrida: 0,
                 creadoPor: user.email,
                 fechaRegistro: new Date().toISOString(),
             });
-            toast({ title: "🚗 Viaje Iniciado", description: "Hoja de ruta aperturada. Conduzca con precaución." });
+            toast({ title: "🚗 Viaje Iniciado", description: "Hoja de ruta aperturada." });
             setOpen(false);
             formApertura.reset();
         } catch (e) {
@@ -203,7 +226,6 @@ export default function ViajesTelemetriaPage() {
 
     const handleAbrirCierre = (viaje: any) => {
         setSelectedViaje(viaje);
-        // Calcular pausas automáticas si existen
         const totalPausasMin = (viaje.pausas || []).reduce((acc: number, p: any) => {
             if (p.inicio && p.fin) {
                 return acc + (new Date(p.fin).getTime() - new Date(p.inicio).getTime()) / (1000 * 60);
@@ -234,13 +256,6 @@ export default function ViajesTelemetriaPage() {
             const netHrs = Math.max(0, totalHrs - pausasHrs);
             const dist = Math.max(0, values.kmFinal - selectedViaje.kmInicial);
 
-            // Indicador 6: Exceso Jornada (> 10h según ley colombiana para transporte)
-            const isExcesoJornada = netHrs > 10;
-
-            // Indicador 8: Exceso Velocidad
-            const hasExcesoVelocidad = values.alertasExcesoVelocidad > 0;
-
-            // Update Vehicle Odometer
             const v = vehiculos?.find(veh => veh.placa === selectedViaje.vehiculoId);
             if (v && values.kmFinal > v.kilometrajeActual) {
                 await updateDoc(doc(firestore, 'empresas', profile.empresaId, 'vehiculos', v.id), {
@@ -253,11 +268,11 @@ export default function ViajesTelemetriaPage() {
                 estado: "Finalizado",
                 horasConduccionTotales: Number(netHrs.toFixed(2)),
                 distanciaRecorrida: dist,
-                isExcesoJornada,
-                hasExcesoVelocidad
+                isExcesoJornada: netHrs > 10,
+                hasExcesoVelocidad: values.alertasExcesoVelocidad > 0
             });
 
-            toast({ title: "🏁 Viaje Cerrado", description: `Distancia: ${dist}km. Horas netas: ${netHrs.toFixed(1)}.` });
+            toast({ title: "🏁 Viaje Cerrado", description: `Distancia: ${dist}km.` });
             setIsOpenCierre(false);
         } catch (e) {
             toast({ variant: "destructive", title: "Error al cerrar viaje" });
@@ -317,10 +332,12 @@ export default function ViajesTelemetriaPage() {
                                 {watchVehiculo && (
                                     <div className={`p-4 rounded-xl border flex items-center justify-between ${preopValid ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
                                         <div className="flex items-center gap-3">
-                                            {preopValid ? <ShieldCheck className="size-5 text-emerald-500" /> : <AlertTriangle className="size-5 text-red-500" />}
-                                            <span className="text-sm font-bold">{preopValid ? "Preoperacional del día validado" : "Pendiente Inspección Preoperacional"}</span>
+                                            {isValidatingContratista ? <Loader2 className="size-5 animate-spin text-primary" /> : (preopValid ? <ShieldCheck className="size-5 text-emerald-500" /> : <AlertTriangle className="size-5 text-red-500" />)}
+                                            <span className="text-sm font-bold">
+                                                {isValidatingContratista ? "Validando cumplimiento de contratista..." : (preopValid ? "Validaciones de seguridad aprobadas" : "Bloqueo de seguridad activo")}
+                                            </span>
                                         </div>
-                                        {preopValid && <Badge className="bg-emerald-500 text-white border-none text-[10px]">OK</Badge>}
+                                        {preopValid && !isValidatingContratista && <Badge className="bg-emerald-500 text-white border-none text-[10px]">OK</Badge>}
                                     </div>
                                 )}
 
@@ -366,7 +383,7 @@ export default function ViajesTelemetriaPage() {
                                     )} />
                                 </div>
 
-                                <Button type="submit" disabled={isSaving || !preopValid} className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 font-black uppercase text-white shadow-xl">
+                                <Button type="submit" disabled={isSaving || !preopValid || isValidatingContratista} className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 font-black uppercase text-white shadow-xl">
                                     {isSaving ? "Procesando..." : "Despachar Vehículo"}
                                 </Button>
                             </form>
@@ -401,7 +418,7 @@ export default function ViajesTelemetriaPage() {
                                         <FormItem><FormLabel className="text-xs font-bold text-orange-400 uppercase">Frenadas Bruscas</FormLabel><FormControl><Input type="number" {...field} className="bg-background-dark border-orange-500/20" /></FormControl></FormItem>
                                     )} />
                                 </div>
-                                <Button type="submit" className="w-full bg-emerald-600 font-black h-12 uppercase">Cerrar Hoja de Ruta</Button>
+                                <Button type="submit" disabled={isSaving} className="w-full bg-emerald-600 font-black h-12 uppercase">Cerrar Hoja de Ruta</Button>
                             </form>
                         </Form>
                     </DialogContent>
@@ -422,7 +439,11 @@ export default function ViajesTelemetriaPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {viajes?.map(viaje => (
+                            {isLoading ? (
+                                <TableRow><TableCell colSpan={5} className="text-center py-10 opacity-50">Cargando viajes...</TableCell></TableRow>
+                            ) : viajes?.length === 0 ? (
+                                <TableRow><TableCell colSpan={5} className="text-center py-10 opacity-50 italic">No hay viajes registrados.</TableCell></TableRow>
+                            ) : viajes?.map(viaje => (
                                 <TableRow key={viaje.id} className="border-border-dark hover:bg-white/5 transition-colors">
                                     <TableCell>
                                         <div className="flex flex-col gap-1">

@@ -11,15 +11,17 @@ interface FirebaseProviderProps {
   firebaseApp: FirebaseApp;
   firestore: Firestore;
   auth: Auth;
+  storage: any; // O FirebaseStorage si tienes el tipo
 }
 
 interface UserProfile {
   id: string;
   empresaId: string;
-  rol: 'Admin' | 'Lider_PESV' | 'Conductor' | 'Auditor' | 'Superadmin';
+  rol: 'Superadmin' | 'Admin' | 'Lider_PESV' | 'RRHH' | 'Gestor_Flota' | 'Conductor' | 'Auditor';
   nombreCompleto: string;
   email: string;
   estado: string;
+  nivel?: 'Básico' | 'Estándar' | 'Avanzado';
 }
 
 interface UserAuthState {
@@ -34,6 +36,7 @@ export interface FirebaseContextState extends UserAuthState {
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
+  storage: any | null;
 }
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
@@ -43,6 +46,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   firebaseApp,
   firestore,
   auth,
+  storage,
 }) => {
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
     user: null,
@@ -99,15 +103,16 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   }, [auth, firestore]);
 
   const contextValue = useMemo((): FirebaseContextState => {
-    const servicesAvailable = !!(firebaseApp && firestore && auth);
+    const servicesAvailable = !!(firebaseApp && firestore && auth && storage);
     return {
       areServicesAvailable: servicesAvailable,
       firebaseApp: servicesAvailable ? firebaseApp : null,
       firestore: servicesAvailable ? firestore : null,
       auth: servicesAvailable ? auth : null,
+      storage: servicesAvailable ? storage : null,
       ...userAuthState,
     };
-  }, [firebaseApp, firestore, auth, userAuthState]);
+  }, [firebaseApp, firestore, auth, storage, userAuthState]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
@@ -125,6 +130,7 @@ export const useFirebase = () => {
 
 export const useAuth = () => useFirebase().auth!;
 export const useFirestore = () => useFirebase().firestore!;
+export const useStorage = () => useFirebase().storage!;
 export const useUser = () => {
   const { user, profile, isUserLoading, userError } = useFirebase();
   return { user, profile, isUserLoading, userError };

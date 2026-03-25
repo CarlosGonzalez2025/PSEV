@@ -3,17 +3,32 @@
 
 import { z } from 'zod';
 import { getAdminDb } from '@/firebase/admin';
+import { sendInvitationEmail } from '@/lib/resend';
+import { ROLES_CONFIG } from '@/types/usuarios';
+import { randomUUID } from 'crypto';
+
+const ROLES = ['Superadmin', 'Admin', 'Lider_PESV', 'RRHH', 'Gestor_Flota', 'Conductor', 'Auditor'] as const;
 
 const MembershipInputSchema = z.object({
   uid: z.string(),
   empresaId: z.string(),
-  rol: z.enum(['Admin', 'Lider_PESV', 'Conductor', 'Auditor', 'Superadmin']),
+  rol: z.enum(ROLES),
   assignedBy: z.string(),
   email: z.string().email(),
   nombreCompleto: z.string()
 });
 
 export type MembershipInput = z.infer<typeof MembershipInputSchema>;
+
+const InvitationInputSchema = z.object({
+  nombreCompleto: z.string().min(3),
+  email: z.string().email(),
+  rol: z.enum(ROLES),
+  empresaId: z.string(),
+  createdBy: z.string(),
+});
+
+export type InvitationInput = z.infer<typeof InvitationInputSchema>;
 
 /**
  * Vincula un usuario a una empresa de forma atómica (Passport + Visa).
@@ -227,6 +242,100 @@ export async function fixTenantRecordsAction() {
     }
 
     return { success: true, totalFixed, report, message: `Total: ${totalFixed} registros operativos aislados.` };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Crea una invitación en Firestore y devuelve el token de activación.
+ * El Admin SDK omite las Security Rules — el control de permisos debe hacerse
+ * en el Server Action del llamador (verificar rol del usuario autenticado).
+ */
+export async function createInvitationAction(input: InvitationInput): Promise<{
+  success: boolean;
+  token?: string;
+  activationUrl?: string;
+  message?: string;
+}> {
+  try {
+    const validated = InvitationInputSchema.parse(input);
+    const db = getAdminDb();
+    const token = randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 días
+
+    await db.doc(`invitaciones/${token}`).set({
+      token,
+      nombreCompleto: validated.nombreCompleto,
+      email: validated.email,
+      rol: validated.rol,
+      empresaId: validated.empresaId,
+      createdBy: validated.createdBy,
+      createdAt: new Date().toISOString(),
+      expiresAt,
+      usada: false,
+    });
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+    const activationUrl = `${baseUrl}/activar?token=${token}`;
+
+    // Enviar correo de invitación via Resend
+    const rolLabel = ROLES_CONFIG[validated.rol as keyof typeof ROLES_CONFIG]?.label ?? validated.rol;
+    try {
+      await sendInvitationEmail({
+        to: validated.email,
+        nombreCompleto: validated.nombreCompleto,
+        rolLabel,
+        empresaId: validated.empresaId,
+        activationUrl,
+        expiresAt,
+        invitadoPor: validated.createdBy,
+      });
+    } catch (emailError: any) {
+      // El correo falló pero la invitación ya está creada — se devuelve igualmente
+      // para que el admin pueda copiar el enlace manualmente.
+      console.error('[createInvitationAction] Fallo al enviar correo:', emailError.message);
+      return {
+        success: true,
+        token,
+        activationUrl,
+        message: `Invitación creada, pero el correo no se pudo enviar: ${emailError.message}. Comparte el enlace manualmente.`,
+      };
+    }
+
+    return { success: true, token, activationUrl };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Actualiza el estado o rol de un usuario en Passport + Visa.
+ */
+export async function updateUserAction(input: {
+  targetUid: string;
+  empresaId: string;
+  updates: { estado?: string; rol?: typeof ROLES[number] };
+  updatedBy: string;
+}) {
+  try {
+    const db = getAdminDb();
+    const batch = db.batch();
+    const now = new Date().toISOString();
+
+    batch.update(db.doc(`usuarios/${input.targetUid}`), { ...input.updates, fechaActualizacion: now });
+    batch.update(db.doc(`empresas/${input.empresaId}/usuarios/${input.targetUid}`), { ...input.updates, fechaActualizacion: now });
+    batch.set(db.collection('_audit_log').doc(), {
+      accion: 'user.updated',
+      targetUid: input.targetUid,
+      empresaId: input.empresaId,
+      updates: input.updates,
+      ejecutadoPor: input.updatedBy,
+      fecha: now,
+    });
+
+    await batch.commit();
+    return { success: true };
   } catch (error: any) {
     return { success: false, message: error.message };
   }

@@ -28,7 +28,8 @@ import {
   Wrench,
   Fuel,
   ShieldAlert,
-  ExternalLink
+  ExternalLink,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -70,12 +71,13 @@ const navItems = [
   { href: "/dashboard/revision-gerencial", icon: ShieldCheck, label: "Revisión Gerencial" },
 
   { isSeparator: true },
+  { href: "/dashboard/usuarios", icon: UserCog, label: "Usuarios del Sistema", roles: ['Superadmin', 'Admin', 'RRHH'] },
   { href: "/dashboard/configuracion", icon: Settings, label: "Configuración" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, profile } = useUser();
+  const { profile } = useUser();
   const userAvatar = PlaceHolderImages.find(p => p.id === "user-avatar-1");
 
   return (
@@ -116,6 +118,10 @@ export function Sidebar() {
             }
             if (item.isSeparator) {
               return <div key={index} className="my-4 border-t border-border-dark" />;
+            }
+            // Ocultar items restringidos por rol
+            if (item.roles && profile?.rol && !item.roles.includes(profile.rol)) {
+              return null;
             }
             const isActive = pathname === item.href;
             return (
