@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = 'RoadWise 360 <info@datnova.io>';
+const FROM = process.env.RESEND_FROM_EMAIL || 'RoadWise 360 <onboarding@resend.dev>';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 interface InvitationEmailPayload {

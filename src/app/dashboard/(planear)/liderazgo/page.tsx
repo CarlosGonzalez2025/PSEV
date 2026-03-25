@@ -259,27 +259,9 @@ export default function LiderazgoPage() {
                                             <CardTitle className="text-lg font-black uppercase text-foreground tracking-tighter">Comité de Seguridad Vial (Paso 2)</CardTitle>
                                             <CardDescription>Equipo interdisciplinario para el seguimiento del sistema.</CardDescription>
                                         </div>
-                                        <Dialog>
-                                            <Button asChild size="sm" className="bg-white/5 border border-border-dark font-bold text-xs">
-                                                <label><Plus className="size-4 mr-1" /> Miembro</label>
-                                            </Button>
-                                            <DialogContent className="bg-surface-dark border-border-dark text-foreground">
-                                                <DialogHeader><DialogTitle>Nuevo Miembro de Comité</DialogTitle></DialogHeader>
-                                                <form onSubmit={handleAddMember} className="space-y-4 py-4">
-                                                    <Input name="nombre" placeholder="Nombre completo" className="bg-background-dark" required />
-                                                    <Input name="cargo" placeholder="Cargo organizacional" className="bg-background-dark" required />
-                                                    <Select name="rol" required>
-                                                        <SelectTrigger className="bg-background-dark"><SelectValue placeholder="Rol en el comité" /></SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="Presidente">Presidente</SelectItem>
-                                                            <SelectItem value="Secretario">Secretario</SelectItem>
-                                                            <SelectItem value="Vocal">Vocal</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <Button type="submit" className="w-full bg-primary font-bold">Agregar al Equipo</Button>
-                                                </form>
-                                            </DialogContent>
-                                        </Dialog>
+                                        <Button size="sm" className="bg-white/5 border border-border-dark font-bold text-xs" onClick={() => setIsComiteOpen(true)}>
+                                            <Plus className="size-4 mr-1" /> Miembro
+                                        </Button>
                                     </CardHeader>
                                     <CardContent>
                                         {(!comiteMembers || comiteMembers.length === 0) ? (
@@ -446,6 +428,29 @@ export default function LiderazgoPage() {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Comité Dialog */}
+            <Dialog open={isComiteOpen} onOpenChange={setIsComiteOpen}>
+                <DialogContent className="bg-surface-dark border-border-dark text-foreground">
+                    <DialogHeader><DialogTitle className="font-black uppercase">Nuevo Miembro de Comité</DialogTitle></DialogHeader>
+                    <form onSubmit={async (e) => { await handleAddMember(e); setIsComiteOpen(false); }} className="space-y-4 py-4">
+                        <Input name="nombre" placeholder="Nombre completo" className="bg-background-dark border-border-dark" required />
+                        <Input name="cargo" placeholder="Cargo organizacional" className="bg-background-dark border-border-dark" required />
+                        <Select name="rol" required>
+                            <SelectTrigger className="bg-background-dark border-border-dark"><SelectValue placeholder="Rol en el comité" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Presidente">Presidente</SelectItem>
+                                <SelectItem value="Secretario">Secretario</SelectItem>
+                                <SelectItem value="Vocal">Vocal</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" className="border-border-dark" onClick={() => setIsComiteOpen(false)}>Cancelar</Button>
+                            <Button type="submit" className="bg-primary font-bold">Agregar al Equipo</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {/* Acta Dialog */}
             <Dialog open={isActaOpen} onOpenChange={setIsActaOpen}>
