@@ -60,7 +60,10 @@ service cloud.firestore {
 
     // === EMPRESAS Y SUBCOLECCIONES ===
     match /empresas/{empresaId} {
-      allow read: if belongsToCompany(empresaId);
+      // Lectura pública del documento de empresa (solo el doc raíz, no sub-colecciones).
+      // Necesario para que la encuesta PESV pueda mostrar el nombre de la empresa
+      // a colaboradores que acceden sin autenticación.
+      allow read: if belongsToCompany(empresaId) || request.auth == null;
       allow create: if isSuperAdmin();
       allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
       allow delete: if isSuperAdmin();
@@ -125,6 +128,38 @@ service cloud.firestore {
         allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
         allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
         allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin"]);
+      }
+
+      // Rutas y Puntos Críticos — Inventario de rutas de desplazamiento
+      match /rutas_desplazamientos/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+      }
+
+      // Rutas y Puntos Críticos — Puntos críticos geocodificados
+      match /puntos_criticos/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+      }
+
+      // Rutas y Puntos Críticos — Infraestructura interna (parqueaderos, vías)
+      match /infraestructura_interna/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
+      }
+
+      // Rutas y Puntos Críticos — Inspecciones viales (Kanban)
+      match /inspecciones_viales/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV", "Gestor_Flota"]);
+        allow delete: if isSuperAdmin() || hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]);
       }
 
       // Datos operativos — Siniestros
@@ -221,6 +256,35 @@ service cloud.firestore {
       match /pesv_recursos/{docId} {
         allow read: if belongsToCompany(empresaId);
         allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+      // Diagnóstico PESV — Documentos de configuración y subdocumentos
+      match /pesv_diagnostico/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+      // Diagnóstico PESV — Sedes y Contexto
+      match /pesv_diagnostico_sedes/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+        allow delete: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+      // Diagnóstico PESV — Rutas de desplazamiento
+      match /pesv_rutas_diagnostico/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+        allow delete: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+      // Diagnóstico PESV — Encuestas de actores viales (acceso público para crear)
+      // Los colaboradores acceden sin autenticación desde el link de encuesta.
+      match /encuestas_pesv/{encuestaId} {
+        allow read: if belongsToCompany(empresaId) || isSuperAdmin() || request.auth == null;
+        allow create: if true; // Público — cualquier persona con el link puede enviar
+        allow update: if isSignedIn() && belongsToCompany(empresaId);
+        allow delete: if isSuperAdmin();
       }
     }
 
