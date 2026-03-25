@@ -205,14 +205,14 @@ export default function ProgramasRiesgoPage() {
         <div className="space-y-8 pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">Programas Smart PESV</h1>
+                    <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Programas Smart PESV</h1>
                     <p className="text-text-secondary mt-1">Gestión dinámica de riesgos críticos (Paso 8 - Resolución 40595)</p>
                 </div>
                 <div className="flex gap-3">
                     <Button onClick={() => setIsAlcoOpen(true)} className="bg-red-600 hover:bg-red-500 font-bold uppercase gap-2 h-12 shadow-lg shadow-red-900/20">
                         <UserMinus className="size-5" /> Test Alcoholemia
                     </Button>
-                    <Button variant="outline" className="font-bold border-border-dark text-white h-12">
+                    <Button variant="outline" className="font-bold border-border-dark text-foreground h-12">
                         <TrendingDown className="size-5 mr-2" /> Reporte Gerencial
                     </Button>
                 </div>
@@ -235,7 +235,7 @@ export default function ProgramasRiesgoPage() {
                                     </div>
                                     <Badge variant="outline" className="text-[10px] font-black border-white/10 text-text-secondary uppercase tracking-widest">Paso {progDef.paso}</Badge>
                                 </div>
-                                <CardTitle className="text-xl font-black text-white mt-4 uppercase tracking-tight">{progDef.titulo}</CardTitle>
+                                <CardTitle className="text-xl font-black text-foreground mt-4 uppercase tracking-tight">{progDef.titulo}</CardTitle>
                                 <div className="flex items-center gap-2 mt-1">
                                     <div className={`size-2 rounded-full ${saved ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></div>
                                     <span className="text-[10px] font-bold text-text-secondary uppercase">{saved ? 'Programado y Activo' : 'Pendiente Parametrización'}</span>
@@ -257,7 +257,7 @@ export default function ProgramasRiesgoPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <p className="text-[9px] font-bold text-text-secondary uppercase">Actividades</p>
-                                        <p className="text-sm font-black text-white">{saved?.actividades?.length || 0} Reg.</p>
+                                        <p className="text-sm font-black text-foreground">{saved?.actividades?.length || 0} Reg.</p>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-[9px] font-bold text-text-secondary uppercase">Presupuesto</p>
@@ -278,14 +278,14 @@ export default function ProgramasRiesgoPage() {
 
             {/* DETALLE DEL PROGRAMA */}
             <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-                <DialogContent className="max-w-5xl bg-surface-dark border-border-dark text-white p-0 overflow-hidden max-h-[90vh]">
+                <DialogContent className="max-w-5xl bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden max-h-[90vh]">
                     <DialogHeader className="p-6 bg-white/5 border-b border-border-dark">
                         <div className="flex items-center gap-4">
                             <div className={`p-4 rounded-2xl ${selectedProg?.bg} ${selectedProg?.color}`}>
                                 {selectedProg && <selectedProg.icon className="size-6" />}
                             </div>
                             <div>
-                                <DialogTitle className="text-2xl font-black uppercase text-white">{selectedProg?.titulo}</DialogTitle>
+                                <DialogTitle className="text-2xl font-black uppercase text-foreground">{selectedProg?.titulo}</DialogTitle>
                                 <p className="text-sm text-text-secondary">Estructuración técnica del programa de prevención.</p>
                             </div>
                         </div>
@@ -324,7 +324,7 @@ export default function ProgramasRiesgoPage() {
                                                 <FormLabel className="text-xs font-black uppercase">Cargo Responsable</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue placeholder="Seleccione responsable..." /></SelectTrigger></FormControl>
-                                                    <SelectContent className="bg-surface-dark border-border-dark text-white">
+                                                    <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                                         <SelectItem value="Lider PESV">Líder del PESV</SelectItem>
                                                         <SelectItem value="Coordinador HSEQ">Coordinador HSEQ</SelectItem>
                                                         <SelectItem value="Gerencia Operativa">Gerencia Operativa</SelectItem>
@@ -363,7 +363,7 @@ export default function ProgramasRiesgoPage() {
                                                 </div>
                                             </div>
                                         ))}
-                                        <Button type="button" variant="outline" className="w-full border-dashed border-border-dark text-white font-bold" onClick={() => {
+                                        <Button type="button" variant="outline" className="w-full border-dashed border-border-dark text-foreground font-bold" onClick={() => {
                                             const current = form.getValues("factoresDesempeno") || [];
                                             form.setValue("factoresDesempeno", [...current, { descripcion: "", indicadorId: "Ind-8", meta: 90 }]);
                                         }}>
@@ -399,7 +399,7 @@ export default function ProgramasRiesgoPage() {
                                                     }}><Trash2 className="size-4" /></Button>
                                                 </div>
                                             ))}
-                                            <Button type="button" variant="outline" className="w-full border-dashed border-border-dark text-white font-bold" onClick={() => {
+                                            <Button type="button" variant="outline" className="w-full border-dashed border-border-dark text-foreground font-bold" onClick={() => {
                                                 const current = form.getValues("actividades") || [];
                                                 form.setValue("actividades", [...current, { nombre: "", fecha: "", estado: "Pendiente", impactaPlanAnual: true }]);
                                             }}>
@@ -422,7 +422,7 @@ export default function ProgramasRiesgoPage() {
 
             {/* DIALOG ALCOHOLEMIA */}
             <Dialog open={isAlcoOpen} onOpenChange={setIsAlcoOpen}>
-                <DialogContent className="max-w-md bg-surface-dark border-border-dark text-white">
+                <DialogContent className="max-w-md bg-surface-dark border-border-dark text-foreground">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-black uppercase text-red-500">Prueba de Alcohol y Drogas</DialogTitle>
                         <DialogDescription>Registro de control sorpresa o preventivo obligatorio (Paso 8.4).</DialogDescription>

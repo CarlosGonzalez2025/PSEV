@@ -27,7 +27,7 @@ export function SegmentosEspecificos({ form, tipoVehiculo }: Props) {
                             <SelectValue placeholder="Evaluar..." />
                         </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-surface-dark border-border-dark text-white">
+                    <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                         {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                     </SelectContent>
                 </Select>
@@ -39,7 +39,7 @@ export function SegmentosEspecificos({ form, tipoVehiculo }: Props) {
     const renderBool = (name: any, label: string, trueLabel: string = "Sí", falseLabel: string = "No") => (
         <FormField control={form.control} name={name as any} render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/5 bg-background-dark/30 p-3 shadow-sm">
-                <FormLabel className="text-[10px] font-bold text-white uppercase flex items-center gap-1">{label}</FormLabel>
+                <FormLabel className="text-[10px] font-bold text-foreground uppercase flex items-center gap-1">{label}</FormLabel>
                 <FormControl>
                     <div className="flex items-center gap-2">
                         <span className="text-[9px] font-bold text-text-secondary">{falseLabel}</span>
@@ -71,7 +71,7 @@ export function SegmentosEspecificos({ form, tipoVehiculo }: Props) {
         <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
                 <Badge className="bg-cyan-500/20 text-cyan-400 border-none">7</Badge>
-                <h3 className="text-sm font-black text-white uppercase italic tracking-wider">Criterios Específicos: {t}</h3>
+                <h3 className="text-sm font-black text-foreground uppercase italic tracking-wider">Criterios Específicos: {t}</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

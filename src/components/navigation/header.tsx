@@ -16,6 +16,7 @@ import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
   const router = useRouter();
@@ -35,8 +36,9 @@ export function Header() {
         <p className="text-muted-foreground text-sm mt-1">Gestión PESV • {profile?.rol === 'Superadmin' ? 'Global' : profile?.empresaId}</p>
       </div>
       <div className="flex items-center gap-4">
+        <ThemeToggle />
         <div className="relative">
-          <Button variant="ghost" size="icon" aria-label="Notificaciones" className="text-muted-foreground hover:text-white">
+          <Button variant="ghost" size="icon" aria-label="Notificaciones" className="text-muted-foreground hover:text-foreground">
             <Bell className="w-5 h-5" />
           </Button>
           <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-card"></span>
@@ -49,7 +51,7 @@ export function Header() {
               Acción Rápida
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-surface-dark border-border-dark text-white">
+          <DropdownMenuContent className="w-56 bg-surface-dark border-border-dark text-foreground">
             <DropdownMenuLabel>Crear Nuevo...</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-border-dark" />
             <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/dashboard/vehiculos')}>
@@ -82,7 +84,7 @@ export function Header() {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-surface-dark border-border-dark text-white" align="end" forceMount>
+          <DropdownMenuContent className="w-56 bg-surface-dark border-border-dark text-foreground" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-bold leading-none">{profile?.nombreCompleto}</p>

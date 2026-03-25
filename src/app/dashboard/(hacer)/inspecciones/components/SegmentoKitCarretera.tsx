@@ -20,7 +20,7 @@ export function SegmentoKitCarretera({ form, tipoVehiculo }: Props) {
         <FormField control={form.control} name={`kitCarretera.${name}` as any} render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/5 bg-background-dark/30 p-3 shadow-sm">
                 <div className="space-y-0.5">
-                    <FormLabel className="text-[11px] font-bold text-white uppercase flex items-center gap-1">
+                    <FormLabel className="text-[11px] font-bold text-foreground uppercase flex items-center gap-1">
                         {label} {critico && <AlertTriangle className="size-3 text-red-500" />}
                     </FormLabel>
                     {desc && <FormDescription className="text-[9px] uppercase">{desc}</FormDescription>}
@@ -60,7 +60,7 @@ export function SegmentoKitCarretera({ form, tipoVehiculo }: Props) {
         <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
                 <Badge className="bg-orange-500/20 text-orange-400 border-none">5</Badge>
-                <h3 className="text-sm font-black text-white uppercase italic tracking-wider">Kit de Carretera y Emergencias</h3>
+                <h3 className="text-sm font-black text-foreground uppercase italic tracking-wider">Kit de Carretera y Emergencias</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

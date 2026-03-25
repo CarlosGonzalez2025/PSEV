@@ -27,7 +27,7 @@ export function SegmentoDocumental({ form, tipoVehiculo }: Props) {
         <FormField control={form.control} name={`documental.${name}` as any} render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/5 bg-background-dark/30 p-3 shadow-sm">
                 <div className="space-y-0.5">
-                    <FormLabel className="text-[11px] font-bold text-white uppercase">{label}</FormLabel>
+                    <FormLabel className="text-[11px] font-bold text-foreground uppercase">{label}</FormLabel>
                     {desc && <FormDescription className="text-[9px] uppercase">{desc}</FormDescription>}
                 </div>
                 <FormControl>
@@ -53,7 +53,7 @@ export function SegmentoDocumental({ form, tipoVehiculo }: Props) {
         <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
                 <Badge className="bg-primary/20 text-primary border-none">1</Badge>
-                <h3 className="text-sm font-black text-white uppercase italic tracking-wider">Documental</h3>
+                <h3 className="text-sm font-black text-foreground uppercase italic tracking-wider">Documental</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -133,7 +133,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             <ShieldAlert size={48} />
           </div>
           <div className="space-y-2">
-            <h2 className="text-3xl font-black text-white uppercase tracking-tighter">{membershipError.title}</h2>
+            <h2 className="text-3xl font-black text-foreground uppercase tracking-tighter">{membershipError.title}</h2>
             <p className="text-text-secondary text-sm leading-relaxed">{membershipError.message}</p>
           </div>
           <div className="p-4 bg-black/40 rounded-xl border border-white/5 text-left font-mono text-[10px] text-primary space-y-1">

@@ -86,7 +86,7 @@ export default function ConfiguracionPage() {
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-10">
       <div>
-        <h1 className="text-3xl font-black text-white tracking-tight uppercase">Configuración de Usuario</h1>
+        <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Configuración de Usuario</h1>
         <p className="text-text-secondary mt-1">Gestiona tu perfil personal y ajustes de seguridad.</p>
       </div>
 
@@ -101,7 +101,7 @@ export default function ConfiguracionPage() {
         </TabsList>
 
         <TabsContent value="perfil" className="mt-6">
-          <Card className="bg-surface-dark border-border-dark text-white">
+          <Card className="bg-surface-dark border-border-dark text-foreground">
             <CardHeader>
               <CardTitle className="text-lg">Información del Perfil</CardTitle>
               <CardDescription className="text-text-secondary">Actualiza tu nombre y visualiza tus datos de acceso.</CardDescription>
@@ -111,11 +111,11 @@ export default function ConfiguracionPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label className="text-text-secondary uppercase text-[10px] font-bold tracking-widest">Correo Electrónico</Label>
-                    <Input value={profile?.email} disabled className="bg-background-dark border-border-dark opacity-50 text-white" />
+                    <Input value={profile?.email} disabled className="bg-background-dark border-border-dark opacity-50 text-foreground" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-text-secondary uppercase text-[10px] font-bold tracking-widest">Rol Asignado</Label>
-                    <Input value={profile?.rol} disabled className="bg-background-dark border-border-dark opacity-50 text-white" />
+                    <Input value={profile?.rol} disabled className="bg-background-dark border-border-dark opacity-50 text-foreground" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -124,7 +124,7 @@ export default function ConfiguracionPage() {
                     value={profileData.nombreCompleto} 
                     onChange={e => setProfileData({nombreCompleto: e.target.value})}
                     placeholder="Tu nombre completo"
-                    className="bg-background-dark border-border-dark text-white"
+                    className="bg-background-dark border-border-dark text-foreground"
                     required
                   />
                 </div>
@@ -147,7 +147,7 @@ export default function ConfiguracionPage() {
         </TabsContent>
 
         <TabsContent value="seguridad" className="mt-6">
-          <Card className="bg-surface-dark border-border-dark text-white">
+          <Card className="bg-surface-dark border-border-dark text-foreground">
             <CardHeader>
               <CardTitle className="text-lg">Cambiar Contraseña</CardTitle>
               <CardDescription className="text-text-secondary">Establece una nueva clave de acceso para tu cuenta.</CardDescription>
@@ -161,7 +161,7 @@ export default function ConfiguracionPage() {
                     value={passwords.newPassword}
                     onChange={e => setPassWords({...passwords, newPassword: e.target.value})}
                     placeholder="Mínimo 6 caracteres"
-                    className="bg-background-dark border-border-dark text-white"
+                    className="bg-background-dark border-border-dark text-foreground"
                     required
                   />
                 </div>
@@ -172,7 +172,7 @@ export default function ConfiguracionPage() {
                     value={passwords.confirmPassword}
                     onChange={e => setPassWords({...passwords, confirmPassword: e.target.value})}
                     placeholder="Repite tu nueva contraseña"
-                    className="bg-background-dark border-border-dark text-white"
+                    className="bg-background-dark border-border-dark text-foreground"
                     required
                   />
                 </div>

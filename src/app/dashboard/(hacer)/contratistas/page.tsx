@@ -161,7 +161,7 @@ export default function ContratistasPage() {
         <div className="space-y-6 pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">Gestión de Contratistas y Cambio</h1>
+                    <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Gestión de Contratistas y Cambio</h1>
                     <p className="text-text-secondary mt-1">Control de terceros y evaluación de impactos viales (Paso 18)</p>
                 </div>
                 {profile?.nivelPESV !== 'Básico' && (
@@ -178,7 +178,7 @@ export default function ContratistasPage() {
                                     <UserPlus className="size-5 mr-2" /> Vincular Aliado
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-md bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+                            <DialogContent className="max-w-md bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
                                 <DialogHeader className="p-6 bg-primary/10 border-b border-border-dark">
                                     <DialogTitle className="text-xl font-black uppercase italic">Vincular Nuevo Contratista</DialogTitle>
                                     <DialogDescription className="text-text-secondary">Envíe una invitación para el registro en el Portal de Autogestión.</DialogDescription>
@@ -234,7 +234,7 @@ export default function ContratistasPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <Card className="bg-surface-dark border-border-dark">
                             <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Contratistas Activos</p></CardHeader>
-                            <CardContent><div className="text-3xl font-black text-white">{contratistas?.length || 0}</div></CardContent>
+                            <CardContent><div className="text-3xl font-black text-foreground">{contratistas?.length || 0}</div></CardContent>
                         </Card>
                         <Card className="bg-surface-dark border-border-dark">
                             <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest text-emerald-500">Aprobación General</p></CardHeader>
@@ -247,7 +247,7 @@ export default function ContratistasPage() {
                         <Card className="bg-surface-dark border-border-dark border-l-4 border-l-primary">
                             <CardHeader className="pb-2"><p className="text-[10px] font-black text-primary uppercase tracking-widest">Portal Público</p></CardHeader>
                             <CardContent className="flex items-center justify-between">
-                                <div className="text-sm font-bold text-white uppercase italic">Configurado</div>
+                                <div className="text-sm font-bold text-foreground uppercase italic">Configurado</div>
                                 <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10"><ExternalLink className="size-4" /></Button>
                             </CardContent>
                         </Card>
@@ -284,13 +284,13 @@ export default function ContratistasPage() {
                                             <TableRow key={c.id} className="border-border-dark hover:bg-white/5">
                                                 <TableCell>
                                                     <div className="flex flex-col">
-                                                        <span className="text-sm font-bold text-white uppercase italic">{c.razonSocial}</span>
+                                                        <span className="text-sm font-bold text-foreground uppercase italic">{c.razonSocial}</span>
                                                         <span className="text-[10px] font-bold text-text-secondary uppercase">{c.nit}</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-center">
                                                     <div className="inline-flex flex-col items-center gap-1">
-                                                        <span className="text-xs font-black text-white">{c.indicadorCumplimiento || 0}%</span>
+                                                        <span className="text-xs font-black text-foreground">{c.indicadorCumplimiento || 0}%</span>
                                                         <Progress value={c.indicadorCumplimiento || 0} className="w-16 h-1 bg-white/5" indicatorClassName="bg-primary" />
                                                     </div>
                                                 </TableCell>
@@ -310,7 +310,7 @@ export default function ContratistasPage() {
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="ghost" size="icon" className="text-text-secondary hover:text-white"><MoreVertical className="size-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="text-text-secondary hover:text-foreground"><MoreVertical className="size-4" /></Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))
@@ -326,7 +326,7 @@ export default function ContratistasPage() {
                         <div className="flex gap-4">
                             <div className="size-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500"><TrendingUp className="size-6" /></div>
                             <div>
-                                <h4 className="text-white font-black uppercase italic tracking-tight">Gestión del Cambio Vial</h4>
+                                <h4 className="text-foreground font-black uppercase italic tracking-tight">Gestión del Cambio Vial</h4>
                                 <p className="text-xs text-text-secondary mt-1">Evalúa el impacto de cambios internos/externos en el PESV antes de su ejecución.</p>
                             </div>
                         </div>
@@ -336,7 +336,7 @@ export default function ContratistasPage() {
                                     <Plus className="size-4 mr-2" /> Evaluar Cambio
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-md bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+                            <DialogContent className="max-w-md bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
                                 <DialogHeader className="p-6 bg-blue-500/10 border-b border-border-dark">
                                     <DialogTitle className="text-xl font-black uppercase italic">Evaluación de Gestión del Cambio</DialogTitle>
                                     <DialogDescription className="text-text-secondary">Identifique riesgos asociados a nuevos procesos o legislación.</DialogDescription>
@@ -381,7 +381,7 @@ export default function ContratistasPage() {
                             <Skeleton className="h-40 w-full" />
                         ) : cambios?.length === 0 ? (
                             <Card className="md:col-span-2 bg-surface-dark border-border-dark py-20 text-center border-dashed border-2">
-                                <ArrowRightLeft className="size-12 text-white/5 mx-auto mb-4" />
+                                <ArrowRightLeft className="size-12 text-foreground/5 mx-auto mb-4" />
                                 <p className="text-text-secondary italic">No se han registrado cambios viales recientes.</p>
                             </Card>
                         ) : (
@@ -392,7 +392,7 @@ export default function ContratistasPage() {
                                         <span className="text-[9px] font-bold text-text-secondary uppercase italic">{cambio.createdAt?.toDate().toLocaleDateString() || 'Hoy'}</span>
                                     </CardHeader>
                                     <CardContent className="p-4">
-                                        <h5 className="font-bold text-white text-sm uppercase italic mb-2 tracking-tight">{cambio.descripcion}</h5>
+                                        <h5 className="font-bold text-foreground text-sm uppercase italic mb-2 tracking-tight">{cambio.descripcion}</h5>
                                         <div className="flex items-center gap-4 mt-4">
                                             <div className="flex flex-col">
                                                 <span className="text-[9px] font-black text-text-secondary uppercase">Impacto Vial</span>

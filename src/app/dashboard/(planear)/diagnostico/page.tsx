@@ -104,11 +104,11 @@ export default function DiagnosticoPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Diagnóstico Integral PESV</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Diagnóstico Integral PESV</h1>
           <p className="text-text-secondary mt-1">Línea base para indicadores y planes de acción (Resolución 40595 - Paso 5)</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-border-dark text-white font-bold" onClick={() => window.print()}>
+          <Button variant="outline" className="border-border-dark text-foreground font-bold" onClick={() => window.print()}>
             <Printer className="w-4 h-4 mr-2" /> Exportar Diagnóstico
           </Button>
         </div>
@@ -141,7 +141,7 @@ export default function DiagnosticoPage() {
           <TabsContent value="contexto">
             <Card className="bg-surface-dark border-border-dark shadow-2xl overflow-hidden">
               <CardHeader className="bg-white/5 border-b border-border-dark">
-                <CardTitle className="text-lg font-bold text-white uppercase tracking-wider">Información de Sedes y Servicios</CardTitle>
+                <CardTitle className="text-lg font-bold text-foreground uppercase tracking-wider">Información de Sedes y Servicios</CardTitle>
                 <CardDescription>Contexto institucional y geográfico de la organización.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
@@ -151,7 +151,7 @@ export default function DiagnosticoPage() {
                       <FormField control={formSedes.control} name="nombreSede" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase text-text-secondary">Nombre de la Sede</FormLabel>
-                          <FormControl><Input placeholder="Principal, Bodega Norte, etc." {...field} className="bg-background-dark border-border-dark text-white" /></FormControl>
+                          <FormControl><Input placeholder="Principal, Bodega Norte, etc." {...field} className="bg-background-dark border-border-dark text-foreground" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
@@ -159,8 +159,8 @@ export default function DiagnosticoPage() {
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase text-text-secondary">Municipio</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger className="bg-background-dark border-border-dark text-white"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
-                            <SelectContent className="bg-surface-dark border-border-dark text-white">
+                            <FormControl><SelectTrigger className="bg-background-dark border-border-dark text-foreground"><SelectValue placeholder="Seleccione..." /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                               <SelectItem value="Bogota">Bogotá D.C.</SelectItem>
                               <SelectItem value="Medellin">Medellín</SelectItem>
                               <SelectItem value="Cali">Cali</SelectItem>
@@ -174,7 +174,7 @@ export default function DiagnosticoPage() {
                     <FormField control={formSedes.control} name="serviciosQuePresta" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-xs font-bold uppercase text-text-secondary">Servicios que presta</FormLabel>
-                        <FormControl><Textarea placeholder="Describa brevemente la actividad económica en esta sede..." {...field} className="bg-background-dark border-border-dark text-white min-h-[100px]" /></FormControl>
+                        <FormControl><Textarea placeholder="Describa brevemente la actividad económica en esta sede..." {...field} className="bg-background-dark border-border-dark text-foreground min-h-[100px]" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -189,7 +189,7 @@ export default function DiagnosticoPage() {
           <TabsContent value="contratistas">
             <Card className="bg-surface-dark border-border-dark shadow-2xl overflow-hidden">
               <CardHeader className="bg-white/5 border-b border-border-dark">
-                <CardTitle className="text-lg font-bold text-white uppercase tracking-wider">Lista de Contratistas y Terceros</CardTitle>
+                <CardTitle className="text-lg font-bold text-foreground uppercase tracking-wider">Lista de Contratistas y Terceros</CardTitle>
                 <CardDescription>Empresas o personas que realizan viajes para la organización.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
@@ -199,14 +199,14 @@ export default function DiagnosticoPage() {
                       <FormField control={formContratistas.control} name="razonSocial" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase text-text-secondary">Razón Social</FormLabel>
-                          <FormControl><Input {...field} className="bg-background-dark border-border-dark text-white" /></FormControl>
+                          <FormControl><Input {...field} className="bg-background-dark border-border-dark text-foreground" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={formContratistas.control} name="nit" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase text-text-secondary">NIT / Cédula</FormLabel>
-                          <FormControl><Input {...field} className="bg-background-dark border-border-dark text-white" /></FormControl>
+                          <FormControl><Input {...field} className="bg-background-dark border-border-dark text-foreground" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
@@ -216,8 +216,8 @@ export default function DiagnosticoPage() {
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase text-text-secondary">Tipo</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger className="bg-background-dark border-border-dark text-white"><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent className="bg-surface-dark border-border-dark text-white">
+                            <FormControl><SelectTrigger className="bg-background-dark border-border-dark text-foreground"><SelectValue /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                               <SelectItem value="Ocasional">Ocasional</SelectItem>
                               <SelectItem value="Permanente">Permanente</SelectItem>
                             </SelectContent>
@@ -228,8 +228,8 @@ export default function DiagnosticoPage() {
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase text-text-secondary">Vinculación</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger className="bg-background-dark border-border-dark text-white"><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent className="bg-surface-dark border-border-dark text-white">
+                            <FormControl><SelectTrigger className="bg-background-dark border-border-dark text-foreground"><SelectValue /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                               <SelectItem value="Tercerización">Tercerización</SelectItem>
                               <SelectItem value="Subcontratación">Subcontratación</SelectItem>
                               <SelectItem value="Outsourcing">Outsourcing</SelectItem>
@@ -242,8 +242,8 @@ export default function DiagnosticoPage() {
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase text-text-secondary">Flota Asociada</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger className="bg-background-dark border-border-dark text-white"><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent className="bg-surface-dark border-border-dark text-white">
+                            <FormControl><SelectTrigger className="bg-background-dark border-border-dark text-foreground"><SelectValue /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                               <SelectItem value="Fidelizada">Fidelizada</SelectItem>
                               <SelectItem value="Ocasional">Ocasional</SelectItem>
                               <SelectItem value="Afiliada">Afiliada</SelectItem>
@@ -255,7 +255,7 @@ export default function DiagnosticoPage() {
                     <FormField control={formContratistas.control} name="objetoContrato" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-xs font-bold uppercase text-text-secondary">Objeto del Contrato</FormLabel>
-                        <FormControl><Textarea {...field} className="bg-background-dark border-border-dark text-white" /></FormControl>
+                        <FormControl><Textarea {...field} className="bg-background-dark border-border-dark text-foreground" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -299,7 +299,7 @@ export default function DiagnosticoPage() {
                     <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Respuesta de Censo</p>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-black text-white">42 / 120</div>
+                    <div className="text-3xl font-black text-foreground">42 / 120</div>
                     <div className="w-full bg-white/5 h-2 rounded-full mt-2 overflow-hidden">
                       <div className="bg-emerald-500 h-full" style={{ width: '35%' }}></div>
                     </div>
@@ -311,13 +311,13 @@ export default function DiagnosticoPage() {
               <div className="lg:col-span-2">
                 <Card className="bg-surface-dark border-border-dark shadow-2xl h-full">
                   <CardHeader className="bg-white/5 border-b border-border-dark">
-                    <CardTitle className="text-lg font-bold text-white uppercase tracking-wider">Censo Sociodemográfico Manual</CardTitle>
+                    <CardTitle className="text-lg font-bold text-foreground uppercase tracking-wider">Censo Sociodemográfico Manual</CardTitle>
                     <CardDescription>Registro individual para casos excepcionales.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
                     <p className="text-sm text-text-secondary mb-6 text-center italic">Formulario completo vinculado a la base de datos de Actores Viales (Paso 10). Se recomienda el uso del link de encuesta para eficiencia.</p>
                     <div className="flex justify-center">
-                      <Button variant="outline" className="border-border-dark text-white font-bold gap-2">
+                      <Button variant="outline" className="border-border-dark text-foreground font-bold gap-2">
                         <Plus className="w-4 h-4" /> Registrar Colaborador Individual
                       </Button>
                     </div>
@@ -331,14 +331,14 @@ export default function DiagnosticoPage() {
           <TabsContent value="flota">
             <Card className="bg-surface-dark border-border-dark shadow-2xl overflow-hidden">
               <CardHeader className="bg-white/5 border-b border-border-dark">
-                <CardTitle className="text-lg font-bold text-white uppercase tracking-wider">Inventario de Vehículos</CardTitle>
+                <CardTitle className="text-lg font-bold text-foreground uppercase tracking-wider">Inventario de Vehículos</CardTitle>
                 <CardDescription>Levantamiento de la flota activa para el diagnóstico inicial.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
                 <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl flex items-start gap-3">
                   <Info className="w-5 h-5 text-blue-400 mt-0.5" />
-                  <p className="text-xs text-blue-100/70 leading-relaxed">
-                    Esta lista se sincroniza automáticamente con el <span className="font-bold text-white">Módulo de Vehículos (Paso 16)</span>. Solo se muestran los campos relevantes para el diagnóstico.
+                  <p className="text-xs text-blue-900/80 dark:text-blue-100/70 leading-relaxed">
+                    Esta lista se sincroniza automáticamente con el <span className="font-bold text-foreground">Módulo de Vehículos (Paso 16)</span>. Solo se muestran los campos relevantes para el diagnóstico.
                   </p>
                 </div>
 
@@ -353,7 +353,7 @@ export default function DiagnosticoPage() {
                   </TableHeader>
                   <TableBody>
                     <TableRow className="border-border-dark">
-                      <TableCell className="font-mono font-bold text-white">ABC-123</TableCell>
+                      <TableCell className="font-mono font-bold text-foreground">ABC-123</TableCell>
                       <TableCell className="text-xs text-text-secondary">Automóvil</TableCell>
                       <TableCell className="text-xs text-text-secondary">Propio</TableCell>
                       <TableCell className="text-center"><Badge className="bg-emerald-500/10 text-emerald-500 border-none">SÍ</Badge></TableCell>
@@ -362,7 +362,7 @@ export default function DiagnosticoPage() {
                 </Table>
 
                 <div className="flex justify-end pt-4">
-                  <Button variant="outline" className="border-border-dark text-white font-bold" onClick={() => toast({ title: "Sincronizando...", description: "Actualizando inventario desde Paso 16." })}>
+                  <Button variant="outline" className="border-border-dark text-foreground font-bold" onClick={() => toast({ title: "Sincronizando...", description: "Actualizando inventario desde Paso 16." })}>
                     Manual Sync
                   </Button>
                 </div>
@@ -374,7 +374,7 @@ export default function DiagnosticoPage() {
           <TabsContent value="rutas">
             <Card className="bg-surface-dark border-border-dark shadow-2xl overflow-hidden">
               <CardHeader className="bg-white/5 border-b border-border-dark">
-                <CardTitle className="text-lg font-bold text-white uppercase tracking-wider">Rutas Frecuentes de Desplazamientos</CardTitle>
+                <CardTitle className="text-lg font-bold text-foreground uppercase tracking-wider">Rutas Frecuentes de Desplazamientos</CardTitle>
                 <CardDescription>Mapeo de la exposición al riesgo en la vía.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
@@ -382,23 +382,23 @@ export default function DiagnosticoPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase text-text-secondary">Origen</label>
-                      <Input placeholder="Ej: Bogotá Sede Norte" className="bg-background-dark border-border-dark text-white" />
+                      <Input placeholder="Ej: Bogotá Sede Norte" className="bg-background-dark border-border-dark text-foreground" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase text-text-secondary">Destino</label>
-                      <Input placeholder="Ej: Medellín Planta" className="bg-background-dark border-border-dark text-white" />
+                      <Input placeholder="Ej: Medellín Planta" className="bg-background-dark border-border-dark text-foreground" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase text-text-secondary">Kilómetros</label>
-                      <Input type="number" placeholder="0" className="bg-background-dark border-border-dark text-white" />
+                      <Input type="number" placeholder="0" className="bg-background-dark border-border-dark text-foreground" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase text-text-secondary">Frecuencia</label>
                       <Select>
-                        <SelectTrigger className="bg-background-dark border-border-dark text-white"><SelectValue placeholder="Periodo" /></SelectTrigger>
-                        <SelectContent className="bg-surface-dark border-border-dark text-white">
+                        <SelectTrigger className="bg-background-dark border-border-dark text-foreground"><SelectValue placeholder="Periodo" /></SelectTrigger>
+                        <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                           <SelectItem value="Semanal">Semanal</SelectItem>
                           <SelectItem value="Mensual">Mensual</SelectItem>
                           <SelectItem value="Anual">Anual</SelectItem>
@@ -407,7 +407,7 @@ export default function DiagnosticoPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase text-text-secondary">Veces x Periodo</label>
-                      <Input type="number" placeholder="Ej: 5" className="bg-background-dark border-border-dark text-white" />
+                      <Input type="number" placeholder="Ej: 5" className="bg-background-dark border-border-dark text-foreground" />
                     </div>
                   </div>
                   <Button type="button" className="bg-primary font-bold">Agregar Ruta</Button>
@@ -420,7 +420,7 @@ export default function DiagnosticoPage() {
           <TabsContent value="emergencias">
             <Card className="bg-surface-dark border-border-dark shadow-2xl overflow-hidden">
               <CardHeader className="bg-white/5 border-b border-border-dark">
-                <CardTitle className="text-lg font-bold text-white uppercase tracking-wider">Capacidades para Emergencias</CardTitle>
+                <CardTitle className="text-lg font-bold text-foreground uppercase tracking-wider">Capacidades para Emergencias</CardTitle>
                 <CardDescription>Evaluación de preparación ante siniestros viales.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
@@ -428,7 +428,7 @@ export default function DiagnosticoPage() {
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase text-text-secondary">Colaboradores Capacitados</label>
-                      <Input type="number" placeholder="0" className="bg-background-dark border-border-dark text-white" />
+                      <Input type="number" placeholder="0" className="bg-background-dark border-border-dark text-foreground" />
                       <p className="text-[10px] text-text-secondary italic">Primeros auxilios y manejo de emergencias.</p>
                     </div>
 
@@ -438,7 +438,7 @@ export default function DiagnosticoPage() {
                         {["Botiquín", "Extintor", "Equipo carretera", "Camilla", "Kit derrames"].map(item => (
                           <div key={item} className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition-colors">
                             <input type="checkbox" className="accent-primary" id={item} />
-                            <label htmlFor={item} className="text-sm text-white">{item}</label>
+                            <label htmlFor={item} className="text-sm text-foreground">{item}</label>
                           </div>
                         ))}
                       </div>
@@ -449,16 +449,16 @@ export default function DiagnosticoPage() {
                     <div className="bg-background-dark p-6 rounded-2xl border border-border-dark space-y-4">
                       <p className="text-[10px] font-black text-primary uppercase tracking-widest">Simulacros</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-white">¿Simulacro realizado?</span>
+                        <span className="text-sm text-foreground">¿Simulacro realizado?</span>
                         <input type="checkbox" className="accent-primary size-5" />
                       </div>
                       <div className="space-y-2 pt-2">
                         <label className="text-[10px] font-bold uppercase text-text-secondary">Última Fecha</label>
-                        <Input type="date" className="bg-surface-dark border-border-dark text-white text-xs" />
+                        <Input type="date" className="bg-surface-dark border-border-dark text-foreground text-xs" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase text-text-secondary">Tipo de Simulacro</label>
-                        <Input placeholder="Ej: Choque simple, Incendio..." className="bg-surface-dark border-border-dark text-white text-xs" />
+                        <Input placeholder="Ej: Choque simple, Incendio..." className="bg-surface-dark border-border-dark text-foreground text-xs" />
                       </div>
                     </div>
                   </div>

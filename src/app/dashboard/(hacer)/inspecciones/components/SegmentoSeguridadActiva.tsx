@@ -30,7 +30,7 @@ export function SegmentoSeguridadActiva({ form, tipoVehiculo }: Props) {
                             <SelectValue placeholder="Evaluar..." />
                         </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-surface-dark border-border-dark text-white">
+                    <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                         {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                     </SelectContent>
                 </Select>
@@ -42,7 +42,7 @@ export function SegmentoSeguridadActiva({ form, tipoVehiculo }: Props) {
     const renderBool = (name: any, label: string, trueLabel: string = "Sí", falseLabel: string = "No", critico: boolean = false) => (
         <FormField control={form.control} name={`seguridadActiva.${name}` as any} render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/5 bg-background-dark/30 p-3 shadow-sm">
-                <FormLabel className="text-[10px] font-bold text-white uppercase flex items-center gap-1">
+                <FormLabel className="text-[10px] font-bold text-foreground uppercase flex items-center gap-1">
                     {label} {critico && <AlertTriangle className="size-3 text-red-500" />}
                 </FormLabel>
                 <FormControl>
@@ -75,12 +75,12 @@ export function SegmentoSeguridadActiva({ form, tipoVehiculo }: Props) {
         <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
                 <Badge className="bg-emerald-500/20 text-emerald-400 border-none">2</Badge>
-                <h3 className="text-sm font-black text-white uppercase italic tracking-wider">Seguridad Activa (Prevención)</h3>
+                <h3 className="text-sm font-black text-foreground uppercase italic tracking-wider">Seguridad Activa (Prevención)</h3>
             </div>
 
             {/* FRENOS */}
             <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-                <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3">Sistema de Frenos</h4>
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-3">Sistema de Frenos</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {renderSelect('frenos.servicio', 'Servicio/Pie', VALORES_ESTADO, true)}
                     {renderSelect('frenos.parqueo', 'Parqueo', VALORES_ESTADO, true)}
@@ -94,7 +94,7 @@ export function SegmentoSeguridadActiva({ form, tipoVehiculo }: Props) {
 
             {/* DIRECCION */}
             <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-                <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3">Sistema de Dirección</h4>
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-3">Sistema de Dirección</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {renderSelect('direccion.juegoVolante', 'Juego Volante', VALORES_ESTADO, true)}
                     {renderSelect('direccion.nivelAceite', 'Nivel Hidráulico', VALORES_FLUIDO)}
@@ -106,7 +106,7 @@ export function SegmentoSeguridadActiva({ form, tipoVehiculo }: Props) {
 
             {/* SUSPENSIÓN */}
             <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-                <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3">Sistema de Suspensión</h4>
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-3">Sistema de Suspensión</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-4 gap-3">
                     {renderSelect('suspension.amortDelantero', 'Amort. Delantero', VALORES_ESTADO)}
                     {renderSelect('suspension.amortTrasero', 'Amort. Trasero', VALORES_ESTADO)}
@@ -117,7 +117,7 @@ export function SegmentoSeguridadActiva({ form, tipoVehiculo }: Props) {
 
             {/* LLANTAS */}
             <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-                <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3">Llantas y Rines</h4>
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-3">Llantas y Rines</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                     {renderNumber('llantas.presionDI', 'Presión DI', 'PSI')}
                     {renderNumber('llantas.presionDD', 'Presión DD', 'PSI')}
@@ -135,7 +135,7 @@ export function SegmentoSeguridadActiva({ form, tipoVehiculo }: Props) {
 
             {/* MOTOR Y FLUIDOS */}
             <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-                <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3">Motor y Fluidos</h4>
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-3">Motor y Fluidos</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {renderSelect('motor.nivelAceite', 'Aceite Motor', VALORES_FLUIDO, true)}
                     {renderSelect('motor.nivelRefrigerante', 'Refrigerante', VALORES_FLUIDO, true)}
@@ -151,7 +151,7 @@ export function SegmentoSeguridadActiva({ form, tipoVehiculo }: Props) {
 
             {/* ELÉCTRICO */}
             <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-                <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3">Sistema Eléctrico / Tablero</h4>
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-3">Sistema Eléctrico / Tablero</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {renderSelect('electrico.bateria', 'Batería/Bornes', VALORES_ESTADO)}
                     {renderSelect('electrico.testigos', 'Testigos', ['Normal', 'Con alertas activas'], true)}

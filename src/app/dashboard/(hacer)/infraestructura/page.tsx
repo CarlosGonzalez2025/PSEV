@@ -60,7 +60,7 @@ export default function InfraestructuraPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase">Infraestructura Física</h1>
+                    <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Infraestructura Física</h1>
                     <p className="text-text-secondary mt-1">Gestión de vías internas y zonas de parqueo seguro (Paso 14)</p>
                 </div>
                 <Button className="font-bold shadow-lg shadow-primary/20 bg-primary">
@@ -73,7 +73,7 @@ export default function InfraestructuraPage() {
                 {INFRA_SECTIONS.map((section) => (
                     <Card key={section.id} className="bg-surface-dark border-border-dark">
                         <CardHeader>
-                            <CardTitle className="text-white text-base font-bold flex items-center gap-2">
+                            <CardTitle className="text-foreground text-base font-bold flex items-center gap-2">
                                 <Building2 className="w-5 h-5 text-primary" /> {section.titulo}
                             </CardTitle>
                         </CardHeader>
@@ -91,7 +91,7 @@ export default function InfraestructuraPage() {
 
             <Card className="bg-surface-dark border-border-dark border-dashed border-2">
                 <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-foreground flex items-center gap-2">
                         <TrafficCone className="w-5 h-5 text-amber-500" /> Plan de Mantenimiento de Infraestructura
                     </CardTitle>
                     <CardDescription>Acciones correctivas pendientes para garantizar vías seguras</CardDescription>
@@ -103,7 +103,7 @@ export default function InfraestructuraPage() {
                                 <AlertTriangle className="w-6 h-6 text-amber-500" />
                             </div>
                             <div>
-                                <p className="text-white font-bold">Resane de calzada en Patio B</p>
+                                <p className="text-foreground font-bold">Resane de calzada en Patio B</p>
                                 <p className="text-xs text-text-secondary">Reportado en inspección del 01/03/2024</p>
                             </div>
                         </div>
@@ -114,7 +114,7 @@ export default function InfraestructuraPage() {
 
             <Card className="bg-surface-dark border-border-dark">
                 <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-foreground flex items-center gap-2">
                         <ClipboardList className="w-5 h-5 text-primary" /> Historial de Inspecciones de Campo
                     </CardTitle>
                 </CardHeader>
@@ -122,17 +122,17 @@ export default function InfraestructuraPage() {
                     <Table>
                         <TableHeader>
                             <TableRow className="border-border-dark">
-                                <TableHead className="text-white text-xs uppercase">Fecha</TableHead>
-                                <TableHead className="text-white text-xs uppercase">Inspector</TableHead>
-                                <TableHead className="text-white text-xs uppercase">Resultado</TableHead>
-                                <TableHead className="text-white text-xs uppercase text-right">Evidencia</TableHead>
+                                <TableHead className="text-foreground text-xs uppercase">Fecha</TableHead>
+                                <TableHead className="text-foreground text-xs uppercase">Inspector</TableHead>
+                                <TableHead className="text-foreground text-xs uppercase">Resultado</TableHead>
+                                <TableHead className="text-foreground text-xs uppercase text-right">Evidencia</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {inspecciones?.map((insp) => (
                                 <TableRow key={insp.id} className="border-border-dark">
-                                    <TableCell className="text-white text-sm">{insp.fecha}</TableCell>
-                                    <TableCell className="text-white text-sm">{insp.inspector}</TableCell>
+                                    <TableCell className="text-foreground text-sm">{insp.fecha}</TableCell>
+                                    <TableCell className="text-foreground text-sm">{insp.inspector}</TableCell>
                                     <TableCell>
                                         <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-bold text-[10px]">95% CUMPLIMIENTO</Badge>
                                     </TableCell>

@@ -163,7 +163,7 @@ export default function MantenimientoPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Mantenimiento PESV (Paso 17)</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Mantenimiento PESV (Paso 17)</h1>
           <p className="text-text-secondary mt-1">Hoja de vida técnica y cronograma de mantenimiento preventivo</p>
         </div>
 
@@ -173,7 +173,7 @@ export default function MantenimientoPage() {
               <Plus className="w-4 h-4 mr-2" /> Registrar Servicio
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+          <DialogContent className="max-w-3xl bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
             <DialogHeader className="p-6 border-b border-border-dark">
               <DialogTitle className="text-xl font-black uppercase">Orden de Trabajo — Intervención Técnica</DialogTitle>
               <DialogDescription className="text-text-secondary">Registro PESV Paso 17 — Resolución 40595/2022</DialogDescription>
@@ -200,7 +200,7 @@ export default function MantenimientoPage() {
                             <FormLabel className="text-[10px] font-bold">VEHÍCULO</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue placeholder="Placa" /></SelectTrigger></FormControl>
-                              <SelectContent className="bg-surface-dark border-border-dark text-white">
+                              <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                 {vehiculos?.map(v => <SelectItem key={v.id} value={v.placa}>{v.placa} — {v.marca} {v.modelo}</SelectItem>)}
                               </SelectContent>
                             </Select>
@@ -214,7 +214,7 @@ export default function MantenimientoPage() {
                             <FormLabel className="text-[10px] font-bold">ORIGEN</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent className="bg-surface-dark border-border-dark text-white">
+                              <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                 <SelectItem value="Programado">Programado (Cronograma)</SelectItem>
                                 <SelectItem value="Inspección">Inspección Preoperacional</SelectItem>
                                 <SelectItem value="Siniestro">Post-Siniestro</SelectItem>
@@ -230,7 +230,7 @@ export default function MantenimientoPage() {
                             <FormLabel className="text-[10px] font-bold">TIPO</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent className="bg-surface-dark border-border-dark text-white">
+                              <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                 <SelectItem value="Preventivo">Preventivo</SelectItem>
                                 <SelectItem value="Correctivo">Correctivo</SelectItem>
                               </SelectContent>
@@ -242,7 +242,7 @@ export default function MantenimientoPage() {
                             <FormLabel className="text-[10px] font-bold">ESTADO</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent className="bg-surface-dark border-border-dark text-white">
+                              <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                 <SelectItem value="Programado">Programado</SelectItem>
                                 <SelectItem value="En ejecución">En Ejecución</SelectItem>
                                 <SelectItem value="Ejecutado">Ejecutado</SelectItem>
@@ -339,20 +339,20 @@ export default function MantenimientoPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-text-secondary">Total Registros</CardTitle></CardHeader>
-          <CardContent><div className="text-3xl font-black text-white">{mantenimientos?.length || 0}</div></CardContent>
+          <CardContent><div className="text-3xl font-black text-foreground">{mantenimientos?.length || 0}</div></CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark border-l-4 border-l-blue-500">
           <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-blue-500">Preventivos</CardTitle></CardHeader>
-          <CardContent><div className="text-3xl font-black text-white">{mantenimientos?.filter(m => m.tipo === 'Preventivo').length || 0}</div></CardContent>
+          <CardContent><div className="text-3xl font-black text-foreground">{mantenimientos?.filter(m => m.tipo === 'Preventivo').length || 0}</div></CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark border-l-4 border-l-red-500">
           <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-red-500">Correctivos</CardTitle></CardHeader>
-          <CardContent><div className="text-3xl font-black text-white">{correctivos}</div></CardContent>
+          <CardContent><div className="text-3xl font-black text-foreground">{correctivos}</div></CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark border-l-4 border-l-emerald-500">
           <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-emerald-500">CPMVh (Indicador 10)</CardTitle></CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">{cumplimiento}%</div>
+            <div className="text-3xl font-black text-foreground">{cumplimiento}%</div>
             <p className="text-[10px] text-text-secondary mt-1">Ejecutados / Programados</p>
           </CardContent>
         </Card>
@@ -382,7 +382,7 @@ export default function MantenimientoPage() {
                   <TableRow key={mtto.id} className="border-border-dark hover:bg-white/5">
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-black text-white">{mtto.vehiculoId}</span>
+                        <span className="font-black text-foreground">{mtto.vehiculoId}</span>
                         {mtto.consecutivoOT && <span className="text-[10px] text-primary font-mono">{mtto.consecutivoOT}</span>}
                       </div>
                     </TableCell>
@@ -402,10 +402,10 @@ export default function MantenimientoPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-white">{mtto.taller}</TableCell>
+                    <TableCell className="text-xs text-foreground">{mtto.taller}</TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="text-xs text-white font-bold">{mtto.fechaEjecucion}</span>
+                        <span className="text-xs text-foreground font-bold">{mtto.fechaEjecucion}</span>
                         {mtto.kmAlServicio > 0 && <span className="text-[10px] text-text-secondary">{mtto.kmAlServicio?.toLocaleString()} km</span>}
                       </div>
                     </TableCell>

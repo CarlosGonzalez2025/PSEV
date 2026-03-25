@@ -63,8 +63,8 @@ export default function VehicleDetailPage() {
 
   const { data: inspecciones, error: inspeccionesError } = useCollection(inspeccionesRef);
 
-  if (loadingVehicle) return <div className="p-10 text-white animate-pulse">Cargando Hoja de Vida...</div>;
-  if (!vehicle) return <div className="p-10 text-white text-center">Vehículo no encontrado.</div>;
+  if (loadingVehicle) return <div className="p-10 text-foreground animate-pulse">Cargando Hoja de Vida...</div>;
+  if (!vehicle) return <div className="p-10 text-foreground text-center">Vehículo no encontrado.</div>;
 
   const checkVencimiento = (fechaStr: string) => {
     if (!fechaStr) return 'neutral';
@@ -80,11 +80,11 @@ export default function VehicleDetailPage() {
   return (
     <div className="space-y-6 pb-10">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" className="text-text-secondary hover:text-white" onClick={() => router.back()}>
+        <Button variant="ghost" className="text-text-secondary hover:text-foreground" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 size-4" /> Volver a Flota
         </Button>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-border-dark text-white">
+          <Button variant="outline" className="border-border-dark text-foreground">
             <Printer className="mr-2 size-4" /> Exportar Hoja de Vida
           </Button>
           <Button className="bg-primary font-bold">
@@ -101,14 +101,14 @@ export default function VehicleDetailPage() {
               <div className="size-20 rounded-2xl bg-primary flex items-center justify-center text-white mb-4 shadow-xl shadow-primary/20">
                 <Truck className="size-10" />
               </div>
-              <h2 className="text-3xl font-black text-white tracking-tighter">{vehicle.placa}</h2>
+              <h2 className="text-3xl font-black text-foreground tracking-tighter">{vehicle.placa}</h2>
               <p className="text-primary font-bold uppercase text-xs tracking-widest">{vehicle.marca} {vehicle.modelo}</p>
               <div className="flex gap-2 mt-4">
                 <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
                   {vehicle.estadoOperativo?.toUpperCase()}
                 </Badge>
                 {vehicle.tipoPropiedad && (
-                  <Badge variant="outline" className="text-white border-border-dark">
+                  <Badge variant="outline" className="text-foreground border-border-dark">
                     {vehicle.tipoPropiedad}
                   </Badge>
                 )}
@@ -117,38 +117,38 @@ export default function VehicleDetailPage() {
             <CardContent className="p-6 space-y-4">
               <div className="space-y-1">
                 <p className="text-[10px] font-black text-text-secondary uppercase">Propietario</p>
-                <p className="text-sm font-bold text-white flex items-center gap-2">
+                <p className="text-sm font-bold text-foreground flex items-center gap-2">
                   <User className="size-3 text-primary" /> {vehicle.propietario}
                 </p>
               </div>
               {vehicle.conductorAsignado && (
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-text-secondary uppercase">Conductor Asignado</p>
-                  <p className="text-sm font-bold text-white flex items-center gap-2">
+                  <p className="text-sm font-bold text-foreground flex items-center gap-2">
                     <User className="size-3 text-primary" /> {vehicle.conductorAsignado}
                   </p>
                 </div>
               )}
               <div className="space-y-1">
                 <p className="text-[10px] font-black text-text-secondary uppercase">Kilometraje Acumulado</p>
-                <p className="text-xl font-black text-white">{vehicle.kilometrajeActual?.toLocaleString()} km</p>
+                <p className="text-xl font-black text-foreground">{vehicle.kilometrajeActual?.toLocaleString()} km</p>
               </div>
               <div className="pt-4 border-t border-border-dark grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-text-secondary uppercase">Clase</p>
-                  <p className="text-xs font-bold text-white">{vehicle.tipoVehiculo}</p>
+                  <p className="text-xs font-bold text-foreground">{vehicle.tipoVehiculo}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-text-secondary uppercase">Combustible</p>
-                  <p className="text-xs font-bold text-white">{vehicle.tipoCombustible || 'N/A'}</p>
+                  <p className="text-xs font-bold text-foreground">{vehicle.tipoCombustible || 'N/A'}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-text-secondary uppercase">Color</p>
-                  <p className="text-xs font-bold text-white">{vehicle.color || 'N/A'}</p>
+                  <p className="text-xs font-bold text-foreground">{vehicle.color || 'N/A'}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-text-secondary uppercase">Centro Costo</p>
-                  <p className="text-xs font-bold text-white">{vehicle.centroCosto || 'N/A'}</p>
+                  <p className="text-xs font-bold text-foreground">{vehicle.centroCosto || 'N/A'}</p>
                 </div>
               </div>
             </CardContent>
@@ -167,7 +167,7 @@ export default function VehicleDetailPage() {
                 <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-border-dark">
                   <div>
                     <p className="text-[10px] font-bold text-text-secondary uppercase">{doc.label}</p>
-                    <p className="text-xs font-bold text-white">{doc.date || 'N/A'}</p>
+                    <p className="text-xs font-bold text-foreground">{doc.date || 'N/A'}</p>
                   </div>
                   <Badge className={checkVencimiento(doc.date) === 'vencido' ? 'bg-red-500' : checkVencimiento(doc.date) === 'por-vencer' ? 'bg-amber-500' : 'bg-emerald-500'}>
                     {checkVencimiento(doc.date).toUpperCase()}
@@ -196,7 +196,7 @@ export default function VehicleDetailPage() {
             <TabsContent value="overview" className="mt-0 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Card 1: Identificación y Especificaciones */}
-                <Card className="bg-surface-dark border-border-dark text-white">
+                <Card className="bg-surface-dark border-border-dark text-foreground">
                   <CardHeader><CardTitle className="text-sm font-black uppercase">Identificación y Chasis</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -216,7 +216,7 @@ export default function VehicleDetailPage() {
                 </Card>
 
                 {/* Card 2: Uso y Exposición */}
-                <Card className="bg-surface-dark border-border-dark text-white">
+                <Card className="bg-surface-dark border-border-dark text-foreground">
                   <CardHeader><CardTitle className="text-sm font-black uppercase">Uso y Exposición</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-4">
@@ -263,16 +263,16 @@ export default function VehicleDetailPage() {
                       ) : (
                         mantenimientos?.map((m: any) => (
                           <TableRow key={m.id} className="border-border-dark hover:bg-white/5">
-                            <TableCell className="text-xs text-white">{m.fechaEjecucion}</TableCell>
+                            <TableCell className="text-xs text-foreground">{m.fechaEjecucion}</TableCell>
                             <TableCell>
                               <div className="flex flex-col">
                                 <Badge className={`w-fit text-[9px] mb-1 ${m.tipo === 'Correctivo' ? 'bg-red-500' : 'bg-blue-500'}`}>{m.tipo?.toUpperCase()}</Badge>
-                                <span className="text-sm font-bold text-white">{m.descripcion}</span>
+                                <span className="text-sm font-bold text-foreground">{m.descripcion}</span>
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-col">
-                                <span className="text-xs text-white">{m.taller}</span>
+                                <span className="text-xs text-foreground">{m.taller}</span>
                                 <span className="text-[10px] text-text-secondary uppercase">{m.tecnicoResponsable}</span>
                               </div>
                             </TableCell>
@@ -304,8 +304,8 @@ export default function VehicleDetailPage() {
                       ) : (
                         inspecciones?.map((i: any) => (
                           <TableRow key={i.id} className="border-border-dark hover:bg-white/5">
-                            <TableCell className="text-xs text-white font-mono">{i.fechaHora?.replace('T', ' ')}</TableCell>
-                            <TableCell className="text-sm text-white font-bold">{i.conductorId}</TableCell>
+                            <TableCell className="text-xs text-foreground font-mono">{i.fechaHora?.replace('T', ' ')}</TableCell>
+                            <TableCell className="text-sm text-foreground font-bold">{i.conductorId}</TableCell>
                             <TableCell className="text-xs text-text-secondary">{i.kilometraje?.toLocaleString()} km</TableCell>
                             <TableCell>
                               <Badge className={i.aprobadoParaCircular ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}>

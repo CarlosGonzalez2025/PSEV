@@ -229,7 +229,7 @@ export default function UsuariosPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4 text-center">
         <ShieldX className="size-12 text-destructive" />
-        <h2 className="text-white font-black text-xl uppercase">Acceso Restringido</h2>
+        <h2 className="text-foreground font-black text-xl uppercase">Acceso Restringido</h2>
         <p className="text-text-secondary text-sm">No tienes permisos para gestionar usuarios.</p>
       </div>
     );
@@ -240,7 +240,7 @@ export default function UsuariosPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">
             Gestión de Usuarios
           </h1>
           <p className="text-text-secondary mt-1">
@@ -266,7 +266,7 @@ export default function UsuariosPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">{stats.total}</div>
+            <div className="text-3xl font-black text-foreground">{stats.total}</div>
           </CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark">
@@ -336,7 +336,7 @@ export default function UsuariosPage() {
                         <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm uppercase italic">
                           {u.nombreCompleto?.substring(0, 2) || '?'}
                         </div>
-                        <span className="text-sm font-bold text-white uppercase tracking-tight">
+                        <span className="text-sm font-bold text-foreground uppercase tracking-tight">
                           {u.nombreCompleto}
                         </span>
                       </div>
@@ -400,7 +400,7 @@ export default function UsuariosPage() {
               >
                 <RolBadge rol={rol} />
                 <div>
-                  <p className="text-xs font-bold text-white">{cfg.label}</p>
+                  <p className="text-xs font-bold text-foreground">{cfg.label}</p>
                   <p className="text-[11px] text-text-secondary mt-0.5">{cfg.descripcion}</p>
                 </div>
               </div>
@@ -410,7 +410,7 @@ export default function UsuariosPage() {
 
       {/* Dialog crear invitación */}
       <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) setActivationUrl(null); }}>
-        <DialogContent className="max-w-lg bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+        <DialogContent className="max-w-lg bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
           <DialogHeader className="p-6 bg-primary/10 border-b border-border-dark">
             <DialogTitle className="text-xl font-black uppercase italic">Invitar Nuevo Usuario</DialogTitle>
             <DialogDescription className="text-text-secondary">
@@ -438,8 +438,8 @@ export default function UsuariosPage() {
                   <>
                     <p className="text-amber-400 font-black text-lg">Invitación creada</p>
                     <p className="text-text-secondary text-sm mt-1">
-                      El correo <strong className="text-white">no pudo enviarse</strong>. Copia el enlace y compártelo manualmente con{' '}
-                      <strong className="text-white">{invitedName}</strong>.
+                      El correo <strong className="text-foreground">no pudo enviarse</strong>. Copia el enlace y compártelo manualmente con{' '}
+                      <strong className="text-foreground">{invitedName}</strong>.
                     </p>
                   </>
                 ) : (
@@ -447,7 +447,7 @@ export default function UsuariosPage() {
                     <p className="text-emerald-400 font-black text-lg">¡Correo enviado!</p>
                     <p className="text-text-secondary text-sm mt-1">
                       Se envió un correo de invitación a{' '}
-                      <strong className="text-white">{invitedEmail}</strong>.<br />
+                      <strong className="text-foreground">{invitedEmail}</strong>.<br />
                       El enlace expira en 7 días.
                     </p>
                   </>

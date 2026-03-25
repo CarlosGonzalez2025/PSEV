@@ -103,11 +103,11 @@ export default function PoliticaPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">Política de Seguridad Vial</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Política de Seguridad Vial</h1>
           <p className="text-text-secondary mt-1">Compromiso, lineamientos y corresponsabilidad (Paso 3)</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="font-bold border-border-dark text-white hover:bg-white/10 h-11 uppercase text-xs tracking-widest">
+          <Button variant="outline" className="font-bold border-border-dark text-foreground hover:bg-white/10 h-11 uppercase text-xs tracking-widest">
             <History className="w-4 h-4 mr-2" /> Historial
           </Button>
           <Button className="font-black shadow-lg shadow-primary/20 bg-primary h-11 uppercase px-8" onClick={handleSave}>
@@ -121,7 +121,7 @@ export default function PoliticaPage() {
           <Card className="bg-surface-dark border-border-dark shadow-2xl overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 bg-white/[0.02]">
               <div>
-                <CardTitle className="text-lg font-black uppercase text-white tracking-tighter italic">Cuerpo de la Política</CardTitle>
+                <CardTitle className="text-lg font-black uppercase text-foreground tracking-tighter italic">Cuerpo de la Política</CardTitle>
                 <CardDescription className="text-text-secondary">Redacción oficial del compromiso organizacional</CardDescription>
               </div>
               <div className="flex flex-col items-end gap-1">
@@ -133,7 +133,7 @@ export default function PoliticaPage() {
             </CardHeader>
             <CardContent className="p-0">
               <Textarea
-                className="w-full min-h-[500px] bg-transparent border-none p-10 text-white resize-none font-serif leading-relaxed text-lg focus-visible:ring-0 custom-scrollbar"
+                className="w-full min-h-[500px] bg-transparent border-none p-10 text-foreground resize-none font-serif leading-relaxed text-lg focus-visible:ring-0 custom-scrollbar"
                 placeholder="Escriba aquí la política de seguridad vial de la organización..."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -143,7 +143,7 @@ export default function PoliticaPage() {
 
           <Card className="bg-surface-dark border-border-dark shadow-lg">
             <CardHeader className="pb-2">
-              <CardTitle className="text-md font-black uppercase text-white flex items-center gap-2">
+              <CardTitle className="text-md font-black uppercase text-foreground flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-primary" /> Tracking de Divulgación y Firmas
               </CardTitle>
             </CardHeader>
@@ -151,9 +151,9 @@ export default function PoliticaPage() {
               <div className="flex justify-between items-center bg-black/20 p-6 rounded-2xl border border-white/5">
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Cobertura de Divulgación</p>
-                  <p className="text-3xl font-black text-white">{coveragePct}% <span className="text-xs text-text-secondary font-normal italic">Personas registradas</span></p>
+                  <p className="text-3xl font-black text-foreground">{coveragePct}% <span className="text-xs text-text-secondary font-normal italic">Personas registradas</span></p>
                 </div>
-                <Users className="size-10 text-white/10" />
+                <Users className="size-10 text-foreground/10" />
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] font-black uppercase text-text-secondary">
@@ -165,7 +165,7 @@ export default function PoliticaPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
                   <p className="text-[10px] font-bold text-text-secondary uppercase">Leído</p>
-                  <p className="text-lg font-black text-white">45</p>
+                  <p className="text-lg font-black text-foreground">45</p>
                 </div>
                 <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
                   <p className="text-[10px] font-bold text-text-secondary uppercase">Pendiente</p>
@@ -187,7 +187,7 @@ export default function PoliticaPage() {
         <aside className="lg:col-span-4 space-y-6">
           <Card className="bg-surface-dark border-border-dark sticky top-24 shadow-xl border-l-4 border-l-primary">
             <CardHeader>
-              <CardTitle className="text-base font-black uppercase text-white flex items-center gap-2">
+              <CardTitle className="text-base font-black uppercase text-foreground flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-primary" /> Checklist Legal (Paso 3)
               </CardTitle>
             </CardHeader>
@@ -203,7 +203,7 @@ export default function PoliticaPage() {
                   <div className="size-6 rounded-full border-2 border-primary/30 flex items-center justify-center text-primary group-hover:bg-primary/20">
                     <Check className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-text-secondary group-hover:text-white uppercase tracking-tight">{req}</span>
+                  <span className="text-xs font-bold text-text-secondary group-hover:text-foreground uppercase tracking-tight">{req}</span>
                 </div>
               ))}
 
@@ -220,10 +220,10 @@ export default function PoliticaPage() {
           </Card>
 
           <Card className="bg-surface-dark border-border-dark">
-            <CardHeader><CardTitle className="text-sm font-black uppercase text-white">Firma de Representante Legal</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm font-black uppercase text-foreground">Firma de Representante Legal</CardTitle></CardHeader>
             <CardContent>
               <div className="border-2 border-dashed border-border-dark rounded-2xl p-8 flex flex-col items-center justify-center hover:border-primary/50 transition-all cursor-pointer bg-black/20 group">
-                <Upload className="size-8 text-white/20 group-hover:text-primary mb-2 transition-colors" />
+                <Upload className="size-8 text-foreground/20 group-hover:text-primary mb-2 transition-colors" />
                 <p className="text-[10px] font-black text-text-secondary uppercase">Cargar PDF Escaneado</p>
                 <p className="text-[8px] text-text-secondary italic mt-1">Soporte físico con firma y sello.</p>
               </div>
@@ -234,7 +234,7 @@ export default function PoliticaPage() {
 
       {/* DIALOG DISTRIBUCIÓN */}
       <Dialog open={isDistributeOpen} onOpenChange={setIsDistributeOpen}>
-        <DialogContent className="max-w-md bg-surface-dark border-border-dark text-white">
+        <DialogContent className="max-w-md bg-surface-dark border-border-dark text-foreground">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase italic text-emerald-500">Notificación Masiva</DialogTitle>
             <DialogDescription>Se enviará una solicitud de firma digital por WhatsApp y Correo a los 57 colaboradores de la flota.</DialogDescription>

@@ -27,7 +27,7 @@ export default function EficienciaEnergeticaPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Eficiencia Energética</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Eficiencia Energética</h1>
           <p className="text-text-secondary mt-1">Control de combustible y huella de carbono (Paso 14 del PESV)</p>
         </div>
         <Button className="font-bold shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white">
@@ -42,7 +42,7 @@ export default function EficienciaEnergeticaPage() {
             <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Consumo Mes</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">0 <span className="text-sm font-normal text-text-secondary">Gal</span></div>
+            <div className="text-3xl font-black text-foreground">0 <span className="text-sm font-normal text-text-secondary">Gal</span></div>
             <p className="text-[10px] text-emerald-500 mt-2 flex items-center gap-1">
               <TrendingDown className="w-3 h-3" /> Sin registros previos
             </p>
@@ -53,7 +53,7 @@ export default function EficienciaEnergeticaPage() {
             <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Eficiencia Flota</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">0 <span className="text-sm font-normal text-text-secondary">Km/Gal</span></div>
+            <div className="text-3xl font-black text-foreground">0 <span className="text-sm font-normal text-text-secondary">Km/Gal</span></div>
             <Progress value={0} className="h-1.5 mt-2" />
           </CardContent>
         </Card>
@@ -62,7 +62,7 @@ export default function EficienciaEnergeticaPage() {
             <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Huella de CO2</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">0 <span className="text-sm font-normal text-text-secondary">kg</span></div>
+            <div className="text-3xl font-black text-foreground">0 <span className="text-sm font-normal text-text-secondary">kg</span></div>
             <p className="text-[10px] text-primary mt-2 flex items-center gap-1">
               <Leaf className="w-3 h-3" /> Iniciando medición
             </p>
@@ -73,7 +73,7 @@ export default function EficienciaEnergeticaPage() {
             <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">Desviaciones</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">0</div>
+            <div className="text-3xl font-black text-foreground">0</div>
             <p className="text-[10px] text-red-500 mt-2 flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" /> Sin anomalías
             </p>
@@ -84,7 +84,7 @@ export default function EficienciaEnergeticaPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 bg-surface-dark border-border-dark shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-lg font-bold text-white">Historial de Abastecimiento</CardTitle>
+            <CardTitle className="text-lg font-bold text-foreground">Historial de Abastecimiento</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -104,17 +104,17 @@ export default function EficienciaEnergeticaPage() {
                         <Fuel className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-white">{c.vehiculoId}</p>
+                        <p className="text-sm font-bold text-foreground">{c.vehiculoId}</p>
                         <p className="text-[10px] text-text-secondary">{c.estacion}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-8">
                       <div className="text-right">
-                        <p className="text-sm font-bold text-white">{c.cantidadGalones} Gal</p>
+                        <p className="text-sm font-bold text-foreground">{c.cantidadGalones} Gal</p>
                         <p className="text-[10px] text-text-secondary font-mono">${c.costoTotal?.toLocaleString()}</p>
                       </div>
                       <div className="text-right hidden sm:block">
-                        <p className="text-xs text-white">{c.fecha?.split('T')[0]}</p>
+                        <p className="text-xs text-foreground">{c.fecha?.split('T')[0]}</p>
                         <p className="text-[10px] text-text-secondary">{c.kilometraje?.toLocaleString()} km</p>
                       </div>
                       <Badge variant="outline" className="border-emerald-500/30 text-emerald-500 text-[10px]">CERRADO</Badge>
@@ -128,7 +128,7 @@ export default function EficienciaEnergeticaPage() {
 
         <Card className="bg-surface-dark border-border-dark overflow-hidden shadow-2xl">
           <CardHeader className="pb-0">
-            <CardTitle className="text-base font-bold text-white flex items-center gap-2">
+            <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <MapPin className="w-4 h-4 text-emerald-500" /> Estaciones Frecuentes
             </CardTitle>
           </CardHeader>

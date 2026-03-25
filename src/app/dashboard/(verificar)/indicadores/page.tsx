@@ -70,11 +70,11 @@ export default function IndicadoresPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Dashboard de Indicadores SISI</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Dashboard de Indicadores SISI</h1>
           <p className="text-text-secondary mt-1">Reporte trimestral alineado a la Resolución 40595 (Paso 20)</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="border-border-dark text-white hover:bg-white/10 font-bold">
+          <Button variant="outline" className="border-border-dark text-foreground hover:bg-white/10 font-bold">
             <Download className="size-4 mr-2" />
             Descargar Formato SISI (Excel)
           </Button>
@@ -101,7 +101,7 @@ export default function IndicadoresPage() {
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${ind.status === 'compliant' ? 'bg-emerald-500' : ind.status === 'warning' ? 'bg-amber-500' : 'bg-primary'}`} />
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <div>
-                      <CardTitle className="text-base font-bold text-white uppercase tracking-tight">{ind.name}</CardTitle>
+                      <CardTitle className="text-base font-bold text-foreground uppercase tracking-tight">{ind.name}</CardTitle>
                       <CardDescription className="text-text-secondary text-[10px] font-bold">FÓRMULA: {ind.desc}</CardDescription>
                     </div>
                     <div className={`p-2 rounded-lg ${ind.status === 'compliant' ? 'bg-emerald-500/10 text-emerald-500' : ind.status === 'warning' ? 'bg-amber-500/10 text-amber-500' : 'bg-primary/10 text-primary'}`}>
@@ -111,7 +111,7 @@ export default function IndicadoresPage() {
                   <CardContent className="space-y-4">
                     <div className="flex items-baseline justify-between">
                       <div className="flex flex-col">
-                        <span className="text-4xl font-black text-white tracking-tighter">{ind.current}</span>
+                        <span className="text-4xl font-black text-foreground tracking-tighter">{ind.current}</span>
                         <span className="text-[10px] text-text-secondary font-bold uppercase">Resultado actual</span>
                       </div>
                       <div className="text-right">
@@ -131,7 +131,7 @@ export default function IndicadoresPage() {
 
       <Card className="bg-surface-dark border-border-dark shadow-2xl">
         <CardHeader>
-          <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+          <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
             <History className="w-5 h-5 text-primary" /> Reportes Trimestrales Enviados
           </CardTitle>
           <CardDescription>Evidencia de cumplimiento ante la autoridad competente</CardDescription>
@@ -140,16 +140,16 @@ export default function IndicadoresPage() {
           <Table>
             <TableHeader>
               <TableRow className="border-border-dark bg-white/5">
-                <TableHead className="text-white font-bold">Periodo</TableHead>
-                <TableHead className="text-white font-bold">Fecha Envío</TableHead>
-                <TableHead className="text-white font-bold text-center">Cumplimiento Global</TableHead>
+                <TableHead className="text-foreground font-bold">Periodo</TableHead>
+                <TableHead className="text-foreground font-bold">Fecha Envío</TableHead>
+                <TableHead className="text-foreground font-bold text-center">Cumplimiento Global</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {mediciones?.map((m) => (
                 <TableRow key={m.id} className="border-border-dark">
-                  <TableCell className="text-white font-bold">{m.periodo}</TableCell>
+                  <TableCell className="text-foreground font-bold">{m.periodo}</TableCell>
                   <TableCell className="text-text-secondary text-sm">{m.fechaMedicion?.split('T')[0]}</TableCell>
                   <TableCell className="text-center">
                     <Badge className={m.resultadoPorcentaje > 90 ? "bg-emerald-500/10 text-emerald-500 border-none" : "bg-amber-500/10 text-amber-500 border-none"}>

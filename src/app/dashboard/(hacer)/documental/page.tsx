@@ -43,11 +43,11 @@ export default function DocumentalPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase">Retención Documental</h1>
+                    <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Retención Documental</h1>
                     <p className="text-text-secondary mt-1">Gestión del ciclo de vida de la información (Paso 19)</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="border-border-dark text-white hover:bg-white/10 font-bold">
+                    <Button variant="outline" className="border-border-dark text-foreground hover:bg-white/10 font-bold">
                         <Download className="w-4 h-4 mr-2" /> Copia de Seguridad
                     </Button>
                 </div>
@@ -57,7 +57,7 @@ export default function DocumentalPage() {
                 <div className="lg:col-span-8 space-y-6">
                     <Card className="bg-surface-dark border-border-dark">
                         <CardHeader>
-                            <CardTitle className="text-white flex items-center gap-2">
+                            <CardTitle className="text-foreground flex items-center gap-2">
                                 <Database className="w-5 h-5 text-primary" /> Tablas de Retención (Paso 19.1)
                             </CardTitle>
                             <CardDescription>Definición de tiempos mínimos de custodia por tipo de registro</CardDescription>
@@ -66,16 +66,16 @@ export default function DocumentalPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-border-dark bg-white/5">
-                                        <TableHead className="text-white font-bold">Tipo de Documento</TableHead>
-                                        <TableHead className="text-white font-bold">Categoría</TableHead>
-                                        <TableHead className="text-white font-bold text-center">Años de Retención</TableHead>
+                                        <TableHead className="text-foreground font-bold">Tipo de Documento</TableHead>
+                                        <TableHead className="text-foreground font-bold">Categoría</TableHead>
+                                        <TableHead className="text-foreground font-bold text-center">Años de Retención</TableHead>
                                         <TableHead className="text-right"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {RETENTION_RULES.map((rule, i) => (
                                         <TableRow key={i} className="border-border-dark hover:bg-white/5">
-                                            <TableCell className="text-white font-bold">{rule.tipo}</TableCell>
+                                            <TableCell className="text-foreground font-bold">{rule.tipo}</TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className="text-[10px] border-border-dark text-text-secondary">{rule.categoria}</Badge>
                                             </TableCell>
@@ -94,7 +94,7 @@ export default function DocumentalPage() {
 
                     <Card className="bg-surface-dark border-border-dark">
                         <CardHeader>
-                            <CardTitle className="text-white flex items-center gap-2">
+                            <CardTitle className="text-foreground flex items-center gap-2">
                                 <FileArchive className="w-5 h-5 text-amber-500" /> Archivo Histórico (Cloud Storage)
                             </CardTitle>
                         </CardHeader>
@@ -106,7 +106,7 @@ export default function DocumentalPage() {
                                             <ShieldCheck className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <p className="text-white font-bold text-sm">Integridad de Archivos</p>
+                                            <p className="text-foreground font-bold text-sm">Integridad de Archivos</p>
                                             <p className="text-xs text-text-secondary">Cifrado AES-256 habilitado en Firestore/Storage</p>
                                         </div>
                                     </div>
@@ -119,7 +119,7 @@ export default function DocumentalPage() {
                                             <Clock className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <p className="text-white font-bold text-sm">Purga Automática</p>
+                                            <p className="text-foreground font-bold text-sm">Purga Automática</p>
                                             <p className="text-xs text-text-secondary">Eliminar registros más antiguos de 5 años</p>
                                         </div>
                                     </div>
@@ -133,16 +133,16 @@ export default function DocumentalPage() {
                 <aside className="lg:col-span-4 space-y-6">
                     <Card className="bg-primary border-primary shadow-xl shadow-primary/20">
                         <CardHeader>
-                            <CardTitle className="text-white text-base font-black flex items-center gap-2">
+                            <CardTitle className="text-foreground text-base font-black flex items-center gap-2">
                                 <ShieldCheck className="w-5 h-5" /> Seguridad
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <p className="text-xs text-white/80 leading-relaxed font-medium">
+                            <p className="text-xs text-foreground/80 leading-relaxed font-medium">
                                 El software garantiza el acceso controlado mediante roles (Visa/Passport) para evitar la alteración de registros históricos.
                             </p>
                             <div className="pt-4 border-t border-white/20">
-                                <div className="flex justify-between text-[10px] text-white/60 mb-1">
+                                <div className="flex justify-between text-[10px] text-foreground/60 mb-1">
                                     <span>ALMACENAMIENTO TENANT</span>
                                     <span>45%</span>
                                 </div>
@@ -155,7 +155,7 @@ export default function DocumentalPage() {
 
                     <Card className="bg-surface-dark border-border-dark">
                         <CardHeader>
-                            <CardTitle className="text-white text-sm font-bold flex items-center gap-2">
+                            <CardTitle className="text-foreground text-sm font-bold flex items-center gap-2">
                                 <AlertCircle className="w-4 h-4 text-red-500" /> Registros en Riesgo
                             </CardTitle>
                         </CardHeader>
@@ -164,7 +164,7 @@ export default function DocumentalPage() {
                                 <p className="text-xs text-red-400 font-bold">25 Inspecciones Vencidas</p>
                                 <p className="text-[10px] text-text-secondary mt-1">Superan el periodo de 1 año. Se recomienda descarga a backup offline antes de purga.</p>
                             </div>
-                            <Button className="w-full font-bold h-10 bg-white/5 hover:bg-white/10 text-white border-border-dark" variant="outline">
+                            <Button className="w-full font-bold h-10 bg-white/5 hover:bg-white/10 text-foreground border-border-dark" variant="outline">
                                 Gestionar Purga Manual
                             </Button>
                         </CardContent>

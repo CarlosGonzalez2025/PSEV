@@ -184,7 +184,7 @@ export default function ConductoresPage() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">Talento Humano Vial</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Talento Humano Vial</h1>
           <p className="text-text-secondary mt-1">Gestión de competencias, salud y comportamiento seguro (Pasos 10 y 11)</p>
         </div>
         <div className="flex gap-2">
@@ -200,7 +200,7 @@ export default function ConductoresPage() {
                 <Plus className="size-5 mr-2" /> Nuevo Actor Vial
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-xl bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+            <DialogContent className="max-w-xl bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
               <DialogHeader className="p-6 bg-primary/10 border-b border-border-dark">
                 <DialogTitle className="text-xl font-black uppercase italic">Hoja de Vida del Actor Vial</DialogTitle>
                 <DialogDescription className="text-text-secondary">Paso 10: Perfil y Requisitos de Ingreso.</DialogDescription>
@@ -285,7 +285,7 @@ export default function ConductoresPage() {
 
           {/* Edit Dialog */}
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
-            <DialogContent className="max-w-xl bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+            <DialogContent className="max-w-xl bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
               <DialogHeader className="p-6 bg-primary/10 border-b border-border-dark">
                 <DialogTitle className="text-xl font-black uppercase italic">Editar Actor Vial</DialogTitle>
                 <DialogDescription className="text-text-secondary">Actualiza los datos del colaborador.</DialogDescription>
@@ -357,7 +357,7 @@ export default function ConductoresPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Actores Viales</p></CardHeader>
-          <CardContent><div className="text-3xl font-black text-white">{conductores?.length || 0}</div></CardContent>
+          <CardContent><div className="text-3xl font-black text-foreground">{conductores?.length || 0}</div></CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest text-emerald-500">Scoring Promedio</p></CardHeader>
@@ -417,7 +417,7 @@ export default function ConductoresPage() {
                             {c.nombreCompleto?.substring(0, 2)}
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-sm font-bold text-white uppercase tracking-tight">{c.nombreCompleto}</span>
+                            <span className="text-sm font-bold text-foreground uppercase tracking-tight">{c.nombreCompleto}</span>
                             <Badge variant="outline" className="w-fit text-[8px] h-4 mt-0.5 border-primary/20 text-primary uppercase">{c.rolEnLaVia}</Badge>
                           </div>
                         </div>
@@ -437,7 +437,7 @@ export default function ConductoresPage() {
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="inline-flex flex-col items-center gap-1">
-                          <span className="text-xs font-black text-white">{c.asistenciaCapacitaciones || 0}%</span>
+                          <span className="text-xs font-black text-foreground">{c.asistenciaCapacitaciones || 0}%</span>
                           <Progress value={c.asistenciaCapacitaciones || 0} className="w-16 h-1 bg-white/5" indicatorClassName="bg-primary" />
                         </div>
                       </TableCell>

@@ -91,7 +91,7 @@ export default function PlanTrabajoPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase">Plan Anual de Trabajo</h1>
+                    <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Plan Anual de Trabajo</h1>
                     <p className="text-text-secondary mt-1">Cronograma de actividades y seguimiento de cumplimiento (Paso 9)</p>
                 </div>
 
@@ -102,7 +102,7 @@ export default function PlanTrabajoPage() {
                             Nueva Actividad
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-surface-dark border-border-dark text-white">
+                    <DialogContent className="bg-surface-dark border-border-dark text-foreground">
                         <DialogHeader>
                             <DialogTitle>Programar Actividad</DialogTitle>
                             <DialogDescription className="text-text-secondary">Defina el responsable y la fecha de ejecución.</DialogDescription>
@@ -110,21 +110,21 @@ export default function PlanTrabajoPage() {
                         <form onSubmit={handleAddActivity} className="space-y-4 pt-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase text-text-secondary">Nombre de la Actividad</label>
-                                <Input name="nombre" placeholder="Ej: Capacitación en Fatiga" className="bg-background-dark border-border-dark text-white" required />
+                                <Input name="nombre" placeholder="Ej: Capacitación en Fatiga" className="bg-background-dark border-border-dark text-foreground" required />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold uppercase text-text-secondary">Responsable</label>
-                                    <Input name="responsable" placeholder="Cargo o Nombre" className="bg-background-dark border-border-dark text-white" required />
+                                    <Input name="responsable" placeholder="Cargo o Nombre" className="bg-background-dark border-border-dark text-foreground" required />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold uppercase text-text-secondary">Fecha Programada</label>
-                                    <Input type="date" name="fecha" className="bg-background-dark border-border-dark text-white" required />
+                                    <Input type="date" name="fecha" className="bg-background-dark border-border-dark text-foreground" required />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase text-text-secondary">Prioridad</label>
-                                <select name="prioridad" className="w-full bg-background-dark border-border-dark text-white h-10 px-3 rounded-md border text-sm focus:ring-1 focus:ring-primary outline-none">
+                                <select name="prioridad" className="w-full bg-background-dark border-border-dark text-foreground h-10 px-3 rounded-md border text-sm focus:ring-1 focus:ring-primary outline-none">
                                     <option value="Alta">Alta</option>
                                     <option value="Media">Media</option>
                                     <option value="Baja">Baja</option>
@@ -141,13 +141,13 @@ export default function PlanTrabajoPage() {
                 <div className="lg:col-span-4 space-y-6">
                     <Card className="bg-surface-dark border-border-dark shadow-xl">
                         <CardHeader>
-                            <CardTitle className="text-white text-base font-bold flex items-center gap-2">
+                            <CardTitle className="text-foreground text-base font-bold flex items-center gap-2">
                                 <ListTodo className="w-5 h-5 text-primary" /> Cumplimiento del Plan
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex justify-between items-end">
-                                <div className="text-3xl font-black text-white">{completedCount}/{totalCount}</div>
+                                <div className="text-3xl font-black text-foreground">{completedCount}/{totalCount}</div>
                                 <div className="text-sm font-bold text-primary">{progressValue.toFixed(1)}%</div>
                             </div>
                             <Progress value={progressValue} className="h-2" />
@@ -163,7 +163,7 @@ export default function PlanTrabajoPage() {
                                 mode="single"
                                 selected={date}
                                 onSelect={setDate}
-                                className="rounded-md border border-border-dark bg-background-dark text-white"
+                                className="rounded-md border border-border-dark bg-background-dark text-foreground"
                             />
                         </CardContent>
                     </Card>
@@ -173,7 +173,7 @@ export default function PlanTrabajoPage() {
                 <div className="lg:col-span-8">
                     <Card className="bg-surface-dark border-border-dark shadow-2xl">
                         <CardHeader className="border-b border-border-dark">
-                            <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                            <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                                 <CalendarIcon className="w-5 h-5 text-primary" /> Cronograma de Actividades
                             </CardTitle>
                         </CardHeader>
@@ -181,11 +181,11 @@ export default function PlanTrabajoPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-border-dark bg-white/5">
-                                        <TableHead className="text-white font-bold w-12"></TableHead>
-                                        <TableHead className="text-white font-bold">Actividad</TableHead>
-                                        <TableHead className="text-white font-bold">Responsable</TableHead>
-                                        <TableHead className="text-white font-bold">Programado</TableHead>
-                                        <TableHead className="text-white font-bold">Estado</TableHead>
+                                        <TableHead className="text-foreground font-bold w-12"></TableHead>
+                                        <TableHead className="text-foreground font-bold">Actividad</TableHead>
+                                        <TableHead className="text-foreground font-bold">Responsable</TableHead>
+                                        <TableHead className="text-foreground font-bold">Programado</TableHead>
+                                        <TableHead className="text-foreground font-bold">Estado</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -209,7 +209,7 @@ export default function PlanTrabajoPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-text-secondary text-sm">{act.responsable}</TableCell>
-                                            <TableCell className="text-white text-sm">{act.fechaProgramada}</TableCell>
+                                            <TableCell className="text-foreground text-sm">{act.fechaProgramada}</TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className={act.estado === "Completada" ? "bg-emerald-500/10 text-emerald-500 border-none" : "bg-amber-500/10 text-amber-500 border-none"}>
                                                     {act.estado}

@@ -32,11 +32,11 @@ export default function DashboardPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-white uppercase">Dashboard Principal</h1>
+          <h1 className="text-4xl font-black tracking-tight text-foreground uppercase">Dashboard Principal</h1>
           <p className="text-muted-foreground text-lg">Resumen estratégico de seguridad vial (Res. 40595)</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="font-bold border-border-dark text-white hover:bg-white/10">
+          <Button variant="outline" className="font-bold border-border-dark text-foreground hover:bg-white/10">
             <Calendar className="w-4 h-4 mr-2" />
             Octubre 2023
           </Button>

@@ -148,7 +148,7 @@ export default function LiderazgoPage() {
         <div className="space-y-8 pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">Liderazgo y Recursos</h1>
+                    <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Liderazgo y Recursos</h1>
                     <p className="text-text-secondary mt-1">Gabinete de Seguridad Vial y Gestión de Recursos (Pasos 1, 2 y 4)</p>
                 </div>
                 <div className="flex gap-2">
@@ -168,7 +168,7 @@ export default function LiderazgoPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         <Card className="lg:col-span-5 bg-surface-dark border-border-dark shadow-xl">
                             <CardHeader>
-                                <CardTitle className="text-lg font-black uppercase text-white tracking-tighter flex items-center gap-2">
+                                <CardTitle className="text-lg font-black uppercase text-foreground tracking-tighter flex items-center gap-2">
                                     <ShieldCheck className="text-primary size-5" /> Designación del Líder (Paso 1)
                                 </CardTitle>
                                 <CardDescription>Persona con idoneidad y autoridad para la toma de decisiones.</CardDescription>
@@ -211,21 +211,21 @@ export default function LiderazgoPage() {
                             {nivelPESV === 'Básico' ? (
                                 <Card className="bg-primary/5 border-primary/20 border-dashed p-8 text-center flex flex-col items-center justify-center">
                                     <Info className="size-12 text-primary/40 mb-4" />
-                                    <h3 className="text-white font-bold uppercase">No requiere Comité (Nivel Básico)</h3>
+                                    <h3 className="text-foreground font-bold uppercase">No requiere Comité (Nivel Básico)</h3>
                                     <p className="text-sm text-text-secondary mt-2 max-w-sm">Dada su categoría de empresa, el Líder del PESV asume directamente todas las responsabilidades. Los Pasos 2 y 3 se simplifican.</p>
                                 </Card>
                             ) : (
                                 <Card className="bg-surface-dark border-border-dark shadow-xl">
                                     <CardHeader className="flex flex-row items-center justify-between">
                                         <div>
-                                            <CardTitle className="text-lg font-black uppercase text-white tracking-tighter">Comité de Seguridad Vial (Paso 2)</CardTitle>
+                                            <CardTitle className="text-lg font-black uppercase text-foreground tracking-tighter">Comité de Seguridad Vial (Paso 2)</CardTitle>
                                             <CardDescription>Equipo interdisciplinario para el seguimiento del sistema.</CardDescription>
                                         </div>
                                         <Dialog>
                                             <DialogTrigger asChild>
                                                 <Button size="sm" className="bg-white/5 border border-border-dark font-bold text-xs"><Plus className="size-4 mr-1" /> Miembro</Button>
                                             </DialogTrigger>
-                                            <DialogContent className="bg-surface-dark border-border-dark text-white">
+                                            <DialogContent className="bg-surface-dark border-border-dark text-foreground">
                                                 <DialogHeader><DialogTitle>Nuevo Miembro de Comité</DialogTitle></DialogHeader>
                                                 <form onSubmit={handleAddMember} className="space-y-4 py-4">
                                                     <Input name="nombre" placeholder="Nombre completo" className="bg-background-dark" />
@@ -245,7 +245,7 @@ export default function LiderazgoPage() {
                                             <TableBody>
                                                 {comiteMembers?.map(m => (
                                                     <TableRow key={m.id} className="border-border-dark text-xs">
-                                                        <TableCell className="font-bold text-white uppercase">{m.nombre}</TableCell>
+                                                        <TableCell className="font-bold text-foreground uppercase">{m.nombre}</TableCell>
                                                         <TableCell><Badge variant="outline" className="text-[9px] border-primary/30 text-primary">{m.rolComite}</Badge></TableCell>
                                                         <TableCell className="text-right text-text-secondary">{new Date(m.fechaIngreso).toLocaleDateString()}</TableCell>
                                                     </TableRow>
@@ -264,7 +264,7 @@ export default function LiderazgoPage() {
                     <Card className="bg-surface-dark border-border-dark overflow-hidden">
                         <CardHeader className="bg-white/5 flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle className="text-xl font-black uppercase text-white italic">Gestor de Actas Dinámicas</CardTitle>
+                                <CardTitle className="text-xl font-black uppercase text-foreground italic">Gestor de Actas Dinámicas</CardTitle>
                                 <CardDescription>Evidencia legal de reuniones trimestrales obligatorias.</CardDescription>
                             </div>
                             <Button onClick={() => setIsActaOpen(true)} className="bg-primary font-black uppercase h-12 px-6"><Plus className="size-5 mr-1" /> Generar Acta Smart</Button>
@@ -276,7 +276,7 @@ export default function LiderazgoPage() {
                                     {actas?.map(acta => (
                                         <TableRow key={acta.id} className="border-border-dark hover:bg-white/5 transition-colors">
                                             <TableCell>
-                                                <div className="flex flex-col"><span className="text-xs font-black text-white">{acta.fecha}</span><span className="text-[10px] text-text-secondary uppercase">{acta.tipo}</span></div>
+                                                <div className="flex flex-col"><span className="text-xs font-black text-foreground">{acta.fecha}</span><span className="text-[10px] text-text-secondary uppercase">{acta.tipo}</span></div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex gap-1 flex-wrap">{acta.temas?.map((t: string) => <Badge key={t} variant="secondary" className="text-[8px] uppercase">{t}</Badge>)}</div>
@@ -300,7 +300,7 @@ export default function LiderazgoPage() {
                 <TabsContent value="recursos" className="mt-6 space-y-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card className="bg-surface-dark border-border-dark">
-                            <CardHeader><CardTitle className="text-lg font-black uppercase text-white italic">Presupuesto PESV (Paso 4)</CardTitle></CardHeader>
+                            <CardHeader><CardTitle className="text-lg font-black uppercase text-foreground italic">Presupuesto PESV (Paso 4)</CardTitle></CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="flex justify-between items-center bg-black/20 p-6 rounded-2xl border border-white/5">
                                     <div>
@@ -309,11 +309,11 @@ export default function LiderazgoPage() {
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Monto Asignado</p>
-                                        <p className="text-xl font-bold text-white/50">${presupuesto?.montoAsignado?.toLocaleString() || '0'}</p>
+                                        <p className="text-xl font-bold text-foreground/50">${presupuesto?.montoAsignado?.toLocaleString() || '0'}</p>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-xs font-black uppercase text-white"><span className="text-text-secondary">Progreso Meta Anual</span><span>{ejePct}% realizado</span></div>
+                                    <div className="flex justify-between text-xs font-black uppercase text-foreground"><span className="text-text-secondary">Progreso Meta Anual</span><span>{ejePct}% realizado</span></div>
                                     <Progress value={ejePct} className="h-2 bg-white/5" indicatorClassName="bg-emerald-500" />
                                 </div>
                                 <Button variant="outline" className="w-full border-border-dark font-bold gap-2"><DollarSign className="size-4" /> Ajustar Presupuesto</Button>
@@ -321,7 +321,7 @@ export default function LiderazgoPage() {
                         </Card>
 
                         <Card className="bg-surface-dark border-border-dark">
-                            <CardHeader><CardTitle className="text-lg font-black uppercase text-white italic">Dashboard de Corresponsabilidad</CardTitle></CardHeader>
+                            <CardHeader><CardTitle className="text-lg font-black uppercase text-foreground italic">Dashboard de Corresponsabilidad</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 {[
                                     { label: "Aprobación de Política", val: true },
@@ -337,7 +337,7 @@ export default function LiderazgoPage() {
                                 <div className="pt-4 border-t border-white/5">
                                     <div className="bg-primary/10 p-4 rounded-xl flex gap-3">
                                         <AlertCircle className="size-5 text-primary shrink-0" />
-                                        <p className="text-xs text-white">Sr. Gerente, se requiere su participación en el próximo comité para cumplir con el indicador de **Liderazgo Directivo**.</p>
+                                        <p className="text-xs text-foreground">Sr. Gerente, se requiere su participación en el próximo comité para cumplir con el indicador de **Liderazgo Directivo**.</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -348,7 +348,7 @@ export default function LiderazgoPage() {
 
             {/* Smart Acta Dialog */}
             <Dialog open={isActaOpen} onOpenChange={setIsActaOpen}>
-                <DialogContent className="max-w-2xl bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+                <DialogContent className="max-w-2xl bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
                     <DialogHeader className="p-6 bg-primary/10 border-b border-border-dark"><DialogTitle className="text-xl font-black uppercase italic">Generador de Acta Inteligente</DialogTitle></DialogHeader>
                     <form onSubmit={handleCreateActa} className="p-6 space-y-6">
                         <div className="grid grid-cols-2 gap-4">

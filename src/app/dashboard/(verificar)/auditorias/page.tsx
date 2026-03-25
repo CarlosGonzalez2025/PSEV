@@ -67,7 +67,7 @@ export default function AuditoriasPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Auditoría Integral PESV</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Auditoría Integral PESV</h1>
           <p className="text-text-secondary mt-1">Verificación técnica de los 24 pasos (Resolución 40595 de 2022)</p>
         </div>
         <Button className="font-bold shadow-lg shadow-primary/20 bg-primary">
@@ -89,7 +89,7 @@ export default function AuditoriasPage() {
                 <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Cumplimiento Global</p>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-black text-white">88%</div>
+                <div className="text-3xl font-black text-foreground">88%</div>
                 <Progress value={88} className="h-1.5 mt-2 bg-white/10" />
               </CardContent>
             </Card>
@@ -98,7 +98,7 @@ export default function AuditoriasPage() {
                 <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Pasos Cumplidos</p>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-black text-white">21 / 24</div>
+                <div className="text-3xl font-black text-foreground">21 / 24</div>
                 <p className="text-[10px] text-text-secondary mt-2">Auditado Oct 2023</p>
               </CardContent>
             </Card>
@@ -107,7 +107,7 @@ export default function AuditoriasPage() {
                 <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">Hallazgos Abiertos</p>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-black text-white">3</div>
+                <div className="text-3xl font-black text-foreground">3</div>
                 <p className="text-[10px] text-red-500 mt-2 flex items-center gap-1 font-bold">
                   <AlertCircle className="w-3 h-3" /> Requieren Plan de Acción
                 </p>
@@ -118,7 +118,7 @@ export default function AuditoriasPage() {
                 <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Próxima Auditoría</p>
               </CardHeader>
               <CardContent>
-                <div className="text-lg font-black text-white">Dic 15, 2024</div>
+                <div className="text-lg font-black text-foreground">Dic 15, 2024</div>
                 <Badge variant="outline" className="mt-2 text-[10px] border-primary/20 text-primary uppercase">Programada</Badge>
               </CardContent>
             </Card>
@@ -126,7 +126,7 @@ export default function AuditoriasPage() {
 
           <Card className="bg-surface-dark border-border-dark shadow-2xl overflow-hidden">
             <CardHeader className="bg-white/5 border-b border-border-dark">
-              <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+              <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" /> Ejecuciones Recientes
               </CardTitle>
             </CardHeader>
@@ -155,7 +155,7 @@ export default function AuditoriasPage() {
                   ) : (
                     auditorias?.map(aud => (
                       <TableRow key={aud.id} className="border-border-dark hover:bg-white/5 transition-colors">
-                        <TableCell className="text-white text-sm font-bold">{aud.fechaProgramada?.split('T')[0]}</TableCell>
+                        <TableCell className="text-foreground text-sm font-bold">{aud.fechaProgramada?.split('T')[0]}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <div className="size-7 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">A1</div>
@@ -190,7 +190,7 @@ export default function AuditoriasPage() {
         <TabsContent value="checklist" className="mt-6">
           <Card className="bg-surface-dark border-border-dark">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="text-foreground flex items-center gap-2">
                 <ClipboardList className="w-5 h-5 text-primary" /> Estructura de Verificación (24 Pasos)
               </CardTitle>
               <CardDescription>Criterios de evaluación basados en la Resolución 40595</CardDescription>
@@ -200,17 +200,17 @@ export default function AuditoriasPage() {
                 <Table>
                   <TableHeader className="sticky top-0 bg-surface-dark z-10 shadow-sm">
                     <TableRow className="border-border-dark">
-                      <TableHead className="w-16 text-white text-center">Paso</TableHead>
-                      <TableHead className="text-white">Requisito</TableHead>
-                      <TableHead className="text-white">Fase de Ciclo</TableHead>
-                      <TableHead className="text-white text-right">Módulo Vinculado</TableHead>
+                      <TableHead className="w-16 text-foreground text-center">Paso</TableHead>
+                      <TableHead className="text-foreground">Requisito</TableHead>
+                      <TableHead className="text-foreground">Fase de Ciclo</TableHead>
+                      <TableHead className="text-foreground text-right">Módulo Vinculado</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {PASOS_AUDITORIA.map((p) => (
                       <TableRow key={p.paso} className="border-border-dark group hover:bg-white/[0.02]">
                         <TableCell className="text-center font-black text-primary text-sm">{p.paso}</TableCell>
-                        <TableCell className="text-xs text-white group-hover:text-primary transition-colors">{p.nombre}</TableCell>
+                        <TableCell className="text-xs text-foreground group-hover:text-primary transition-colors">{p.nombre}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-[9px] uppercase border-border-dark text-text-secondary">{p.fase}</Badge>
                         </TableCell>

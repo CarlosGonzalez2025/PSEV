@@ -63,7 +63,7 @@ import {
   Info,
   Loader2
 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { createContratista } from '@/actions/contratistas';
 
 export default function Paso18Dashboard() {
@@ -158,7 +158,7 @@ export default function Paso18Dashboard() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Gestión de Contratistas</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Gestión de Contratistas</h1>
           <p className="text-text-secondary mt-1">Control operativo y cumplimiento del Paso 18</p>
         </div>
 
@@ -168,7 +168,7 @@ export default function Paso18Dashboard() {
                <Plus className="w-5 h-5 mr-2" /> Agregar Contratista
              </Button>
            </DialogTrigger>
-           <DialogContent className="bg-surface-dark border-border-dark text-white">
+           <DialogContent className="bg-surface-dark border-border-dark text-foreground">
              <DialogHeader>
                <DialogTitle>Nuevo Aliado / Contratista</DialogTitle>
                <DialogDescription>Se generará un link único para que el contratista cargue sus conductores y vehículos.</DialogDescription>
@@ -206,7 +206,7 @@ export default function Paso18Dashboard() {
             </div>
             <div>
               <p className="text-[10px] font-bold text-text-secondary uppercase">Total Aliados</p>
-              <p className="text-2xl font-black text-white">{stats.total}</p>
+              <p className="text-2xl font-black text-foreground">{stats.total}</p>
             </div>
           </CardContent>
         </Card>
@@ -217,7 +217,7 @@ export default function Paso18Dashboard() {
             </div>
             <div>
               <p className="text-[10px] font-bold text-text-secondary uppercase">Aprobados</p>
-              <p className="text-2xl font-black text-white">{stats.aprobados}</p>
+              <p className="text-2xl font-black text-foreground">{stats.aprobados}</p>
             </div>
           </CardContent>
         </Card>
@@ -228,7 +228,7 @@ export default function Paso18Dashboard() {
             </div>
             <div>
               <p className="text-[10px] font-bold text-text-secondary uppercase">Pendientes</p>
-              <p className="text-2xl font-black text-white">{stats.pendientes}</p>
+              <p className="text-2xl font-black text-foreground">{stats.pendientes}</p>
             </div>
           </CardContent>
         </Card>
@@ -239,7 +239,7 @@ export default function Paso18Dashboard() {
             </div>
             <div>
               <p className="text-[10px] font-bold text-text-secondary uppercase">Bloqueados</p>
-              <p className="text-2xl font-black text-white">{stats.bloqueados}</p>
+              <p className="text-2xl font-black text-foreground">{stats.bloqueados}</p>
             </div>
           </CardContent>
         </Card>
@@ -251,13 +251,13 @@ export default function Paso18Dashboard() {
            <div className="relative flex-1 max-w-sm">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-secondary" />
              <Input
-               className="bg-black/20 border-border-dark pl-9 h-10 text-white"
+               className="bg-black/20 border-border-dark pl-9 h-10 text-foreground"
                placeholder="Buscar por nombre o NIT..."
                value={searchTerm}
                onChange={e => setSearchTerm(e.target.value)}
              />
            </div>
-           <Button variant="outline" className="border-border-dark text-white"><Filter className="w-4 h-4 mr-2"/> Filtros</Button>
+           <Button variant="outline" className="border-border-dark text-foreground"><Filter className="w-4 h-4 mr-2"/> Filtros</Button>
         </div>
         
         <Table>
@@ -277,7 +277,7 @@ export default function Paso18Dashboard() {
                <TableRow><TableCell colSpan={5} className="text-center py-10 opacity-50 italic">No hay registros que coincidan.</TableCell></TableRow>
             ) : filtered?.map((c) => (
               <TableRow key={c.id} className="border-border-dark hover:bg-white/5 transition-colors">
-                <TableCell className="font-bold text-white">
+                <TableCell className="font-bold text-foreground">
                   <div className="flex flex-col">
                     {c.nombreEmpresa}
                     <span className="text-[10px] text-text-secondary font-normal">{c.contactoNombre}</span>
@@ -304,7 +304,7 @@ export default function Paso18Dashboard() {
                       <Button size="icon" variant="ghost" className="text-primary hover:bg-primary/10" onClick={() => copyToClipboard(c.portalToken)}>
                         <ClipboardCopy className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" className="text-text-secondary hover:text-white" asChild>
+                      <Button variant="ghost" className="text-text-secondary hover:text-foreground" asChild>
                          <a href={`/portal/contratista/${c.portalToken}`} target="_blank"><ExternalLink className="w-4 h-4" /></a>
                       </Button>
                       <Button size="sm" variant="secondary" className="gap-1">

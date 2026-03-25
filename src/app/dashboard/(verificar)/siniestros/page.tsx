@@ -90,18 +90,18 @@ export default function SiniestrosPage() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight uppercase text-white">Siniestralidad Vial</h1>
+          <h1 className="text-3xl font-black tracking-tight uppercase text-foreground">Siniestralidad Vial</h1>
           <p className="text-text-secondary mt-1">Registro, investigación y análisis de costos (Paso 21 del PESV)</p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="font-bold shadow-lg shadow-destructive/20 bg-destructive hover:bg-destructive/90 text-white">
+            <Button className="font-bold shadow-lg shadow-destructive/20 bg-destructive hover:bg-destructive/90 text-foreground">
               <Plus className="size-4 mr-2" />
               Reportar Siniestro
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-surface-dark border-border-dark text-white max-w-lg">
+          <DialogContent className="bg-surface-dark border-border-dark text-foreground max-w-lg">
             <DialogHeader>
               <DialogTitle>Nuevo Reporte de Siniestro</DialogTitle>
               <DialogDescription className="text-text-secondary">Asegúrese de clasificar correctamente la gravedad según la norma.</DialogDescription>
@@ -114,7 +114,7 @@ export default function SiniestrosPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Gravedad (Normativa)</Label>
-                  <select name="gravedad" className="w-full bg-background-dark border-border-dark text-white h-10 px-3 rounded-md border text-sm">
+                  <select name="gravedad" className="w-full bg-background-dark border-border-dark text-foreground h-10 px-3 rounded-md border text-sm">
                     <option value="Fatalidad">1. Fatalidad</option>
                     <option value="Herido Grave">2. Herido Grave</option>
                     <option value="Herido Leve">3. Herido Leve</option>
@@ -144,7 +144,7 @@ export default function SiniestrosPage() {
               </div>
               <div className="space-y-2">
                 <Label>Resumen Preliminar</Label>
-                <textarea name="resumen" className="w-full bg-background-dark border-border-dark text-white p-3 rounded-md border text-sm h-20 outline-none" placeholder="Descripción breve de los hechos..." required />
+                <textarea name="resumen" className="w-full bg-background-dark border-border-dark text-foreground p-3 rounded-md border text-sm h-20 outline-none" placeholder="Descripción breve de los hechos..." required />
               </div>
               <Button type="submit" variant="destructive" className="w-full font-bold">Registrar Evento Crítico</Button>
             </form>
@@ -158,7 +158,7 @@ export default function SiniestrosPage() {
             <p className="text-[10px] font-bold uppercase text-muted-foreground">Tasa Siniestralidad</p>
           </CardHeader>
           <CardContent>
-            <div className="flex items-end gap-2 text-white">
+            <div className="flex items-end gap-2 text-foreground">
               <span className="text-3xl font-black">1.2%</span>
               <Badge className="bg-green-500/10 text-green-500 mb-1 flex gap-1 border-none font-bold italic">
                 <TrendingDown className="size-3" /> -0.5%
@@ -174,7 +174,7 @@ export default function SiniestrosPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <DollarSign className="size-5 text-amber-500" />
-              <div className="text-3xl font-black text-white">{totalCostos.toLocaleString()}</div>
+              <div className="text-3xl font-black text-foreground">{totalCostos.toLocaleString()}</div>
             </div>
           </CardContent>
         </Card>
@@ -186,7 +186,7 @@ export default function SiniestrosPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <FileSearch className="size-5 text-primary" />
-              <div className="text-3xl font-black text-white">
+              <div className="text-3xl font-black text-foreground">
                 {siniestros?.filter(s => s.estadoInvestigacion === 'Abierta').length || 0}
               </div>
             </div>
@@ -211,10 +211,10 @@ export default function SiniestrosPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input className="pl-9 bg-background-dark border-border-dark text-white" placeholder="Buscar siniestro por ID, placa o conductor..." />
+              <Input className="pl-9 bg-background-dark border-border-dark text-foreground" placeholder="Buscar siniestro por ID, placa o conductor..." />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="text-white border-border-dark"><Filter className="size-4 mr-2" /> Filtros</Button>
+              <Button variant="outline" size="sm" className="text-foreground border-border-dark"><Filter className="size-4 mr-2" /> Filtros</Button>
             </div>
           </div>
         </CardHeader>
@@ -251,13 +251,13 @@ export default function SiniestrosPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-white">{s.fechaHora?.split('T')[0]}</span>
+                          <span className="text-sm font-medium text-foreground">{s.fechaHora?.split('T')[0]}</span>
                           <span className="text-[10px] text-muted-foreground">{s.fechaHora?.split('T')[1]}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-white">{s.vehiculoId}</span>
+                          <span className="text-sm font-bold text-foreground">{s.vehiculoId}</span>
                           <span className="text-[10px] text-muted-foreground">{s.conductorId}</span>
                         </div>
                       </TableCell>
@@ -266,16 +266,16 @@ export default function SiniestrosPage() {
                           {s.gravedad}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-white text-sm">
+                      <TableCell className="text-foreground text-sm">
                         $ {((s.costosDirectos || 0) + (s.costosIndirectos || 0)).toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-[10px] font-bold text-white border-border-dark bg-white/5">
+                        <Badge variant="outline" className="text-[10px] font-bold text-foreground border-border-dark bg-white/5">
                           {s.estadoInvestigacion || 'ABIERTA'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="text-text-secondary hover:text-white"><MoreVertical className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" className="text-text-secondary hover:text-foreground"><MoreVertical className="size-4" /></Button>
                       </TableCell>
                     </TableRow>
                   ))

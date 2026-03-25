@@ -269,7 +269,7 @@ export default function VehiculosPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white uppercase">Gestión de Flota (Paso 16)</h1>
+          <h1 className="text-3xl font-black tracking-tight text-foreground uppercase">Gestión de Flota (Paso 16)</h1>
           <p className="text-text-secondary mt-1">Hoja de vida digital aislada por empresa</p>
         </div>
 
@@ -288,7 +288,7 @@ export default function VehiculosPage() {
                 Registrar Vehículo
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+            <DialogContent className="max-w-3xl bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
               <DialogHeader className="p-6 border-b border-border-dark">
                 <DialogTitle className="text-xl font-black uppercase">Hoja de Vida de Vehículo</DialogTitle>
                 <DialogDescription className="text-text-secondary">Información técnica y legal PESV.</DialogDescription>
@@ -339,7 +339,7 @@ export default function VehiculosPage() {
                               <FormLabel className="text-[10px] font-bold">CLASE</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue /></SelectTrigger></FormControl>
-                                <SelectContent className="bg-surface-dark border-border-dark text-white">
+                                <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                   <SelectItem value="Vehículo liviano">Vehículo liviano</SelectItem>
                                   <SelectItem value="Camioneta/pick-up">Camioneta/pick-up</SelectItem>
                                   <SelectItem value="Motocicleta">Motocicleta</SelectItem>
@@ -361,7 +361,7 @@ export default function VehiculosPage() {
                               <FormLabel className="text-[10px] font-bold">COMBUSTIBLE</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue /></SelectTrigger></FormControl>
-                                <SelectContent className="bg-surface-dark border-border-dark text-white">
+                                <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                   <SelectItem value="Gasolina">Gasolina</SelectItem>
                                   <SelectItem value="Diesel">Diesel</SelectItem>
                                   <SelectItem value="Gas">Gas (GNV/GLP)</SelectItem>
@@ -403,7 +403,7 @@ export default function VehiculosPage() {
                               <FormLabel className="text-[10px] font-bold">TIPO PROPIEDAD</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue /></SelectTrigger></FormControl>
-                                <SelectContent className="bg-surface-dark border-border-dark text-white">
+                                <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                   <SelectItem value="Propio">Propio</SelectItem>
                                   <SelectItem value="Afiliado">Afiliado</SelectItem>
                                   <SelectItem value="Tercerizado">Tercerizado</SelectItem>
@@ -452,7 +452,7 @@ export default function VehiculosPage() {
                               <FormLabel className="text-[10px] font-bold">ESTADO OPERATIVO</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue /></SelectTrigger></FormControl>
-                                <SelectContent className="bg-surface-dark border-border-dark text-white">
+                                <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                   <SelectItem value="Operativo">Operativo</SelectItem>
                                   <SelectItem value="En Taller">En Taller</SelectItem>
                                   <SelectItem value="Bloqueado">Bloqueado</SelectItem>
@@ -489,15 +489,15 @@ export default function VehiculosPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-text-secondary">Inventario Flota</CardTitle></CardHeader>
-          <CardContent><div className="text-3xl font-black text-white">{vehiculos?.length || 0}</div></CardContent>
+          <CardContent><div className="text-3xl font-black text-foreground">{vehiculos?.length || 0}</div></CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark border-l-4 border-l-red-500">
           <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-red-500">Vencidos</CardTitle></CardHeader>
-          <CardContent><div className="text-3xl font-black text-white">{vehiculos?.filter(v => checkVencimiento(v.soatVencimiento) === 'vencido' || checkVencimiento(v.rtmVencimiento) === 'vencido').length || 0}</div></CardContent>
+          <CardContent><div className="text-3xl font-black text-foreground">{vehiculos?.filter(v => checkVencimiento(v.soatVencimiento) === 'vencido' || checkVencimiento(v.rtmVencimiento) === 'vencido').length || 0}</div></CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark border-l-4 border-l-amber-500">
           <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-amber-500">Por Vencer</CardTitle></CardHeader>
-          <CardContent><div className="text-3xl font-black text-white">{vehiculos?.filter(v => checkVencimiento(v.soatVencimiento) === 'por-vencer' || checkVencimiento(v.rtmVencimiento) === 'por-vencer').length || 0}</div></CardContent>
+          <CardContent><div className="text-3xl font-black text-foreground">{vehiculos?.filter(v => checkVencimiento(v.soatVencimiento) === 'por-vencer' || checkVencimiento(v.rtmVencimiento) === 'por-vencer').length || 0}</div></CardContent>
         </Card>
       </div>
 
@@ -521,7 +521,7 @@ export default function VehiculosPage() {
                   <TableRow key={v.id} className="hover:bg-white/5 border-border-dark">
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-mono font-black text-white text-lg">{v.placa}</span>
+                        <span className="font-mono font-black text-foreground text-lg">{v.placa}</span>
                         <span className="text-[10px] text-primary uppercase font-bold">{v.marca} {v.modelo}</span>
                       </div>
                     </TableCell>
@@ -531,12 +531,12 @@ export default function VehiculosPage() {
                         <Badge className={`text-[9px] h-4 ${checkVencimiento(v.rtmVencimiento) === 'vencido' ? 'bg-red-500' : 'bg-emerald-500'}`}>RTM: {v.rtmVencimiento || 'N/A'}</Badge>
                       </div>
                     </TableCell>
-                    <TableCell><span className="text-sm font-bold text-white">{v.kilometrajeActual?.toLocaleString()} km</span></TableCell>
+                    <TableCell><span className="text-sm font-bold text-foreground">{v.kilometrajeActual?.toLocaleString()} km</span></TableCell>
                     <TableCell><Badge variant="outline" className="text-emerald-500 border-emerald-500/30">{v.estadoOperativo?.toUpperCase()}</Badge></TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="size-4" /></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-surface-dark border-border-dark text-white">
+                        <DropdownMenuContent align="end" className="bg-surface-dark border-border-dark text-foreground">
                           <DropdownMenuItem onClick={() => router.push(`/dashboard/vehiculos/${v.id}`)}><Eye className="size-4 mr-2" /> Ver Detalle</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(v)}><Edit className="size-4 mr-2" /> Editar</DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -553,7 +553,7 @@ export default function VehiculosPage() {
       </Card>
 
       <AlertDialog open={!!deletingVehicle} onOpenChange={(val) => !val && setDeletingVehicle(null)}>
-        <AlertDialogContent className="bg-surface-dark border-border-dark text-white">
+        <AlertDialogContent className="bg-surface-dark border-border-dark text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar Vehículo {deletingVehicle?.placa}?</AlertDialogTitle>
             <AlertDialogDescription>Esta acción es irreversible.</AlertDialogDescription>

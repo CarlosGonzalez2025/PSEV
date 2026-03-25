@@ -28,7 +28,7 @@ export default function PlanesAccionPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Planes de Acción</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Planes de Acción</h1>
           <p className="text-text-secondary mt-1">Mejora continua y cierre de no conformidades (Paso 23 y 24)</p>
         </div>
         <Button className="font-bold shadow-lg shadow-primary/20 bg-primary">
@@ -43,7 +43,7 @@ export default function PlanesAccionPage() {
             <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Total Hallazgos</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">{planes?.length || 0}</div>
+            <div className="text-3xl font-black text-foreground">{planes?.length || 0}</div>
             <p className="text-[10px] text-emerald-500 mt-2 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> Eficacia monitoreada
             </p>
@@ -54,7 +54,7 @@ export default function PlanesAccionPage() {
             <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">Vencidos / Críticos</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">0</div>
+            <div className="text-3xl font-black text-foreground">0</div>
             <p className="text-[10px] text-red-500 mt-2">Requieren cierre inmediato</p>
           </CardContent>
         </Card>
@@ -63,7 +63,7 @@ export default function PlanesAccionPage() {
             <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">En Proceso</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">{planes?.filter(p => p.estado === 'Abierto' || p.estado === 'En Proceso').length || 0}</div>
+            <div className="text-3xl font-black text-foreground">{planes?.filter(p => p.estado === 'Abierto' || p.estado === 'En Proceso').length || 0}</div>
             <p className="text-[10px] text-text-secondary mt-2">Acciones activas</p>
           </CardContent>
         </Card>
@@ -72,7 +72,7 @@ export default function PlanesAccionPage() {
             <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Eficacia Promedio</p>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">100%</div>
+            <div className="text-3xl font-black text-foreground">100%</div>
             <p className="text-[10px] text-emerald-500 mt-2">Meta de cierre cumplida</p>
           </CardContent>
         </Card>
@@ -116,13 +116,13 @@ export default function PlanesAccionPage() {
                       <TableCell className="text-xs text-text-secondary font-mono">{plan.id.slice(-5).toUpperCase()}</TableCell>
                       <TableCell>
                         <div className="flex flex-col max-w-xs">
-                          <span className="text-sm font-bold text-white truncate">{plan.descripcion}</span>
+                          <span className="text-sm font-bold text-foreground truncate">{plan.descripcion}</span>
                           <span className="text-[10px] text-primary uppercase font-bold">{plan.origen}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <div className="size-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white">AF</div>
+                          <div className="size-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-foreground">AF</div>
                           <span className="text-sm text-text-secondary">Responsable</span>
                         </div>
                       </TableCell>

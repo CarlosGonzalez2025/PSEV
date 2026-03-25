@@ -65,7 +65,7 @@ export default function EmergenciasPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase">Emergencias Viales (PPRAEV)</h1>
+                    <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Emergencias Viales (PPRAEV)</h1>
                     <p className="text-text-secondary mt-1">Protocolos de atención y registro de simulacros (Paso 12)</p>
                 </div>
             </div>
@@ -82,7 +82,7 @@ export default function EmergenciasPage() {
                         <div className="lg:col-span-8 space-y-6">
                             <Card className="bg-surface-dark border-border-dark">
                                 <CardHeader>
-                                    <CardTitle className="text-white flex items-center gap-2">
+                                    <CardTitle className="text-foreground flex items-center gap-2">
                                         <FileText className="w-5 h-5 text-primary" /> Cuerpo del Protocolo (Paso 12.1)
                                     </CardTitle>
                                     <CardDescription>Plan de Preparación, Respuesta y Atención a Emergencias Viales</CardDescription>
@@ -90,13 +90,13 @@ export default function EmergenciasPage() {
                                 <CardContent className="space-y-4">
                                     <div className="p-6 border border-dashed border-border-dark rounded-xl bg-white/5 text-center">
                                         <Upload className="mx-auto w-10 h-10 text-text-secondary mb-4" />
-                                        <p className="text-white font-bold">Cargar PPRAEV Actualizado</p>
+                                        <p className="text-foreground font-bold">Cargar PPRAEV Actualizado</p>
                                         <p className="text-xs text-text-secondary mt-1">Formato PDF (Máx 10MB)</p>
-                                        <Button variant="outline" className="mt-4 border-border-dark text-white hover:bg-white/10">Seleccionar Archivo</Button>
+                                        <Button variant="outline" className="mt-4 border-border-dark text-foreground hover:bg-white/10">Seleccionar Archivo</Button>
                                     </div>
                                     <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
                                         <p className="text-xs text-primary font-bold">REQUISITOS LEGALES</p>
-                                        <ul className="text-xs text-white mt-2 space-y-1 list-disc list-inside opacity-80">
+                                        <ul className="text-xs text-foreground mt-2 space-y-1 list-disc list-inside opacity-80">
                                             <li>Procedimientos ante choque, incendio o volcamiento.</li>
                                             <li>Números de emergencia (Policía, Cruz Roja, ARL).</li>
                                             <li>Protocolo de primer respondiente.</li>
@@ -109,7 +109,7 @@ export default function EmergenciasPage() {
                         <aside className="lg:col-span-4">
                             <Card className="bg-surface-dark border-border-dark">
                                 <CardHeader>
-                                    <CardTitle className="text-white text-sm font-bold uppercase">Estado del Documento</CardTitle>
+                                    <CardTitle className="text-foreground text-sm font-bold uppercase">Estado del Documento</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="flex justify-between items-center">
@@ -118,7 +118,7 @@ export default function EmergenciasPage() {
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-text-secondary text-sm">Última Revisión</span>
-                                        <span className="text-white text-sm">Pendiente</span>
+                                        <span className="text-foreground text-sm">Pendiente</span>
                                     </div>
                                     <Button className="w-full bg-primary font-bold h-12 shadow-lg shadow-primary/20">
                                         <Send className="w-4 h-4 mr-2" /> Difundir a Conductores
@@ -133,7 +133,7 @@ export default function EmergenciasPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card className="bg-surface-dark border-border-dark">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-foreground flex items-center gap-2">
                                     <Flame className="w-5 h-5 text-red-500" /> Registrar Simulacro (Anual)
                                 </CardTitle>
                                 <CardDescription>Evidencia obligatoria de entrenamiento (Paso 12.3)</CardDescription>
@@ -142,7 +142,7 @@ export default function EmergenciasPage() {
                                 <form onSubmit={handleAddSimulacro} className="space-y-4">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-text-secondary uppercase">Tipo de Evento</label>
-                                        <select name="tipo" className="w-full bg-background-dark border-border-dark text-white h-10 px-3 rounded-md border text-sm outline-none">
+                                        <select name="tipo" className="w-full bg-background-dark border-border-dark text-foreground h-10 px-3 rounded-md border text-sm outline-none">
                                             <option value="Colisión">Simulacro de Colisión</option>
                                             <option value="Volcamiento">Simulacro de Volcamiento</option>
                                             <option value="Incendio">Simulacro de Incendio Vial</option>
@@ -152,16 +152,16 @@ export default function EmergenciasPage() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-text-secondary uppercase">Fecha</label>
-                                            <Input type="date" name="fecha" className="bg-background-dark border-border-dark text-white" required />
+                                            <Input type="date" name="fecha" className="bg-background-dark border-border-dark text-foreground" required />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-text-secondary uppercase">Participantes</label>
-                                            <Input type="number" name="participantes" className="bg-background-dark border-border-dark text-white" required />
+                                            <Input type="number" name="participantes" className="bg-background-dark border-border-dark text-foreground" required />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-text-secondary uppercase">Resultado / Observaciones</label>
-                                        <textarea name="resultado" className="w-full bg-background-dark border-border-dark text-white p-3 rounded-md border text-sm h-20 outline-none" placeholder="¿Se cumplieron los tiempos de respuesta?" />
+                                        <textarea name="resultado" className="w-full bg-background-dark border-border-dark text-foreground p-3 rounded-md border text-sm h-20 outline-none" placeholder="¿Se cumplieron los tiempos de respuesta?" />
                                     </div>
                                     <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 font-bold">Guardar Registro</Button>
                                 </form>
@@ -170,7 +170,7 @@ export default function EmergenciasPage() {
 
                         <Card className="bg-surface-dark border-border-dark">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-foreground flex items-center gap-2">
                                     <History className="w-5 h-5 text-primary" /> Historial de Simulacros
                                 </CardTitle>
                             </CardHeader>
@@ -178,16 +178,16 @@ export default function EmergenciasPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="border-border-dark">
-                                            <TableHead className="text-white text-xs uppercase">Fecha</TableHead>
-                                            <TableHead className="text-white text-xs uppercase">Tipo</TableHead>
-                                            <TableHead className="text-white text-xs uppercase">Efectividad</TableHead>
+                                            <TableHead className="text-foreground text-xs uppercase">Fecha</TableHead>
+                                            <TableHead className="text-foreground text-xs uppercase">Tipo</TableHead>
+                                            <TableHead className="text-foreground text-xs uppercase">Efectividad</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {simulacros?.map((sim) => (
                                             <TableRow key={sim.id} className="border-border-dark">
-                                                <TableCell className="text-white text-sm">{sim.fecha}</TableCell>
-                                                <TableCell className="text-white font-bold text-sm">{sim.tipo}</TableCell>
+                                                <TableCell className="text-foreground text-sm">{sim.fecha}</TableCell>
+                                                <TableCell className="text-foreground font-bold text-sm">{sim.tipo}</TableCell>
                                                 <TableCell>
                                                     <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-bold italic text-[10px]">EXITOSO</Badge>
                                                 </TableCell>
@@ -209,7 +209,7 @@ export default function EmergenciasPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card className="bg-surface-dark border-border-dark">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-foreground flex items-center gap-2">
                                     <CheckCircle2 className="w-5 h-5 text-emerald-500" /> Checklist Botiquines (Res. 40595)
                                 </CardTitle>
                             </CardHeader>
@@ -226,7 +226,7 @@ export default function EmergenciasPage() {
                                         <div className="size-5 rounded border border-emerald-500/50 flex items-center justify-center text-emerald-500">
                                             <CheckCircle2 className="w-3.5 h-3.5" />
                                         </div>
-                                        <span className="text-sm text-text-secondary group-hover:text-white">{item}</span>
+                                        <span className="text-sm text-text-secondary group-hover:text-foreground">{item}</span>
                                     </div>
                                 ))}
                             </CardContent>
@@ -234,7 +234,7 @@ export default function EmergenciasPage() {
 
                         <Card className="bg-surface-dark border-border-dark">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-foreground flex items-center gap-2">
                                     <AlertTriangle className="w-5 h-5 text-amber-500" /> Equipos de Prevención
                                 </CardTitle>
                             </CardHeader>
@@ -250,7 +250,7 @@ export default function EmergenciasPage() {
                                         <div className="size-5 rounded border border-amber-500/50 flex items-center justify-center text-amber-500">
                                             <CheckCircle2 className="w-3.5 h-3.5" />
                                         </div>
-                                        <span className="text-sm text-text-secondary group-hover:text-white">{item}</span>
+                                        <span className="text-sm text-text-secondary group-hover:text-foreground">{item}</span>
                                     </div>
                                 ))}
                             </CardContent>

@@ -137,7 +137,7 @@ export default function RutasPage() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Vías Seguras Administradas</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Vías Seguras Administradas</h1>
           <p className="text-text-secondary mt-1">Inventario de rutas, puntos críticos y paradas (Paso 14)</p>
         </div>
 
@@ -150,9 +150,9 @@ export default function RutasPage() {
               <Plus className="w-5 h-5 mr-2" /> Mapear Nueva Ruta
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl bg-surface-dark border-border-dark text-white max-h-[95vh] overflow-y-auto custom-scrollbar p-0">
+          <DialogContent className="max-w-4xl bg-surface-dark border-border-dark text-foreground max-h-[95vh] overflow-y-auto custom-scrollbar p-0">
             <DialogHeader className="p-6 bg-white/5 border-b border-border-dark">
-              <DialogTitle className="text-2xl font-black uppercase text-white tracking-tight flex items-center gap-3">
+              <DialogTitle className="text-2xl font-black uppercase text-foreground tracking-tight flex items-center gap-3">
                 <Navigation className="size-6 text-primary" />
                 {selectedRutaId ? "Editar Ruta Inventariada" : "Nuevo Mapeo de Ruta"}
               </DialogTitle>
@@ -253,7 +253,7 @@ export default function RutasPage() {
                             </Button>
                           </div>
                         ))}
-                        <Button type="button" variant="outline" className="w-full border-border-dark text-white font-bold" onClick={() => {
+                        <Button type="button" variant="outline" className="w-full border-border-dark text-foreground font-bold" onClick={() => {
                           const current = form.getValues("puntosCriticos") || [];
                           form.setValue("puntosCriticos", [...current, { ubicacion: "", tipoPeligro: "Curva peligrosa" }]);
                         }}>
@@ -296,7 +296,7 @@ export default function RutasPage() {
                             </Button>
                           </div>
                         ))}
-                        <Button type="button" variant="outline" className="w-full border-border-dark text-white font-bold" onClick={() => {
+                        <Button type="button" variant="outline" className="w-full border-border-dark text-foreground font-bold" onClick={() => {
                           const current = form.getValues("paradasSeguras") || [];
                           form.setValue("paradasSeguras", [...current, { nombreLugar: "", tipoServicio: "Pausa activa" }]);
                         }}>
@@ -328,7 +328,7 @@ export default function RutasPage() {
               </div>
               <div>
                 <p className="text-[10px] font-bold text-text-secondary uppercase">Rutas Totales</p>
-                <p className="text-2xl font-black text-white">{rutas?.length || 0}</p>
+                <p className="text-2xl font-black text-foreground">{rutas?.length || 0}</p>
               </div>
             </CardContent>
           </Card>
@@ -340,7 +340,7 @@ export default function RutasPage() {
               </div>
               <div>
                 <p className="text-[10px] font-bold text-text-secondary uppercase">Puntos Críticos</p>
-                <p className="text-2xl font-black text-white">
+                <p className="text-2xl font-black text-foreground">
                   {rutas?.reduce((acc, r) => acc + (r.puntosCriticos?.length || 0), 0) || 0}
                 </p>
               </div>
@@ -351,7 +351,7 @@ export default function RutasPage() {
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <Info className="size-4 text-primary" />
-                <p className="text-xs font-bold text-white uppercase">Cumplimiento Paso 14</p>
+                <p className="text-xs font-bold text-foreground uppercase">Cumplimiento Paso 14</p>
               </div>
               <p className="text-[10px] text-text-secondary leading-relaxed">
                 La Resolución 40595 exige que el inventario incluya puntos de siniestralidad y planificación de descansos. El 100% de sus rutas cumplen si tienen mapeadas sus paradas seguras.
@@ -369,7 +369,7 @@ export default function RutasPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-secondary" />
               <Input
-                className="bg-black/20 border-border-dark pl-9 h-10 text-white placeholder:text-text-secondary/50"
+                className="bg-black/20 border-border-dark pl-9 h-10 text-foreground placeholder:text-text-secondary/50"
                 placeholder="Filtrar por nombre, origen o destino..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -395,13 +395,13 @@ export default function RutasPage() {
                 {filteredRutas?.map((ruta: any) => (
                   <Card key={ruta.id} className="bg-background-dark border-border-dark hover:border-primary/50 transition-all group relative overflow-hidden flex flex-col">
                     <div className="absolute top-0 right-0 p-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                      <Button size="icon" variant="ghost" className="size-7 bg-white/10 hover:bg-white/20 text-white" onClick={() => handleEdit(ruta)}><Edit className="size-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="size-7 bg-white/10 hover:bg-white/20 text-foreground" onClick={() => handleEdit(ruta)}><Edit className="size-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="size-7 bg-red-500/10 hover:bg-red-500/20 text-red-500" onClick={() => handleDelete(ruta.id)}><Trash2 className="size-3.5" /></Button>
                     </div>
 
                     <div className="bg-white/5 p-4 border-b border-white/5 flex flex-col h-28 justify-center relative">
                       <MapPin className="absolute right-4 bottom-4 size-12 text-primary/10 -rotate-12" />
-                      <h3 className="text-lg font-black text-white leading-tight uppercase line-clamp-2">{ruta.nombreRuta}</h3>
+                      <h3 className="text-lg font-black text-foreground leading-tight uppercase line-clamp-2">{ruta.nombreRuta}</h3>
                       <Badge variant="outline" className="mt-2 w-fit border-primary/30 text-primary text-[9px] uppercase font-black tracking-widest">{ruta.tipoRuta}</Badge>
                     </div>
 
@@ -409,14 +409,14 @@ export default function RutasPage() {
                       <div className="flex items-center justify-between">
                         <div className="space-y-1">
                           <p className="text-[9px] font-bold text-text-secondary uppercase">Origen - Destino</p>
-                          <div className="flex items-center gap-1.5 text-xs text-white font-medium">
+                          <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
                             <span>{ruta.origen}</span>
                             <ChevronRight className="size-3 text-primary" />
                             <span>{ruta.destino}</span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-black text-white tracking-tighter">{ruta.distanciaKm} <span className="text-[10px] text-text-secondary">KM</span></p>
+                          <p className="text-lg font-black text-foreground tracking-tighter">{ruta.distanciaKm} <span className="text-[10px] text-text-secondary">KM</span></p>
                         </div>
                       </div>
 

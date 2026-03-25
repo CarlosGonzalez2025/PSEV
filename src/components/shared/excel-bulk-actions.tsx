@@ -72,12 +72,12 @@ export function ExcelBulkActions({ data, templateColumns, onImport, fileName }: 
 
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="border-border-dark text-white font-bold gap-2">
+                    <Button variant="outline" className="border-border-dark text-foreground font-bold gap-2">
                         <FileSpreadsheet className="w-4 h-4" />
                         Acciones Excel
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-surface-dark border-border-dark text-white">
+                <DropdownMenuContent align="end" className="bg-surface-dark border-border-dark text-foreground">
                     <DropdownMenuItem onClick={handleExport} className="cursor-pointer hover:bg-white/10 gap-2">
                         <Download className="w-4 h-4" /> Exportar Actuales
                     </DropdownMenuItem>

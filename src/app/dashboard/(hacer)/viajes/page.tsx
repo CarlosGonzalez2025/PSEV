@@ -30,7 +30,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { isInspectionApproved, isInspectionForSameDay } from '@/lib/inspection-config';
 import { validarContratistaParaDespacho } from '@/actions/contratistas';
 
@@ -285,7 +285,7 @@ export default function ViajesTelemetriaPage() {
         <div className="space-y-6 pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase">Control de Desplazamientos</h1>
+                    <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Control de Desplazamientos</h1>
                     <p className="text-text-secondary mt-1">Planificación y seguimiento en ruta (Pasos 14 y 15)</p>
                 </div>
 
@@ -295,7 +295,7 @@ export default function ViajesTelemetriaPage() {
                             <Plus className="w-5 h-5 mr-2" /> Programar Despacho
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+                    <DialogContent className="max-w-2xl bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
                         <DialogHeader className="p-6 bg-white/5 border-b border-border-dark">
                             <DialogTitle className="text-xl font-black uppercase flex items-center gap-3">
                                 <PlayCircle className="size-6 text-primary" /> Apertura de Hoja de Ruta
@@ -310,7 +310,7 @@ export default function ViajesTelemetriaPage() {
                                             <FormLabel className="text-xs font-bold uppercase text-text-secondary">Vehículo</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue placeholder="Seleccione placa" /></SelectTrigger></FormControl>
-                                                <SelectContent className="bg-surface-dark border-border-dark text-white">
+                                                <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                                     {vehiculos?.map(v => <SelectItem key={v.id} value={v.placa}>{v.placa} ({v.marca})</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
@@ -321,7 +321,7 @@ export default function ViajesTelemetriaPage() {
                                             <FormLabel className="text-xs font-bold uppercase text-text-secondary">Conductor</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue placeholder="Nombre" /></SelectTrigger></FormControl>
-                                                <SelectContent className="bg-surface-dark border-border-dark text-white">
+                                                <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                                     {conductores?.map(c => <SelectItem key={c.id} value={c.nombreCompleto}>{c.nombreCompleto}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
@@ -347,7 +347,7 @@ export default function ViajesTelemetriaPage() {
                                             <FormLabel className="text-xs font-bold uppercase text-text-secondary">Ruta</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue placeholder="Ruta guardada" /></SelectTrigger></FormControl>
-                                                <SelectContent className="bg-surface-dark border-border-dark text-white">
+                                                <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                                     {rutasDefinidas?.map(r => <SelectItem key={r.id} value={r.nombreRuta}>{r.nombreRuta}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
@@ -358,7 +358,7 @@ export default function ViajesTelemetriaPage() {
                                             <FormLabel className="text-xs font-bold uppercase text-text-secondary">Tipo Desplazamiento</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl><SelectTrigger className="bg-background-dark border-border-dark"><SelectValue /></SelectTrigger></FormControl>
-                                                <SelectContent className="bg-surface-dark border-border-dark text-white">
+                                                <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                                                     <SelectItem value="Laboral (Misión)">Laboral (Misión)</SelectItem>
                                                     <SelectItem value="In Itinere">In Itinere (Casa-Trabajo)</SelectItem>
                                                     <SelectItem value="Salida Extramural">Salida Extramural</SelectItem>
@@ -393,7 +393,7 @@ export default function ViajesTelemetriaPage() {
 
                 {/* Dialog Cierre */}
                 <Dialog open={isOpenCierre} onOpenChange={setIsOpenCierre}>
-                    <DialogContent className="max-w-2xl bg-surface-dark border-border-dark text-white p-0">
+                    <DialogContent className="max-w-2xl bg-surface-dark border-border-dark text-foreground p-0">
                         <DialogHeader className="p-6 bg-emerald-500/10 border-b border-border-dark">
                             <DialogTitle className="text-xl font-black uppercase text-emerald-500">Consolidación de Viaje</DialogTitle>
                         </DialogHeader>
@@ -447,7 +447,7 @@ export default function ViajesTelemetriaPage() {
                                 <TableRow key={viaje.id} className="border-border-dark hover:bg-white/5 transition-colors">
                                     <TableCell>
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-xs font-black text-white">{viaje.vehiculoId}</span>
+                                            <span className="text-xs font-black text-foreground">{viaje.vehiculoId}</span>
                                             <span className="text-[10px] text-text-secondary">{viaje.conductorId}</span>
                                         </div>
                                     </TableCell>
@@ -459,7 +459,7 @@ export default function ViajesTelemetriaPage() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="text-xs text-white">{new Date(viaje.fechaHoraInicio).toLocaleString()}</span>
+                                            <span className="text-xs text-foreground">{new Date(viaje.fechaHoraInicio).toLocaleString()}</span>
                                             <span className="text-[10px] text-text-secondary">{viaje.kmInicial} KM</span>
                                         </div>
                                     </TableCell>

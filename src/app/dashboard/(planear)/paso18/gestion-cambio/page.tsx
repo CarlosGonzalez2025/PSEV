@@ -61,7 +61,7 @@ import {
     AlertCircle,
     History
 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { createGestionCambio } from '@/actions/contratistas';
 
 export default function GestionCambioPage() {
@@ -112,7 +112,7 @@ export default function GestionCambioPage() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Gestión del Cambio Vial</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Gestión del Cambio Vial</h1>
           <p className="text-text-secondary mt-1">Identificación y control de riesgos ante cambios en la operación</p>
         </div>
 
@@ -122,17 +122,17 @@ export default function GestionCambioPage() {
                <Plus className="w-5 h-5 mr-2" /> Registrar Cambio
              </Button>
            </DialogTrigger>
-           <DialogContent className="bg-surface-dark border-border-dark text-white">
+           <DialogContent className="bg-surface-dark border-border-dark text-foreground">
              <DialogHeader>
                <DialogTitle className="flex items-center gap-2 italic uppercase font-black"><AlertTriangle className="text-amber-500"/> Notificar Cambio Operativo</DialogTitle>
                <DialogDescription>El registro generará automáticamente una alerta en la Matriz de Riesgos (Paso 6).</DialogDescription>
              </DialogHeader>
-             <div className="grid gap-4 py-4 text-white">
+             <div className="grid gap-4 py-4 text-foreground">
                <div className="grid gap-2">
                  <Label>Tipo de Cambio</Label>
                  <Select value={newCambio.tipoCambio} onValueChange={(val: any) => setNewCambio({...newCambio, tipoCambio: val})}>
                     <SelectTrigger className="bg-background-dark border-border-dark"><SelectValue/></SelectTrigger>
-                    <SelectContent className="bg-surface-dark border-border-dark text-white">
+                    <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                         <SelectItem value="Infraestructura">Infraestructura (Vías, Sedes)</SelectItem>
                         <SelectItem value="Nueva Ruta">Nueva Ruta / Trayecto</SelectItem>
                         <SelectItem value="Proceso Operativo">Cambio en Proceso Operativo</SelectItem>
@@ -149,7 +149,7 @@ export default function GestionCambioPage() {
                     <Label>Impacto en Riesgos</Label>
                     <Select value={newCambio.impactoRiesgo} onValueChange={(val: any) => setNewCambio({...newCambio, impactoRiesgo: val})}>
                         <SelectTrigger className="bg-background-dark border-border-dark"><SelectValue/></SelectTrigger>
-                        <SelectContent className="bg-surface-dark border-border-dark text-white">
+                        <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                             <SelectItem value="Bajo">Impacto Bajo</SelectItem>
                             <SelectItem value="Medio">Impacto Medio</SelectItem>
                             <SelectItem value="Alto">Impacto Alto</SelectItem>
@@ -193,7 +193,7 @@ export default function GestionCambioPage() {
                     ) : cambios?.map((c) => (
                         <TableRow key={c.id} className="border-border-dark hover:bg-white/5 transition-colors">
                             <TableCell className="text-text-secondary text-xs">{new Date(c.fechaImplementacion).toLocaleDateString()}</TableCell>
-                            <TableCell className="text-white text-xs font-bold">{c.tipoCambio}</TableCell>
+                            <TableCell className="text-foreground text-xs font-bold">{c.tipoCambio}</TableCell>
                             <TableCell className="text-text-secondary text-xs max-w-xs truncate">{c.descripcion}</TableCell>
                             <TableCell>
                                 <Badge className={
@@ -220,7 +220,7 @@ export default function GestionCambioPage() {
                     <CardTitle className="text-sm font-bold uppercase flex items-center gap-2"><AlertCircle className="w-4 h-4 text-primary"/> Importancia del Paso 18</CardTitle>
                 </CardHeader>
                 <CardContent className="text-xs text-text-secondary leading-relaxed">
-                    De acuerdo con la <span className="text-white">Resolución 40595 de 2022</span>, las empresas deben documentar y analizar los riesgos generados por cambios en la flota, infraestructura o rutas.
+                    De acuerdo con la <span className="text-foreground">Resolución 40595 de 2022</span>, las empresas deben documentar y analizar los riesgos generados por cambios en la flota, infraestructura o rutas.
                     <br/><br/>
                     Cada registro aquí notifica al <span className="text-primary italic">Paso 6: Matriz de Riesgos</span> para su re-evaluación inmediata.
                 </CardContent>

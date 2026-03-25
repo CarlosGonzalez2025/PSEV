@@ -103,11 +103,11 @@ export default function ConductorHojaVidaPage() {
     <div className="space-y-6 pb-10">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-text-secondary hover:text-white">
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-text-secondary hover:text-foreground">
           <ArrowLeft className="size-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-black text-white uppercase italic tracking-tight">{conductor.nombreCompleto}</h1>
+          <h1 className="text-2xl font-black text-foreground uppercase italic tracking-tight">{conductor.nombreCompleto}</h1>
           <p className="text-text-secondary text-sm">Hoja de Vida Vial — CC {conductor.cedula}</p>
         </div>
         <Badge className={licExpired ? 'bg-destructive/10 text-destructive border-none' : 'bg-emerald-500/10 text-emerald-500 border-none'}>
@@ -125,7 +125,7 @@ export default function ConductorHojaVidaPage() {
         </Card>
         <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Inspecciones</p></CardHeader>
-          <CardContent><div className="text-3xl font-black text-white">{statsInspecciones.total}</div></CardContent>
+          <CardContent><div className="text-3xl font-black text-foreground">{statsInspecciones.total}</div></CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest text-emerald-500">Aptas</p></CardHeader>
@@ -204,11 +204,11 @@ export default function ConductorHojaVidaPage() {
                       const esNoApto = resultado === 'no_apto' || resultado === 'No Aprobado';
                       return (
                         <TableRow key={ins.id} className="border-border-dark hover:bg-white/5">
-                          <TableCell className="text-sm text-white flex items-center gap-2">
+                          <TableCell className="text-sm text-foreground flex items-center gap-2">
                             <Calendar className="size-3.5 text-text-secondary" />
                             {ins.fechaInspeccion || '—'}
                           </TableCell>
-                          <TableCell className="text-sm text-white">{ins.vehiculoId || ins.placaVehiculo || '—'}</TableCell>
+                          <TableCell className="text-sm text-foreground">{ins.vehiculoId || ins.placaVehiculo || '—'}</TableCell>
                           <TableCell className="text-sm text-text-secondary capitalize">{ins.tipoInspeccion || '—'}</TableCell>
                           <TableCell className="text-center">
                             {esApto ? (

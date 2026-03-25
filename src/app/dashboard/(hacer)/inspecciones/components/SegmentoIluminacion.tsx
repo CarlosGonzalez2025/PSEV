@@ -25,7 +25,7 @@ export function SegmentoIluminacion({ form, tipoVehiculo }: Props) {
                             <SelectValue placeholder="Evaluar..." />
                         </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-surface-dark border-border-dark text-white">
+                    <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                         {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                     </SelectContent>
                 </Select>
@@ -38,7 +38,7 @@ export function SegmentoIluminacion({ form, tipoVehiculo }: Props) {
         <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
                 <Badge className="bg-amber-500/20 text-amber-400 border-none">4</Badge>
-                <h3 className="text-sm font-black text-white uppercase italic tracking-wider">Iluminación y Señalización</h3>
+                <h3 className="text-sm font-black text-foreground uppercase italic tracking-wider">Iluminación y Señalización</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

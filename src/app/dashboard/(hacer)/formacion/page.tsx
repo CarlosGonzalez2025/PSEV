@@ -121,11 +121,11 @@ export default function PlanFormacionPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">Plan Anual de Formación</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Plan Anual de Formación</h1>
           <p className="text-text-secondary mt-1">Gestión de competencias y capacitación vial (Pasos 10 y 11)</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="font-bold border-border-dark text-white uppercase text-[10px] tracking-widest h-11 px-6">
+          <Button variant="outline" className="font-bold border-border-dark text-foreground uppercase text-[10px] tracking-widest h-11 px-6">
             <Upload className="size-4 mr-2" /> Cargar Material
           </Button>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -134,7 +134,7 @@ export default function PlanFormacionPage() {
                 <Plus className="size-5 mr-2" /> Programar Capacitación
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md bg-surface-dark border-border-dark text-white p-0 overflow-hidden">
+            <DialogContent className="max-w-md bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
               <DialogHeader className="p-6 bg-primary/10 border-b border-border-dark">
                 <DialogTitle className="text-xl font-black uppercase italic">Nueva Sesión de Formación</DialogTitle>
                 <DialogDescription className="text-text-secondary">Paso 11: Definición de temas y modalidad.</DialogDescription>
@@ -173,7 +173,7 @@ export default function PlanFormacionPage() {
         <Card className="bg-surface-dark border-border-dark shadow-xl">
           <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Indicador 12: Cobertura</p></CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">{kpis.coverage}%</div>
+            <div className="text-3xl font-black text-foreground">{kpis.coverage}%</div>
             <Progress value={kpis.coverage} className="h-1.5 mt-2 bg-white/5" indicatorClassName="bg-primary" />
             <p className="text-[9px] font-bold text-text-secondary mt-2 flex items-center gap-1 uppercase tracking-tight"><Target className="size-3" /> Meta anual: 90%</p>
           </CardContent>
@@ -197,7 +197,7 @@ export default function PlanFormacionPage() {
         <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Total Horas</p></CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-white">
+            <div className="text-3xl font-black text-foreground">
               {capacitaciones?.filter(c => c.estado === 'Realizada').reduce((acc, curr) => acc + (Number(curr.horasDuracion) || 0), 0)}h
             </div>
             <p className="text-[9px] text-text-secondary mt-2 uppercase font-bold tracking-tight">Acumulado Formación</p>
@@ -208,7 +208,7 @@ export default function PlanFormacionPage() {
       <Card className="bg-surface-dark border-border-dark overflow-hidden">
         <CardHeader className="border-b border-white/5 bg-white/[0.02] flex flex-row items-center justify-between">
           <div className="flex items-center gap-4">
-            <CardTitle className="text-lg font-black uppercase text-white italic">Cronograma de Capacitaciones</CardTitle>
+            <CardTitle className="text-lg font-black uppercase text-foreground italic">Cronograma de Capacitaciones</CardTitle>
             <Badge className="bg-primary/20 text-primary border-primary/30 uppercase text-[9px] font-black">{capacitaciones?.length || 0} Sesiones</Badge>
           </div>
           <div className="flex gap-2">
@@ -224,7 +224,7 @@ export default function PlanFormacionPage() {
               <div className="p-10 text-center"><Skeleton className="h-20 w-full" /></div>
             ) : capacitaciones?.length === 0 ? (
               <div className="text-center py-20 border-2 border-dashed border-border-dark m-6 rounded-2xl flex flex-col items-center">
-                <GraduationCap className="size-16 text-white/5 mb-4" />
+                <GraduationCap className="size-16 text-foreground/5 mb-4" />
                 <p className="text-text-secondary italic text-sm">No hay sesiones programadas para este periodo.</p>
                 <Button variant="ghost" className="mt-4 text-primary font-black uppercase text-xs" onClick={() => setIsAddOpen(true)}>Programar Primera Sesión</Button>
               </div>
@@ -236,7 +236,7 @@ export default function PlanFormacionPage() {
                       <Award className="size-7" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-white uppercase tracking-tight text-lg italic">{cap.tema}</h4>
+                      <h4 className="font-bold text-foreground uppercase tracking-tight text-lg italic">{cap.tema}</h4>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-[10px] font-black text-text-secondary uppercase">{cap.modalidad}</span>
                         <div className="size-1 rounded-full bg-white/20" />
@@ -247,7 +247,7 @@ export default function PlanFormacionPage() {
 
                   <div className="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-4 md:pt-0 border-white/5">
                     <div className="text-right">
-                      <div className="flex items-center justify-end gap-1.5 text-xs font-black text-white">
+                      <div className="flex items-center justify-end gap-1.5 text-xs font-black text-foreground">
                         <Clock className="size-3.5 text-primary" /> {new Date(cap.fechaProgramada).toLocaleDateString()}
                       </div>
                       <p className="text-[10px] font-bold text-text-secondary uppercase">{new Date(cap.fechaProgramada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
@@ -279,7 +279,7 @@ export default function PlanFormacionPage() {
           <UserCheck className="size-8 text-primary" />
         </div>
         <div className="flex-1">
-          <h4 className="text-white font-black uppercase tracking-tight">Motor de Inteligencia Vial</h4>
+          <h4 className="text-foreground font-black uppercase tracking-tight">Motor de Inteligencia Vial</h4>
           <p className="text-sm text-text-secondary mt-1">El sistema calcula automáticamente la eficacia de las capacitaciones y actualiza el **Scoring de Riesgo** de los conductores basándose en su participación.</p>
         </div>
         <Button className="font-bold bg-white text-black hover:bg-white/90 px-8">Ver Reporte SISI</Button>

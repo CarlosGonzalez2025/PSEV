@@ -29,7 +29,7 @@ export function SegmentoCarroceria({ form, tipoVehiculo }: Props) {
                             <SelectValue placeholder="Evaluar..." />
                         </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-surface-dark border-border-dark text-white">
+                    <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                         {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                     </SelectContent>
                 </Select>
@@ -41,7 +41,7 @@ export function SegmentoCarroceria({ form, tipoVehiculo }: Props) {
     const renderBool = (name: any, label: string) => (
         <FormField control={form.control} name={`carroceria.${name}` as any} render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/5 bg-background-dark/30 p-3 shadow-sm">
-                <FormLabel className="text-[10px] font-bold text-white uppercase flex items-center gap-1">{label}</FormLabel>
+                <FormLabel className="text-[10px] font-bold text-foreground uppercase flex items-center gap-1">{label}</FormLabel>
                 <FormControl>
                     <div className="flex items-center gap-2">
                         <span className="text-[9px] font-bold text-text-secondary">No</span>
@@ -57,7 +57,7 @@ export function SegmentoCarroceria({ form, tipoVehiculo }: Props) {
         <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
                 <Badge className="bg-purple-500/20 text-purple-400 border-none">6</Badge>
-                <h3 className="text-sm font-black text-white uppercase italic tracking-wider flex items-center gap-2">Carrocería y Chasis <Hammer className="size-4" /></h3>
+                <h3 className="text-sm font-black text-foreground uppercase italic tracking-wider flex items-center gap-2">Carrocería y Chasis <Hammer className="size-4" /></h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -83,7 +83,7 @@ export function SegmentoCarroceria({ form, tipoVehiculo }: Props) {
 
             {['CAMION', 'TRACTO', 'FURGON'].includes(t) && (
                 <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-                    <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3 flex items-center gap-2"><Truck className="size-4" /> Carga y Remolque</h4>
+                    <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2"><Truck className="size-4" /> Carga y Remolque</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {renderSelect('compuertas', 'Compuertas/Estacas', VALORES_ESTADO)}
                         {t === 'FURGON' && renderSelect('furgon', 'Pisos y Paredes Furgón', VALORES_ESTADO)}
@@ -96,7 +96,7 @@ export function SegmentoCarroceria({ form, tipoVehiculo }: Props) {
 
             {t === 'AUTOTANQUE' && (
                 <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-                    <h4 className="text-xs font-black text-white uppercase tracking-widest mb-3 flex items-center gap-2"><Truck className="size-4" /> Autotanque Específico</h4>
+                    <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2"><Truck className="size-4" /> Autotanque Específico</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {renderSelect('cuerpoTanque', 'Cuerpo del Tanque', VALORES_ESTADO, true)}
                         {renderSelect('valvulasTanque', 'Válvulas / Desfogue', VALORES_ESTADO)}

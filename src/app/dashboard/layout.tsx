@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     <div className="p-4 bg-amber-500/10 rounded-full text-amber-500">
                       <AlertTriangle size={48} />
                     </div>
-                    <h2 className="text-2xl font-bold text-white">Sin Empresa Asignada</h2>
+                    <h2 className="text-2xl font-bold text-foreground">Sin Empresa Asignada</h2>
                     <p className="text-text-secondary max-w-md">
                       Tu cuenta no está vinculada a ninguna empresa. Contacta al soporte para activar tu acceso al sistema RoadWise 360.
                     </p>

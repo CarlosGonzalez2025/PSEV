@@ -174,7 +174,7 @@ export default function RiesgosPage() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Matriz de Riesgos Viales</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Matriz de Riesgos Viales</h1>
           <p className="text-text-secondary mt-1">Identificación y valoración (Resolución 40595 - Paso 6)</p>
         </div>
 
@@ -187,9 +187,9 @@ export default function RiesgosPage() {
               <Plus className="w-5 h-5 mr-2" /> Identificar Peligro
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl bg-surface-dark border-border-dark text-white max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <DialogContent className="max-w-4xl bg-surface-dark border-border-dark text-foreground max-h-[90vh] overflow-y-auto custom-scrollbar">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black uppercase text-white">
+              <DialogTitle className="text-2xl font-black uppercase text-foreground">
                 {selectedRiskId ? "Editar Valoración de Riesgo" : "Nueva Identificación de Riesgo"}
               </DialogTitle>
             </DialogHeader>
@@ -277,7 +277,7 @@ export default function RiesgosPage() {
                     <TabsContent value="controles" className="space-y-4">
                       <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl flex gap-3 mb-4">
                         <Info className="size-5 text-blue-400 mt-0.5" />
-                        <p className="text-xs text-blue-100/70">Registre los controles que la empresa <span className="font-bold text-white uppercase italic">YA tiene implementados</span> antes de esta valoración.</p>
+                        <p className="text-xs text-blue-900/80 dark:text-blue-100/70">Registre los controles que la empresa <span className="font-bold text-foreground dark:text-foreground uppercase italic">YA tiene implementados</span> antes de esta valoración.</p>
                       </div>
                       <FormField control={form.control} name="controlFuente" render={({ field }) => (
                         <FormItem>
@@ -389,7 +389,7 @@ export default function RiesgosPage() {
         <div className="lg:col-span-1 flex flex-col gap-6">
           <Card className="bg-surface-dark border-border-dark h-full flex flex-col overflow-hidden">
             <CardHeader className="bg-white/5 border-b border-border-dark p-4">
-              <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Resumen Crítico</CardTitle>
+              <CardTitle className="text-sm font-black uppercase text-foreground tracking-widest">Resumen Crítico</CardTitle>
             </CardHeader>
             <CardContent className="p-4 flex-1 space-y-4">
               <div className="relative aspect-square border-l border-b border-white/10 p-2">
@@ -404,8 +404,8 @@ export default function RiesgosPage() {
                       const count = riesgos?.filter(r => r.nivelExposicion === e && r.nivelProbabilidad === p).length || 0;
                       return (
                         <div key={`${p}-${e}`} className={`rounded flex flex-col items-center justify-center transition-all ${lvl.color} ${count > 0 ? 'opacity-100 scale-100 shadow-lg' : 'opacity-10 scale-95'}`}>
-                          <span className="text-xl font-black text-white">{count}</span>
-                          <span className="text-[8px] font-black text-white/50">{score}pts</span>
+                          <span className="text-xl font-black text-foreground">{count}</span>
+                          <span className="text-[8px] font-black text-foreground/50">{score}pts</span>
                         </div>
                       )
                     })
@@ -416,15 +416,15 @@ export default function RiesgosPage() {
               <div className="space-y-2 pt-4 border-t border-border-dark">
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-bold text-red-500 uppercase">I: Críticos</span>
-                  <span className="text-sm font-black text-white">{riesgos?.filter(r => r.valorNR >= 6).length || 0}</span>
+                  <span className="text-sm font-black text-foreground">{riesgos?.filter(r => r.valorNR >= 6).length || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-bold text-yellow-500 uppercase">II: Moderados</span>
-                  <span className="text-sm font-black text-white">{riesgos?.filter(r => r.valorNR >= 3 && r.valorNR < 6).length || 0}</span>
+                  <span className="text-sm font-black text-foreground">{riesgos?.filter(r => r.valorNR >= 3 && r.valorNR < 6).length || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-bold text-emerald-500 uppercase">III: Bajos</span>
-                  <span className="text-sm font-black text-white">{riesgos?.filter(r => r.valorNR < 3).length || 0}</span>
+                  <span className="text-sm font-black text-foreground">{riesgos?.filter(r => r.valorNR < 3).length || 0}</span>
                 </div>
               </div>
             </CardContent>
@@ -437,7 +437,7 @@ export default function RiesgosPage() {
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-secondary" />
               <Input
-                className="bg-black/20 border-border-dark pl-9 h-10 text-white placeholder:text-text-secondary/50"
+                className="bg-black/20 border-border-dark pl-9 h-10 text-foreground placeholder:text-text-secondary/50"
                 placeholder="Buscar por descripción o tarea..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -474,7 +474,7 @@ export default function RiesgosPage() {
                       <tr key={r.id} className="border-b border-border-dark group hover:bg-white/5 transition-colors">
                         <td className="p-4">
                           <div className="flex flex-col">
-                            <span className="text-xs font-bold text-white">{r.rolActorVial}</span>
+                            <span className="text-xs font-bold text-foreground">{r.rolActorVial}</span>
                             <span className="text-[9px] text-text-secondary uppercase">{r.tipoDesplazamiento}</span>
                           </div>
                         </td>
@@ -485,7 +485,7 @@ export default function RiesgosPage() {
                           </div>
                         </td>
                         <td className="p-4 text-center">
-                          <span className="text-xs font-black text-white">{r.nivelExposicion} x {r.nivelProbabilidad} = {r.valorNR}</span>
+                          <span className="text-xs font-black text-foreground">{r.nivelExposicion} x {r.nivelProbabilidad} = {r.valorNR}</span>
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2">
@@ -495,7 +495,7 @@ export default function RiesgosPage() {
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button size="icon" variant="ghost" className="size-8 text-white hover:bg-white/10" onClick={() => handleEdit(r)}><Edit className="size-4" /></Button>
+                            <Button size="icon" variant="ghost" className="size-8 text-foreground hover:bg-white/10" onClick={() => handleEdit(r)}><Edit className="size-4" /></Button>
                             <Button size="icon" variant="ghost" className="size-8 text-destructive hover:bg-destructive/10" onClick={() => handleDelete(r.id)}><Trash2 className="size-4" /></Button>
                           </div>
                         </td>

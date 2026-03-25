@@ -324,7 +324,7 @@ export default function InspeccionesPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">Inspecciones Vehiculares (Paso 16)</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Inspecciones Vehiculares (Paso 16)</h1>
           <p className="text-text-secondary mt-1 text-sm font-bold uppercase tracking-widest">Checklist Granular por Criterio — Res. 40595 · PESV Colombia</p>
         </div>
 
@@ -335,11 +335,11 @@ export default function InspeccionesPage() {
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="max-w-5xl max-h-[95vh] bg-surface-dark border-border-dark text-white p-0 overflow-hidden flex flex-col">
+          <DialogContent className="max-w-5xl max-h-[95vh] bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden flex flex-col">
             <DialogHeader className="p-6 bg-primary/10 border-b border-border-dark shrink-0">
               <div className="flex justify-between items-center">
                 <div>
-                  <DialogTitle className="text-xl font-black uppercase italic text-white flex items-center gap-2">
+                  <DialogTitle className="text-xl font-black uppercase italic text-foreground flex items-center gap-2">
                     <ClipboardCheck className="size-6 text-primary" /> Inspección Reglamentaria
                   </DialogTitle>
                   <DialogDescription className="text-text-secondary font-bold text-[10px] uppercase">
@@ -363,7 +363,7 @@ export default function InspeccionesPage() {
                         <FormLabel className="text-[10px] font-black text-text-secondary uppercase">Vehículo *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger className="bg-background-dark border-border-dark h-10"><SelectValue placeholder="Seleccione placa" /></SelectTrigger></FormControl>
-                          <SelectContent className="bg-surface-dark border-border-dark text-white">
+                          <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                             {vehiculos?.map(v => <SelectItem key={v.id} value={v.placa}>{v.placa} — {v.marca} {v.modelo}</SelectItem>)}
                           </SelectContent>
                         </Select>
@@ -375,7 +375,7 @@ export default function InspeccionesPage() {
                         <FormLabel className="text-[10px] font-black text-text-secondary uppercase">Conductor *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger className="bg-background-dark border-border-dark h-10"><SelectValue placeholder="Conductor" /></SelectTrigger></FormControl>
-                          <SelectContent className="bg-surface-dark border-border-dark text-white">
+                          <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                             {conductores?.map(c => <SelectItem key={c.id} value={c.id}>{c.nombreCompleto}</SelectItem>)}
                           </SelectContent>
                         </Select>
@@ -387,7 +387,7 @@ export default function InspeccionesPage() {
                         <FormLabel className="text-[10px] font-black text-text-secondary uppercase">Tipo Inspección</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger className="bg-background-dark border-border-dark h-10"><SelectValue /></SelectTrigger></FormControl>
-                          <SelectContent className="bg-surface-dark border-border-dark text-white">
+                          <SelectContent className="bg-surface-dark border-border-dark text-foreground">
                             <SelectItem value="preoperacional">Preoperacional</SelectItem>
                             <SelectItem value="periodica">Periódica</SelectItem>
                           </SelectContent>
@@ -480,7 +480,7 @@ export default function InspeccionesPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-surface-dark border-border-dark">
           <CardHeader className="pb-2 pt-4 px-4 text-[10px] font-black text-text-secondary uppercase tracking-widest">Total Inspecciones</CardHeader>
-          <CardContent className="px-4 pb-4"><div className="text-3xl font-black text-white italic">{inspecciones?.length ?? 0}</div></CardContent>
+          <CardContent className="px-4 pb-4"><div className="text-3xl font-black text-foreground italic">{inspecciones?.length ?? 0}</div></CardContent>
         </Card>
         <Card className="bg-surface-dark border-border-dark border-l-4 border-l-emerald-500">
           <CardHeader className="pb-2 pt-4 px-4 text-[10px] font-black text-emerald-500 uppercase tracking-widest">Aptos</CardHeader>
@@ -500,7 +500,7 @@ export default function InspeccionesPage() {
       <Card className="bg-surface-dark border-border-dark overflow-hidden shadow-2xl">
         <CardHeader className="border-b border-white/5 bg-white/[0.02] flex flex-row items-center justify-between p-6">
           <div>
-            <CardTitle className="text-lg font-black uppercase text-white italic">Bitácora de Inspecciones</CardTitle>
+            <CardTitle className="text-lg font-black uppercase text-foreground italic">Bitácora de Inspecciones</CardTitle>
             <CardDescription className="text-text-secondary text-[10px] font-bold uppercase tracking-tighter">Evidencia Digital — Res. 40595 / Paso 16</CardDescription>
           </div>
           <div className="flex gap-2">
@@ -529,25 +529,25 @@ export default function InspeccionesPage() {
                 <TableRow key={i.id} className="border-border-dark hover:bg-white/[0.03] transition-colors">
                   <TableCell className="pl-6">
                     <div className="flex flex-col">
-                      <span className="text-xs font-black text-white italic">{i.consecutivo}</span>
+                      <span className="text-xs font-black text-foreground italic">{i.consecutivo}</span>
                       <span className="text-[9px] font-bold text-text-secondary uppercase">{new Date(i.fechaHora).toLocaleString('es-CO')}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="text-xs font-black text-white tracking-widest">{i.vehiculoId ?? i.placa}</span>
+                      <span className="text-xs font-black text-foreground tracking-widest">{i.vehiculoId ?? i.placa}</span>
                       <span className="text-[9px] font-black text-primary uppercase italic">{i.tipoVehiculoEvaluado ?? i.tipo_vehiculo}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-white max-w-[150px] truncate">{i.nombre_conductor || i.conductorId}</span>
+                      <span className="text-xs font-bold text-foreground max-w-[150px] truncate">{i.nombre_conductor || i.conductorId}</span>
                       <span className="text-[9px] font-bold text-text-secondary uppercase truncate">ID: {i.documento_conductor || 'N/A'}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-white capitalize">{i.tipoInspeccion}</span>
+                      <span className="text-xs font-bold text-foreground capitalize">{i.tipoInspeccion}</span>
                       <span className="text-[9px] font-bold text-text-secondary uppercase">{i.kilometraje} KM</span>
                     </div>
                   </TableCell>
