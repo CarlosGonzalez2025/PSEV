@@ -1,16 +1,22 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 import { ThemeProvider } from '@/components/theme-provider';
 
+export const viewport: Viewport = {
+  themeColor: '#09090b',
+  minimumScale: 1,
+  initialScale: 1,
+  width: 'device-width',
+  viewportFit: 'cover',
+};
+
 export const metadata: Metadata = {
   title: 'RoadWise 360',
   description: 'Sistema Integral de Gestión de Seguridad Vial',
   manifest: '/manifest.json',
-  themeColor: '#09090b', // matching bg-background-dark
-  viewport: 'minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no, viewport-fit=cover',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
