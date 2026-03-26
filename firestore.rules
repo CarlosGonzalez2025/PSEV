@@ -218,6 +218,21 @@ service cloud.firestore {
         allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
       }
 
+      // Política de Seguridad Vial PESV (Paso 3) — Pública para divulgación
+      match /politicasSeguridadVial/{docId} {
+        allow read: if true; // Pública: cualquier persona con el enlace puede leer
+        allow write: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+      // Difusiones / Firmas de política — Metas y firmas internas + firmas públicas vía URL
+      match /difusiones_politica/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if true; // Pública: cualquiera con el enlace puede firmar
+        allow update: if belongsToCompany(empresaId);
+        allow delete: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
+
       // Datos operativos — Riesgos
       match /riesgos/{docId} {
         allow read: if belongsToCompany(empresaId);

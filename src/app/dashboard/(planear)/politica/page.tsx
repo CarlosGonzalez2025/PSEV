@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
     FileText, Target, Send, Save, Plus, Trash2, Edit2,
     ShieldCheck, CheckCircle2, AlertTriangle, Clock, Users,
-    TrendingUp, CheckCheck, Calendar, Flag,
+    TrendingUp, CheckCheck, Calendar, Flag, Link2, Copy, Check,
+    ImagePlus, Upload,
 } from 'lucide-react';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import {
     doc, setDoc, collection, query, serverTimestamp,
@@ -25,7 +27,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Types Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 type EstadoMeta = 'Pendiente' | 'En_Progreso' | 'Cumplida' | 'Vencida';
 type TipoMeta =
@@ -64,14 +66,14 @@ interface DifusionDoc {
     createdAt: any;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Constants Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 const TIPO_META_LABEL: Record<TipoMeta, string> = {
-    Reduccion_Siniestros: 'Reducción Siniestros',
-    Cobertura_Formacion: 'Cobertura Formación',
+    Reduccion_Siniestros: 'ReducciÃƒ³n Siniestros',
+    Cobertura_Formacion: 'Cobertura FormaciÃƒ³n',
     Mantenimiento_Preventivo: 'Mantenimiento Preventivo',
-    Inspeccion_Vehicular: 'Inspección Vehicular',
-    Gestion_Riesgos: 'Gestión de Riesgos',
+    Inspeccion_Vehicular: 'InspecciÃƒ³n Vehicular',
+    Gestion_Riesgos: 'GestiÃƒ³n de Riesgos',
     Otro: 'Otro',
 };
 
@@ -99,11 +101,11 @@ const ESTADO_META_LABEL: Record<EstadoMeta, string> = {
 };
 
 const LEGAL_CHECKLIST = [
-    { label: 'Idoneidad y compromiso de la Alta Dirección', key: 'idoneidad' },
-    { label: 'Asignación presupuestal expresa', key: 'presupuesto' },
-    { label: 'Difusión a todos los niveles de la organización', key: 'difusion' },
-    { label: 'Inclusión de hábitos y comportamientos seguros', key: 'habitos' },
-    { label: 'Revisión y actualización periódica documentada', key: 'revision' },
+    { label: 'Idoneidad y compromiso de la Alta DirecciÃƒ³n', key: 'idoneidad' },
+    { label: 'AsignaciÃƒ³n presupuestal expresa', key: 'presupuesto' },
+    { label: 'DifusiÃƒ³n a todos los niveles de la organizaciÃƒ³n', key: 'difusion' },
+    { label: 'InclusiÃƒ³n de hÃƒ¡bitos y comportamientos seguros', key: 'habitos' },
+    { label: 'RevisiÃƒ³n y actualizaciÃƒ³n periÃƒ³dica documentada', key: 'revision' },
     { label: 'Firma del representante legal', key: 'firma' },
 ];
 
@@ -129,7 +131,7 @@ const EMPTY_DIFUSION: Omit<DifusionDoc, 'id' | 'createdAt'> = {
     metodo: 'Email',
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 function calcPct(actual: number, meta: number) {
     if (!meta) return 0;
@@ -150,7 +152,7 @@ function progressTextColor(pct: number) {
     return 'text-red-400';
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Component Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 export default function PoliticaMetasPage() {
     const firestore = useFirestore();
@@ -159,6 +161,9 @@ export default function PoliticaMetasPage() {
     const [content, setContent] = useState('');
     const [legalChecks, setLegalChecks] = useState<Record<string, boolean>>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [urlCopied, setUrlCopied] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     const [metaDialog, setMetaDialog] = useState(false);
     const [editingMeta, setEditingMeta] = useState<MetaDoc | null>(null);
@@ -167,7 +172,7 @@ export default function PoliticaMetasPage() {
     const [difDialog, setDifDialog] = useState(false);
     const [difForm, setDifForm] = useState<Omit<DifusionDoc, 'id' | 'createdAt'>>(EMPTY_DIFUSION);
 
-    // ─ Refs ───────────────────────────────────────────────────────────────────
+    // Ã¢â€â‚¬ Refs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     const politicaRef = useMemoFirebase(() => {
         if (!firestore || !profile?.empresaId) return null;
@@ -194,7 +199,7 @@ export default function PoliticaMetasPage() {
         [difColRef],
     );
 
-    // ─ Data ───────────────────────────────────────────────────────────────────
+    // Ã¢â€â‚¬ Data Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     const { data: politica } = useDoc(politicaRef);
     const { data: metas } = useCollection<MetaDoc>(metasQuery);
@@ -206,7 +211,7 @@ export default function PoliticaMetasPage() {
         if (politica.legalChecks) setLegalChecks(politica.legalChecks);
     }, [politica]);
 
-    // ─ Computed ───────────────────────────────────────────────────────────────
+    // Ã¢â€â‚¬ Computed Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     const metaStats = useMemo(() => {
         const list = metas ?? [];
@@ -235,7 +240,7 @@ export default function PoliticaMetasPage() {
         return Math.round((filled / LEGAL_CHECKLIST.length) * 100);
     }, [legalChecks]);
 
-    // ─ Policy ─────────────────────────────────────────────────────────────────
+    // Ã¢â€â‚¬ Policy Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     const handleSavePolicy = async () => {
         if (!politicaRef) return;
@@ -246,7 +251,7 @@ export default function PoliticaMetasPage() {
             const vencimiento = new Date();
             vencimiento.setFullYear(vencimiento.getFullYear() + 3);
             await setDoc(politicaRef, {
-                titulo: 'Política de Seguridad Vial',
+                titulo: 'PolÃƒ­tica de Seguridad Vial',
                 contenidoHtml: content,
                 version: nextVersion,
                 fechaAprobacion: new Date().toISOString(),
@@ -257,15 +262,47 @@ export default function PoliticaMetasPage() {
                 empresaId: profile?.empresaId,
                 updatedAt: serverTimestamp(),
             }, { merge: true });
-            toast({ title: 'Política publicada', description: `Versión ${nextVersion} guardada. Vigencia 3 años.` });
+            toast({ title: 'PolÃƒ­tica publicada', description: `VersiÃƒ³n ${nextVersion} guardada. Vigencia 3 aÃƒ±os.` });
         } catch {
-            toast({ variant: 'destructive', title: 'Error', description: 'No se pudo guardar la política.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'No se pudo guardar la polÃƒ­tica.' });
         } finally {
             setIsSaving(false);
         }
     };
 
-    // ─ Metas ──────────────────────────────────────────────────────────────────
+    // Ã¢â€â‚¬ Image Upload Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+
+    const handleImageUpload = async (file: File) => {
+        if (!politicaRef || !profile?.empresaId) return;
+        setIsUploadingImage(true);
+        try {
+            const storage = getStorage();
+            const path = `empresas/${profile.empresaId}/politica-imagen/${Date.now()}_${file.name}`;
+            const sRef = storageRef(storage, path);
+            const snap = await uploadBytes(sRef, file);
+            const url = await getDownloadURL(snap.ref);
+            await setDoc(politicaRef, { imagenUrl: url }, { merge: true });
+            toast({ title: 'Imagen guardada', description: 'La imagen de la polÃƒ­tica fue subida exitosamente.' });
+        } catch {
+            toast({ variant: 'destructive', title: 'Error', description: 'No se pudo subir la imagen.' });
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
+    const publicUrl = typeof window !== 'undefined' && profile?.empresaId
+        ? `${window.location.origin}/politica/${profile.empresaId}`
+        : '';
+
+    const handleCopyUrl = () => {
+        if (!publicUrl) return;
+        navigator.clipboard.writeText(publicUrl).then(() => {
+            setUrlCopied(true);
+            setTimeout(() => setUrlCopied(false), 2500);
+        });
+    };
+
+    // Ã¢â€â‚¬ Metas Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     const openNewMeta = () => {
         setEditingMeta(null);
@@ -287,7 +324,7 @@ export default function PoliticaMetasPage() {
     const handleSaveMeta = async () => {
         if (!metasColRef || !firestore || !profile?.empresaId) return;
         if (!metaForm.nombre || !metaForm.indicador || !metaForm.fecha_limite) {
-            toast({ variant: 'destructive', title: 'Campos requeridos', description: 'Complete nombre, indicador y fecha límite.' });
+            toast({ variant: 'destructive', title: 'Campos requeridos', description: 'Complete nombre, indicador y fecha lÃƒ­mite.' });
             return;
         }
         try {
@@ -312,7 +349,7 @@ export default function PoliticaMetasPage() {
         toast({ title: 'Meta eliminada' });
     };
 
-    // ─ Difusión ───────────────────────────────────────────────────────────────
+    // Ã¢â€â‚¬ DifusiÃƒ³n Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     const handleAddDifusion = async () => {
         if (!difColRef) return;
@@ -343,19 +380,19 @@ export default function PoliticaMetasPage() {
         await deleteDoc(doc(firestore, 'empresas', profile.empresaId, 'difusiones_politica', id));
     };
 
-    // ─ Render ─────────────────────────────────────────────────────────────────
+    // Ã¢â€â‚¬ Render Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     return (
         <div className="space-y-8 pb-10">
 
-            {/* ── Header ──────────────────────────────────────────────────── */}
+            {/* Ã¢â€â‚¬Ã¢â€â‚¬ Header Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">
-                        Política y Metas
+                        PolÃƒ­tica y Metas
                     </h1>
                     <p className="text-muted-foreground mt-1 text-sm">
-                        Compromiso organizacional, objetivos PESV y seguimiento de difusión — Paso 3
+                        Compromiso organizacional, objetivos PESV y seguimiento de difusiÃƒ³n Ã¢â‚¬â€ Paso 3
                     </p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -378,13 +415,13 @@ export default function PoliticaMetasPage() {
                 </div>
             </div>
 
-            {/* ── KPI Strip ───────────────────────────────────────────────── */}
+            {/* Ã¢â€â‚¬Ã¢â€â‚¬ KPI Strip Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                     { label: 'Metas Totales', value: metaStats.total, color: 'text-foreground', Icon: Flag },
                     { label: 'Cumplidas', value: metaStats.cumplidas, color: 'text-emerald-400', Icon: CheckCheck },
                     { label: 'En Progreso', value: metaStats.enProgreso, color: 'text-blue-400', Icon: TrendingUp },
-                    { label: 'Difusión Firmada', value: `${difStats.pct}%`, color: difStats.pct >= 80 ? 'text-emerald-400' : 'text-primary', Icon: Users },
+                    { label: 'DifusiÃƒ³n Firmada', value: `${difStats.pct}%`, color: difStats.pct >= 80 ? 'text-emerald-400' : 'text-primary', Icon: Users },
                 ].map(({ label, value, color, Icon }) => (
                     <Card key={label} className="bg-card border-border-dark">
                         <CardContent className="p-5 flex items-center gap-4">
@@ -400,11 +437,11 @@ export default function PoliticaMetasPage() {
                 ))}
             </div>
 
-            {/* ── Tabs ────────────────────────────────────────────────────── */}
+            {/* Ã¢â€â‚¬Ã¢â€â‚¬ Tabs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <Tabs defaultValue="politica">
                 <TabsList className="bg-card border border-border-dark h-12 p-1 flex-wrap gap-1">
                     <TabsTrigger value="politica" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold uppercase text-xs tracking-wide h-full px-4">
-                        <FileText className="size-4" /> Política
+                        <FileText className="size-4" /> PolÃƒ­tica
                     </TabsTrigger>
                     <TabsTrigger value="metas" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold uppercase text-xs tracking-wide h-full px-4">
                         <Target className="size-4" /> Metas
@@ -413,7 +450,7 @@ export default function PoliticaMetasPage() {
                         )}
                     </TabsTrigger>
                     <TabsTrigger value="difusion" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold uppercase text-xs tracking-wide h-full px-4">
-                        <Send className="size-4" /> Difusión
+                        <Send className="size-4" /> DifusiÃƒ³n
                         {difStats.total > 0 && (
                             <Badge className={cn(
                                 'text-[9px] font-black px-1.5 py-0',
@@ -425,7 +462,7 @@ export default function PoliticaMetasPage() {
                     </TabsTrigger>
                 </TabsList>
 
-                {/* ══════════════════════════════════════════ TAB: POLÍTICA */}
+                {/* Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢ TAB: POLÃƒTICA */}
                 <TabsContent value="politica" className="mt-6">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
@@ -435,10 +472,10 @@ export default function PoliticaMetasPage() {
                                 <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 bg-white/[0.02] py-4 px-6">
                                     <div>
                                         <CardTitle className="text-base font-black uppercase tracking-tight">
-                                            Cuerpo de la Política
+                                            Cuerpo de la PolÃƒ­tica
                                         </CardTitle>
                                         <CardDescription className="text-xs mt-0.5">
-                                            Redacción oficial — Res. 40595/2022 Art. 8
+                                            RedacciÃƒ³n oficial Ã¢â‚¬â€ Res. 40595/2022 Art. 8
                                         </CardDescription>
                                     </div>
                                     <div className="text-right text-[10px] text-muted-foreground space-y-0.5">
@@ -456,7 +493,7 @@ export default function PoliticaMetasPage() {
                                 <CardContent className="p-0">
                                     <Textarea
                                         className="w-full min-h-[500px] bg-transparent border-none p-8 text-foreground resize-none leading-relaxed text-[15px] focus-visible:ring-0 custom-scrollbar"
-                                        placeholder={`POLÍTICA DE SEGURIDAD VIAL\n\n[Nombre de la empresa], comprometida con la seguridad vial como valor fundamental, declara:\n\n1. La prevención de accidentes de tránsito es una responsabilidad compartida de toda la organización.\n\n2. Se asignarán los recursos humanos, técnicos y financieros necesarios para implementar y mantener el Plan Estratégico de Seguridad Vial.\n\n3. Se promoverá una cultura de comportamiento vial responsable en todos los niveles de la organización.\n\n4. Se cumplirán todas las disposiciones legales vigentes en materia de seguridad vial.\n\n_________________________________\nRepresentante Legal\nFecha:`}
+                                        placeholder={`POLÃƒTICA DE SEGURIDAD VIAL\n\n[Nombre de la empresa], comprometida con la seguridad vial como valor fundamental, declara:\n\n1. La prevenciÃƒ³n de accidentes de trÃƒ¡nsito es una responsabilidad compartida de toda la organizaciÃƒ³n.\n\n2. Se asignarÃƒ¡n los recursos humanos, tÃƒ©cnicos y financieros necesarios para implementar y mantener el Plan EstratÃƒ©gico de Seguridad Vial.\n\n3. Se promoverÃƒ¡ una cultura de comportamiento vial responsable en todos los niveles de la organizaciÃƒ³n.\n\n4. Se cumplirÃƒ¡n todas las disposiciones legales vigentes en materia de seguridad vial.\n\n_________________________________\nRepresentante Legal\nFecha:`}
                                         value={content}
                                         onChange={e => setContent(e.target.value)}
                                     />
@@ -464,8 +501,8 @@ export default function PoliticaMetasPage() {
                                 <div className="border-t border-white/5 px-6 py-3 flex items-center justify-between bg-white/[0.01]">
                                     <span className="text-[10px] text-muted-foreground">
                                         {content.trim()
-                                            ? `${content.trim().split(/\s+/).length} palabras · ${content.length} caracteres`
-                                            : 'Sin contenido aún'}
+                                            ? `${content.trim().split(/\s+/).length} palabras Ã‚· ${content.length} caracteres`
+                                            : 'Sin contenido aÃƒºn'}
                                     </span>
                                     <Button
                                         onClick={handleSavePolicy}
@@ -473,7 +510,7 @@ export default function PoliticaMetasPage() {
                                         className="bg-primary font-black uppercase text-xs h-9 px-6 gap-2 shadow-lg shadow-primary/20"
                                     >
                                         <Save className="size-4" />
-                                        {isSaving ? 'Publicando...' : 'Publicar Política'}
+                                        {isSaving ? 'Publicando...' : 'Publicar PolÃƒ­tica'}
                                     </Button>
                                 </div>
                             </Card>
@@ -557,22 +594,120 @@ export default function PoliticaMetasPage() {
                                             'text-xs font-black uppercase tracking-wide',
                                             politica?.estado === 'Publicada' ? 'text-emerald-400' : 'text-amber-400'
                                         )}>
-                                            {politica?.estado === 'Publicada' ? 'Política Vigente' : 'Sin Publicar'}
+                                            {politica?.estado === 'Publicada' ? 'PolÃƒ­tica Vigente' : 'Sin Publicar'}
                                         </p>
                                         <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
                                             {politica?.estado === 'Publicada'
-                                                ? 'La política se encuentra activa y fue firmada. Revísela anualmente o ante cambios organizacionales relevantes.'
-                                                : 'Redacte el texto de la política y presione "Publicar Política" para activarla en el sistema.'
+                                                ? 'La polÃƒ­tica se encuentra activa y fue firmada. RevÃƒ­sela anualmente o ante cambios organizacionales relevantes.'
+                                                : 'Redacte el texto de la polÃƒ­tica y presione "Publicar PolÃƒ­tica" para activarla en el sistema.'
                                             }
                                         </p>
                                     </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Image Upload Card */}
+                            <Card className="bg-card border-border-dark">
+                                <CardHeader className="py-4 px-5 border-b border-white/5">
+                                    <CardTitle className="text-sm font-black uppercase flex items-center gap-2">
+                                        <ImagePlus className="size-4 text-primary" />
+                                        Imagen de la PolÃƒ­tica
+                                    </CardTitle>
+                                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                                        Sube una foto del documento fÃƒ­sico firmado
+                                    </p>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-3">
+                                    {(politica as any)?.imagenUrl && (
+                                        <div className="rounded-lg overflow-hidden border border-white/10">
+                                            <img
+                                                src={(politica as any).imagenUrl}
+                                                alt="Imagen polÃƒ­tica"
+                                                className="w-full object-cover max-h-36"
+                                            />
+                                        </div>
+                                    )}
+                                    <input
+                                        ref={imageInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={e => {
+                                            const f = e.target.files?.[0];
+                                            if (f) handleImageUpload(f);
+                                        }}
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={isUploadingImage || !politicaRef}
+                                        onClick={() => imageInputRef.current?.click()}
+                                        className="w-full gap-2 font-bold uppercase text-xs border-white/10"
+                                    >
+                                        <Upload className="size-3.5" />
+                                        {isUploadingImage ? 'Subiendo...' : ((politica as any)?.imagenUrl ? 'Cambiar imagen' : 'Subir imagen')}
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            {/* Public URL Card */}
+                            <Card className="bg-card border-border-dark border-l-4 border-l-blue-500">
+                                <CardHeader className="py-4 px-5 border-b border-white/5">
+                                    <CardTitle className="text-sm font-black uppercase flex items-center gap-2">
+                                        <Link2 className="size-4 text-blue-400" />
+                                        URL de DivulgaciÃƒ³n
+                                    </CardTitle>
+                                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                                        Comparte este enlace para que los colaboradores firmen la polÃƒ­tica
+                                    </p>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-3">
+                                    {politica?.estado === 'Publicada' && publicUrl ? (
+                                        <>
+                                            <div className="bg-white/5 border border-white/10 rounded-lg p-3 break-all">
+                                                <p className="text-[10px] text-blue-300 font-mono leading-relaxed">
+                                                    {publicUrl}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    onClick={handleCopyUrl}
+                                                    className={cn(
+                                                        'flex-1 gap-2 font-bold uppercase text-xs h-9 transition-all',
+                                                        urlCopied
+                                                            ? 'bg-emerald-600 hover:bg-emerald-600'
+                                                            : 'bg-blue-600 hover:bg-blue-700'
+                                                    )}
+                                                >
+                                                    {urlCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                                                    {urlCopied ? 'Copiado!' : 'Copiar URL'}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="gap-2 font-bold uppercase text-xs h-9 border-white/10"
+                                                    onClick={() => window.open(publicUrl, '_blank')}
+                                                >
+                                                    <FileText className="size-3.5" /> Ver
+                                                </Button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                                            <AlertTriangle className="size-4 text-amber-400 shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-amber-300 leading-relaxed">
+                                                Publica la polÃƒ­tica primero para habilitar la URL de divulgaciÃƒ³n.
+                                            </p>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </aside>
                     </div>
                 </TabsContent>
 
-                {/* ══════════════════════════════════════════ TAB: METAS */}
+                {/* Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢ TAB: METAS */}
                 <TabsContent value="metas" className="mt-6 space-y-5">
                     {/* Header row */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -614,7 +749,7 @@ export default function PoliticaMetasPage() {
                             <CardContent className="py-20 flex flex-col items-center gap-3 text-center">
                                 <Target className="size-12 text-muted-foreground/20" />
                                 <p className="text-sm font-bold text-muted-foreground">Sin metas registradas</p>
-                                <p className="text-xs text-muted-foreground/60">Defina los objetivos PESV para el período vigente</p>
+                                <p className="text-xs text-muted-foreground/60">Defina los objetivos PESV para el perÃƒ­odo vigente</p>
                                 <Button onClick={openNewMeta} className="mt-2 bg-primary font-black uppercase text-xs h-9 px-5 gap-2">
                                     <Plus className="size-4" /> Crear primera meta
                                 </Button>
@@ -675,7 +810,7 @@ export default function PoliticaMetasPage() {
                                                         <Calendar className="size-3 shrink-0" />
                                                         <span>{meta.fecha_limite
                                                             ? new Date(meta.fecha_limite + 'T12:00:00').toLocaleDateString('es-CO')
-                                                            : '—'}</span>
+                                                            : 'Ã¢â‚¬â€'}</span>
                                                     </div>
                                                     {meta.responsable && (
                                                         <p className="text-[10px] text-muted-foreground/60 truncate max-w-[140px]">{meta.responsable}</p>
@@ -706,7 +841,7 @@ export default function PoliticaMetasPage() {
                     )}
                 </TabsContent>
 
-                {/* ══════════════════════════════════════════ TAB: DIFUSIÓN */}
+                {/* Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢Ã¢â€¢ TAB: DIFUSIÃƒâ€œN */}
                 <TabsContent value="difusion" className="mt-6 space-y-5">
                     {/* Stats row */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -729,7 +864,7 @@ export default function PoliticaMetasPage() {
                     <Card className="bg-card border-border-dark">
                         <CardContent className="p-5">
                             <div className="flex justify-between text-xs font-bold mb-2">
-                                <span className="text-muted-foreground">Progreso de difusión de la política</span>
+                                <span className="text-muted-foreground">Progreso de difusiÃƒ³n de la polÃƒ­tica</span>
                                 <span className={progressTextColor(difStats.pct)}>
                                     {difStats.pct}% firmado
                                 </span>
@@ -761,9 +896,9 @@ export default function PoliticaMetasPage() {
                             {!difusiones?.length ? (
                                 <div className="py-16 flex flex-col items-center gap-2 text-center">
                                     <Users className="size-10 text-muted-foreground/20" />
-                                    <p className="text-sm font-bold text-muted-foreground">Sin registros de difusión</p>
+                                    <p className="text-sm font-bold text-muted-foreground">Sin registros de difusiÃƒ³n</p>
                                     <p className="text-xs text-muted-foreground/60 max-w-xs">
-                                        Agregue colaboradores para hacer seguimiento de quién ha recibido y firmado la política
+                                        Agregue colaboradores para hacer seguimiento de quiÃƒ©n ha recibido y firmado la polÃƒ­tica
                                     </p>
                                 </div>
                             ) : (
@@ -773,7 +908,7 @@ export default function PoliticaMetasPage() {
                                             <TableRow className="border-white/5 hover:bg-transparent">
                                                 <TableHead className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Nombre</TableHead>
                                                 <TableHead className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cargo</TableHead>
-                                                <TableHead className="text-[10px] font-black text-muted-foreground uppercase tracking-widest hidden sm:table-cell">Método</TableHead>
+                                                <TableHead className="text-[10px] font-black text-muted-foreground uppercase tracking-widest hidden sm:table-cell">MÃƒ©todo</TableHead>
                                                 <TableHead className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Estado</TableHead>
                                                 <TableHead className="text-[10px] font-black text-muted-foreground uppercase tracking-widest hidden md:table-cell">Fecha Firma</TableHead>
                                                 <TableHead className="w-10" />
@@ -807,7 +942,7 @@ export default function PoliticaMetasPage() {
                                                     <TableCell className="text-[11px] text-muted-foreground hidden md:table-cell">
                                                         {dif.fechaAceptacion
                                                             ? new Date(dif.fechaAceptacion).toLocaleDateString('es-CO')
-                                                            : '—'
+                                                            : 'Ã¢â‚¬â€'
                                                         }
                                                     </TableCell>
                                                     <TableCell>
@@ -830,7 +965,7 @@ export default function PoliticaMetasPage() {
                 </TabsContent>
             </Tabs>
 
-            {/* ─── Dialog: Nueva / Editar Meta ─────────────────────────────── */}
+            {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Dialog: Nueva / Editar Meta Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <Dialog open={metaDialog} onOpenChange={setMetaDialog}>
                 <DialogContent className="max-w-2xl bg-card border-border-dark text-foreground">
                     <DialogHeader>
@@ -849,10 +984,10 @@ export default function PoliticaMetasPage() {
                             />
                         </div>
                         <div className="sm:col-span-2 space-y-1.5">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Descripción</Label>
+                            <Label className="text-xs font-bold uppercase text-muted-foreground">DescripciÃƒ³n</Label>
                             <Textarea
                                 className="bg-background border-border-dark resize-none h-20"
-                                placeholder="Contexto y justificación de la meta..."
+                                placeholder="Contexto y justificaciÃƒ³n de la meta..."
                                 value={metaForm.descripcion}
                                 onChange={e => setMetaForm(p => ({ ...p, descripcion: e.target.value }))}
                             />
@@ -884,10 +1019,10 @@ export default function PoliticaMetasPage() {
                             </Select>
                         </div>
                         <div className="sm:col-span-2 space-y-1.5">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Indicador de Medición *</Label>
+                            <Label className="text-xs font-bold uppercase text-muted-foreground">Indicador de MediciÃƒ³n *</Label>
                             <Input
                                 className="bg-background border-border-dark"
-                                placeholder="Ej: Número de accidentes por cada 100 vehículos"
+                                placeholder="Ej: NÃƒºmero de accidentes por cada 100 vehÃƒ­culos"
                                 value={metaForm.indicador}
                                 onChange={e => setMetaForm(p => ({ ...p, indicador: e.target.value }))}
                             />
@@ -914,7 +1049,7 @@ export default function PoliticaMetasPage() {
                             <Label className="text-xs font-bold uppercase text-muted-foreground">Unidad</Label>
                             <Input
                                 className="bg-background border-border-dark"
-                                placeholder="%, personas, vehículos..."
+                                placeholder="%, personas, vehÃƒ­culos..."
                                 value={metaForm.unidad}
                                 onChange={e => setMetaForm(p => ({ ...p, unidad: e.target.value }))}
                             />
@@ -938,7 +1073,7 @@ export default function PoliticaMetasPage() {
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Fecha Límite *</Label>
+                            <Label className="text-xs font-bold uppercase text-muted-foreground">Fecha LÃƒ­mite *</Label>
                             <Input
                                 type="date"
                                 className="bg-background border-border-dark"
@@ -959,7 +1094,7 @@ export default function PoliticaMetasPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* ─── Dialog: Registrar Difusión ──────────────────────────────── */}
+            {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Dialog: Registrar DifusiÃƒ³n Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <Dialog open={difDialog} onOpenChange={setDifDialog}>
                 <DialogContent className="max-w-md bg-card border-border-dark text-foreground">
                     <DialogHeader>
@@ -979,7 +1114,7 @@ export default function PoliticaMetasPage() {
                             <Label className="text-xs font-bold uppercase text-muted-foreground">Cargo *</Label>
                             <Input
                                 className="bg-background border-border-dark"
-                                placeholder="Cargo en la organización"
+                                placeholder="Cargo en la organizaciÃƒ³n"
                                 value={difForm.cargo}
                                 onChange={e => setDifForm(p => ({ ...p, cargo: e.target.value }))}
                             />
@@ -995,7 +1130,7 @@ export default function PoliticaMetasPage() {
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Método de Difusión</Label>
+                            <Label className="text-xs font-bold uppercase text-muted-foreground">MÃƒ©todo de DifusiÃƒ³n</Label>
                             <Select value={difForm.metodo} onValueChange={v => setDifForm(p => ({ ...p, metodo: v as MetodoFirma }))}>
                                 <SelectTrigger className="bg-background border-border-dark">
                                     <SelectValue />
