@@ -1,42 +1,63 @@
 'use client';
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Shield,
-  LayoutDashboard,
-  Flame,
-  ClipboardList,
-  Truck,
-  Handshake,
+  Activity,
+  AlertTriangle,
+  BarChartBig,
   Building2,
   ClipboardCheck,
-  FileArchive,
-  Megaphone,
-  ShieldCheck,
-  BarChartBig,
-  Settings,
-  Users,
-  UserCheck,
-  Map,
-  FileText,
-  AlertTriangle,
-  Activity,
-  ListTodo,
-  HardHat,
-  GraduationCap,
-  Wrench,
-  Fuel,
-  ShieldAlert,
+  ClipboardList,
   ExternalLink,
+  FileArchive,
+  FileText,
+  Flame,
+  Fuel,
+  GraduationCap,
+  Handshake,
+  HardHat,
+  LayoutDashboard,
+  ListTodo,
+  Map,
+  Megaphone,
+  Menu,
+  Settings,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Truck,
+  UserCheck,
   UserCog,
+  Users,
+  Wrench,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useUser } from "@/firebase";
 
-const navItems = [
+import { useUser } from "@/firebase";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+type NavItem = {
+  href?: string;
+  icon?: typeof LayoutDashboard;
+  isSeparator?: boolean;
+  isTitle?: boolean;
+  label: string;
+  roles?: Array<"Superadmin" | "Admin" | "Usuario" | "RRHH" | "Lider_PESV" | "Gestor_Flota" | "Conductor" | "Auditor">;
+};
+
+const navItems: NavItem[] = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
 
   { label: "Planear (Fase 1)", isTitle: true },
@@ -70,83 +91,109 @@ const navItems = [
   { href: "/dashboard/comunicacion", icon: Megaphone, label: "Campañas y Boletines" },
   { href: "/dashboard/revision-gerencial", icon: ShieldCheck, label: "Revisión Gerencial" },
 
-  { isSeparator: true },
-  { href: "/dashboard/usuarios", icon: UserCog, label: "Usuarios del Sistema", roles: ['Superadmin', 'Admin', 'RRHH'] },
+  { label: "", isSeparator: true },
+  { href: "/dashboard/usuarios", icon: UserCog, label: "Usuarios del Sistema", roles: ["Superadmin", "Admin", "RRHH"] },
   { href: "/dashboard/configuracion", icon: Settings, label: "Configuración" },
 ];
 
-export function Sidebar() {
+function SidebarContent({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
   const { profile } = useUser();
-  const userAvatar = PlaceHolderImages.find(p => p.id === "user-avatar-1");
+  const userAvatar = PlaceHolderImages.find((placeholder) => placeholder.id === "user-avatar-1");
+
+  const renderNavLink = (item: NavItem, key: string) => {
+    if (!item.href) return null;
+
+    const isActive = pathname === item.href;
+    const link = (
+      <Link
+        key={key}
+        href={item.href}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 group",
+          isActive
+            ? "bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20"
+            : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
+        )}
+      >
+        {item.icon ? (
+          <item.icon
+            className={cn(
+              "h-5 w-5 shrink-0 transition-transform group-hover:scale-110",
+              isActive ? "text-primary-foreground" : "text-primary"
+            )}
+          />
+        ) : null}
+        <span className="min-w-0 truncate">{item.label}</span>
+      </Link>
+    );
+
+    return mobile ? (
+      <SheetClose asChild key={key}>
+        {link}
+      </SheetClose>
+    ) : (
+      link
+    );
+  };
 
   return (
-    <aside className="hidden md:flex w-72 flex-col justify-between border-r bg-card p-4 overflow-y-auto custom-scrollbar border-border-dark">
+    <div className="flex h-full flex-col justify-between gap-6">
       <div className="flex flex-col gap-4">
-        <div className="flex gap-3 items-center px-2 py-4 border-b border-border-dark">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary shadow-sm">
-            <Shield className="w-6 h-6" />
+        <div className="flex items-center gap-3 border-b border-border-dark px-2 py-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm">
+            <Shield className="h-6 w-6" />
           </div>
-          <div className="flex flex-col">
-            <h1 className="text-foreground text-lg font-black leading-none tracking-tight font-headline">RoadWise 360</h1>
-            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">por DateNova</p>
+          <div className="min-w-0">
+            <h1 className="truncate font-headline text-lg font-black leading-none tracking-tight text-foreground">
+              RoadWise 360
+            </h1>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              por DateNova
+            </p>
           </div>
         </div>
-        <nav className="flex flex-col gap-1 mt-2">
-          {profile?.rol === 'Superadmin' && (
-            <Link
-              href="/admin"
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group mb-4",
-                pathname === "/admin"
-                  ? "bg-red-500 text-white font-bold"
-                  : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
-              )}
-            >
-              <ShieldAlert className="w-5 h-5 shrink-0" />
-              <p className="text-sm">Panel Maestro SaaS</p>
-            </Link>
-          )}
+
+        <nav className="mt-2 flex flex-col gap-1">
+          {profile?.rol === "Superadmin"
+            ? renderNavLink(
+                {
+                  href: "/admin",
+                  icon: ShieldAlert,
+                  label: "Panel Maestro SaaS",
+                },
+                "admin-panel"
+              )
+            : null}
 
           {navItems.map((item, index) => {
             if (item.isTitle) {
               return (
-                <div key={index} className="px-3 pt-6 pb-2">
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{item.label}</p>
+                <div key={`title-${index}`} className="px-3 pb-2 pt-6">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    {item.label}
+                  </p>
                 </div>
               );
             }
+
             if (item.isSeparator) {
-              return <div key={index} className="my-4 border-t border-border-dark" />;
+              return <div key={`separator-${index}`} className="my-4 border-t border-border-dark" />;
             }
-            // Ocultar items restringidos por rol
+
             if (item.roles && profile?.rol && !item.roles.includes(profile.rol)) {
               return null;
             }
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={index}
-                href={item.href || "#"}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
-                  isActive
-                    ? "bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20"
-                    : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
-                )}
-              >
-                {item.icon && <item.icon className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-primary-foreground" : "text-primary")} />}
-                <p className="text-sm">{item.label}</p>
-              </Link>
-            );
+
+            return renderNavLink(item, `nav-${index}`);
           })}
         </nav>
       </div>
 
-      <div className="flex flex-col gap-2 mt-8">
-        <div className="flex items-center gap-3 px-3 py-4 border border-border-dark bg-secondary/20 rounded-xl">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3 rounded-xl border border-border-dark bg-secondary/20 px-3 py-4">
           {userAvatar ? (
-            <div className="relative">
+            <div className="relative shrink-0">
               <Image
                 src={userAvatar.imageUrl}
                 alt={userAvatar.description}
@@ -155,29 +202,70 @@ export function Sidebar() {
                 className="rounded-full border-2 border-primary/20"
                 data-ai-hint={userAvatar.imageHint}
               />
-              <div className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-card"></div>
+              <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-green-500" />
             </div>
-          ) : <div className="w-10 h-10 rounded-full bg-muted"></div>}
-          <div className="flex flex-col overflow-hidden">
-            <p className="text-foreground text-sm font-bold leading-none truncate">
-              {profile?.rol === 'Superadmin' ? 'Super Admin' : profile?.nombreCompleto || 'Usuario'}
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-muted" />
+          )}
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold leading-none text-foreground">
+              {profile?.rol === "Superadmin" ? "Super Admin" : profile?.nombreCompleto || "Usuario"}
             </p>
-            <p className="text-muted-foreground text-[10px] font-medium leading-none mt-1 truncate">
-              {profile?.rol === 'Superadmin' ? 'DateNova Global' : `Empresa: ${profile?.empresaId || 'Sin asignar'}`}
+            <p className="mt-1 truncate text-[10px] font-medium leading-none text-muted-foreground">
+              {profile?.rol === "Superadmin" ? "DateNova Global" : `Empresa: ${profile?.empresaId || "Sin asignar"}`}
             </p>
           </div>
         </div>
-        <div className="px-2 pt-4">
+
+        <div className="px-2 pt-2">
           <a
             href="https://www.datenova.io"
             target="_blank"
-            className="flex items-center justify-between group px-3 py-2 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors"
+            rel="noopener noreferrer"
+            className="group flex items-center justify-between rounded-lg bg-primary/5 px-3 py-2 transition-colors hover:bg-primary/10"
           >
-            <span className="text-[10px] font-black text-primary tracking-widest">WWW.DATENOVA.IO</span>
-            <ExternalLink className="size-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="text-[10px] font-black tracking-widest text-primary">WWW.DATENOVA.IO</span>
+            <ExternalLink className="h-3 w-3 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
           </a>
         </div>
       </div>
+    </div>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <aside className="hidden w-72 shrink-0 border-r border-border-dark bg-card p-4 md:flex">
+      <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+        <SidebarContent />
+      </div>
     </aside>
+  );
+}
+
+export function MobileNavigation() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 border-border-dark bg-card text-foreground md:hidden"
+          aria-label="Abrir menú de navegación"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[88vw] max-w-[22rem] border-r border-border-dark bg-card p-0">
+        <SheetHeader className="sr-only">
+          <SheetTitle>Menú de navegación</SheetTitle>
+          <SheetDescription>Accede a los módulos principales del dashboard RoadWise 360.</SheetDescription>
+        </SheetHeader>
+        <div className="h-full overflow-y-auto p-4 custom-scrollbar">
+          <SidebarContent mobile />
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

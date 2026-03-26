@@ -1,418 +1,953 @@
-
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, serverTimestamp, addDoc, updateDoc, doc, orderBy } from 'firebase/firestore';
+import {
+  collection, query, serverTimestamp, addDoc, updateDoc,
+  doc, deleteDoc, where,
+} from 'firebase/firestore';
 import { ExcelBulkActions } from '@/components/shared/excel-bulk-actions';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-    Handshake,
-    Plus,
-    ShieldCheck,
-    AlertTriangle,
-    FileCheck,
-    Search,
-    MoreVertical,
-    ExternalLink,
-    RefreshCw,
-    AlertCircle,
-    CheckCircle2,
-    Clock,
-    UserPlus,
-    Car,
-    Users,
-    FileText,
-    TrendingUp,
-    ArrowRightLeft
-} from "lucide-react";
+  Dialog, DialogContent, DialogDescription,
+  DialogHeader, DialogTitle, DialogTrigger,
+} from '@/components/ui/dialog';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+  Table, TableBody, TableCell, TableHead,
+  TableHeader, TableRow,
+} from '@/components/ui/table';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Form, FormControl, FormField, FormItem,
+  FormLabel, FormMessage,
+} from '@/components/ui/form';
+import {
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import {
+  Handshake, Plus, AlertCircle, CheckCircle2, Clock,
+  UserPlus, Car, Users, TrendingUp, Copy, Trash2,
+  MoreVertical, Search, ArrowRight, ShieldCheck, ShieldOff,
+} from 'lucide-react';
 
-// --- ESQUEMAS ---
+// ── SCHEMAS ──────────────────────────────────────────────────────────────
 const contractorSchema = z.object({
-    razonSocial: z.string().min(3, "Razón social requerida"),
-    nit: z.string().min(5, "NIT inválido"),
-    tipoVinculacion: z.enum(["Tercerización", "Subcontratación", "Outsourcing", "Intermediación laboral", "Flota Fidelizada"]),
-    obligadoPESV: z.enum(["Sí", "No"]),
+  razonSocialONombre: z.string().min(3, 'Razón social requerida'),
+  nitCedula: z.string().min(5, 'NIT / Cédula inválido'),
+  tipoVinculacion: z.enum([
+    'Tercerización', 'Subcontratación', 'Outsourcing',
+    'Intermediación laboral', 'Flota Fidelizada',
+  ]),
+  obligadoImplementarPESV: z.boolean().default(false),
 });
 
 const changeSchema = z.object({
-    tipoCambio: z.enum(["Nueva ruta", "Nuevas tecnologías/vehículos", "Nueva legislación", "Nuevos clientes/servicios"]),
-    descripcion: z.string().min(10, "Descripción detallada requerida"),
-    impacto: z.enum(["Alto", "Medio", "Bajo"]),
-    actualizaMatriz: z.boolean().default(false),
+  tipoDeCambio: z.enum([
+    'Nueva ruta', 'Nuevas tecnologías/vehículos',
+    'Nueva legislación', 'Nuevos clientes/servicios',
+  ]),
+  descripcionCambio: z.string().min(10, 'Descripción detallada requerida'),
+  impactoSeguridadVial: z.enum(['Crítico', 'Alto', 'Medio', 'Bajo']),
+  planMitigacion: z.string().min(10, 'Plan de mitigación requerido'),
+  requiereActualizarMatrizRiesgos: z.boolean().default(false),
 });
 
-export default function ContratistasPage() {
-    const firestore = useFirestore();
-    const { profile } = useUser();
-    const nivelPESV = profile?.nivelPESV ?? profile?.nivelPesv ?? profile?.nivel ?? 'Básico';
-    const [isAddContractorOpen, setIsAddContractorOpen] = useState(false);
-    const [isAddChangeOpen, setIsAddChangeOpen] = useState(false);
+type ContractorForm = z.infer<typeof contractorSchema>;
+type ChangeForm = z.infer<typeof changeSchema>;
 
-    // --- QUERIES ---
-    const contratistasRef = useMemoFirebase(() => {
-        if (!firestore || !profile?.empresaId) return null;
-        return query(collection(firestore, 'empresas', profile.empresaId, 'pesv_contratistas'), orderBy('razonSocial'));
-    }, [firestore, profile?.empresaId]);
-    const { data: contratistas, isLoading: loadingContratistas } = useCollection(contratistasRef);
+// ── HELPERS ──────────────────────────────────────────────────────────────
+function semaforoDot(estado: string) {
+  if (estado === 'Aprobado') return 'bg-emerald-500';
+  if (estado === 'Bloqueado/Rechazado') return 'bg-destructive';
+  return 'bg-amber-500';
+}
 
-    const cambiosRef = useMemoFirebase(() => {
-        if (!firestore || !profile?.empresaId) return null;
-        return query(collection(firestore, 'empresas', profile.empresaId, 'gestion_cambios'), orderBy('createdAt', 'desc'));
-    }, [firestore, profile?.empresaId]);
-    const { data: cambios, isLoading: loadingCambios } = useCollection(cambiosRef);
-
-    // --- FORMS ---
-    const contractorForm = useForm<z.infer<typeof contractorSchema>>({
-        resolver: zodResolver(contractorSchema),
-        defaultValues: { razonSocial: "", nit: "", tipoVinculacion: "Flota Fidelizada", obligadoPESV: "No" }
-    });
-
-    const changeForm = useForm<z.infer<typeof changeSchema>>({
-        resolver: zodResolver(changeSchema),
-        defaultValues: { tipoCambio: "Nueva ruta", descripcion: "", impacto: "Bajo", actualizaMatriz: false }
-    });
-
-    // --- ACTIONS ---
-    async function onContractorSubmit(values: z.infer<typeof contractorSchema>) {
-        if (!firestore || !profile?.empresaId) return;
-        try {
-            await addDoc(collection(firestore, 'empresas', profile.empresaId, 'pesv_contratistas'), {
-                ...values,
-                estadoAprobacion: "Pendiente",
-                indicadorCumplimiento: 0,
-                numConductores: 0,
-                numVehiculos: 0,
-                createdAt: serverTimestamp()
-            });
-            setIsAddContractorOpen(false);
-            contractorForm.reset();
-            toast({ title: "Contratista Vinculado", description: "Se ha enviado la invitación al Portal de Aliados." });
-        } catch (e) {
-            toast({ variant: "destructive", title: "Error", description: "No se pudo vincular al contratista." });
-        }
-    }
-
-    async function handleImport(data: any[]) {
-        if (!firestore || !profile?.empresaId) return;
-        try {
-            const colRef = collection(firestore, 'empresas', profile.empresaId, 'pesv_contratistas');
-            for (const item of data) {
-                await addDoc(colRef, {
-                    razonSocial: item.razonSocial || "Sin Nombre",
-                    nit: String(item.nit || ""),
-                    tipoVinculacion: item.tipoVinculacion || "Flota Fidelizada",
-                    obligadoPESV: item.obligadoPESV || "No",
-                    estadoAprobacion: "Pendiente",
-                    indicadorCumplimiento: 0,
-                    numConductores: 0,
-                    numVehiculos: 0,
-                    createdAt: serverTimestamp()
-                });
-            }
-            toast({ title: "Carga Masiva Completada", description: `Se han importado ${data.length} contratistas.` });
-        } catch (e) {
-            toast({ variant: "destructive", title: "Error", description: "Error en la carga masiva." });
-        }
-    }
-
-    async function onChangeSubmit(values: z.infer<typeof changeSchema>) {
-        if (!firestore || !profile?.empresaId) return;
-        try {
-            await addDoc(collection(firestore, 'empresas', profile.empresaId, 'gestion_cambios'), {
-                ...values,
-                estado: "Evaluado",
-                createdAt: serverTimestamp()
-            });
-            setIsAddChangeOpen(false);
-            changeForm.reset();
-            toast({ title: "Cambio Registrado", description: "Se ha evaluado el impacto en la Seguridad Vial." });
-        } catch (e) {
-            toast({ variant: "destructive", title: "Error", description: "No se pudo registrar el cambio." });
-        }
-    }
-
+function estadoBadge(estado: string) {
+  if (estado === 'Aprobado')
     return (
-        <div className="space-y-6 pb-10">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                <div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight uppercase italic">Gestión de Contratistas y Cambio</h1>
-                    <p className="text-text-secondary mt-1">Control de terceros y evaluación de impactos viales (Paso 18)</p>
-                </div>
-                {nivelPESV !== 'Básico' && (
-                    <div className="flex gap-2">
-                        <ExcelBulkActions
-                            data={contratistas || []}
-                            fileName="Contratistas_PESV"
-                            templateColumns={["razonSocial", "nit", "tipoVinculacion", "obligadoPESV"]}
-                            onImport={handleImport}
-                        />
-                        <Dialog open={isAddContractorOpen} onOpenChange={setIsAddContractorOpen}>
-                            <DialogTrigger asChild>
-                                <Button className="bg-primary font-black uppercase h-11 px-6 shadow-lg shadow-primary/20">
-                                    <UserPlus className="size-5 mr-2" /> Vincular Aliado
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
-                                <DialogHeader className="p-6 bg-primary/10 border-b border-border-dark">
-                                    <DialogTitle className="text-xl font-black uppercase italic">Vincular Nuevo Contratista</DialogTitle>
-                                    <DialogDescription className="text-text-secondary">Envíe una invitación para el registro en el Portal de Autogestión.</DialogDescription>
-                                </DialogHeader>
-                                <Form {...contractorForm}>
-                                    <form onSubmit={contractorForm.handleSubmit(onContractorSubmit)} className="p-6 space-y-4">
-                                        <FormField control={contractorForm.control} name="razonSocial" render={({ field }) => (
-                                            <FormItem><FormLabel>Razón Social / Nombre</FormLabel><FormControl><Input {...field} className="bg-background-dark" /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                        <FormField control={contractorForm.control} name="nit" render={({ field }) => (
-                                            <FormItem><FormLabel>NIT / Cédula</FormLabel><FormControl><Input {...field} className="bg-background-dark" /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                        <FormField control={contractorForm.control} name="tipoVinculacion" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Tipo de Vinculación</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger className="bg-background-dark"><SelectValue /></SelectTrigger></FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="Tercerización">Tercerización</SelectItem>
-                                                        <SelectItem value="Subcontratación">Subcontratación</SelectItem>
-                                                        <SelectItem value="Outsourcing">Outsourcing</SelectItem>
-                                                        <SelectItem value="Intermediación laboral">Intermediación laboral</SelectItem>
-                                                        <SelectItem value="Flota Fidelizada">Flota Fidelizada</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )} />
-                                        <FormField control={contractorForm.control} name="obligadoPESV" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>¿Obligado a implementar PESV?</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger className="bg-background-dark"><SelectValue /></SelectTrigger></FormControl>
-                                                    <SelectContent><SelectItem value="Sí">Sí</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )} />
-                                        <Button type="submit" className="w-full bg-primary font-black uppercase h-12 mt-4 shadow-xl shadow-primary/20">Generar Invitación Portal</Button>
-                                    </form>
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-                )}
-            </div>
-
-            <Tabs defaultValue="contratistas" className="w-full">
-                <TabsList className="bg-surface-dark border-border-dark p-1 h-12 w-fit mb-6">
-                    <TabsTrigger value="contratistas" className="data-[state=active]:bg-primary font-bold px-6 uppercase text-[10px] tracking-widest italic">Portal de Aliados</TabsTrigger>
-                    <TabsTrigger value="cambio" className="data-[state=active]:bg-primary font-bold px-6 uppercase text-[10px] tracking-widest italic">Gestión del Cambio</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="contratistas" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <Card className="bg-surface-dark border-border-dark">
-                            <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Contratistas Activos</p></CardHeader>
-                            <CardContent><div className="text-3xl font-black text-foreground">{contratistas?.length || 0}</div></CardContent>
-                        </Card>
-                        <Card className="bg-surface-dark border-border-dark">
-                            <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest text-emerald-500">Aprobación General</p></CardHeader>
-                            <CardContent><div className="text-3xl font-black text-emerald-500">85%</div></CardContent>
-                        </Card>
-                        <Card className="bg-surface-dark border-border-dark">
-                            <CardHeader className="pb-2"><p className="text-[10px] font-black text-text-secondary uppercase tracking-widest text-destructive">Terceros Bloqueados</p></CardHeader>
-                            <CardContent><div className="text-3xl font-black text-destructive">2</div></CardContent>
-                        </Card>
-                        <Card className="bg-surface-dark border-border-dark border-l-4 border-l-primary">
-                            <CardHeader className="pb-2"><p className="text-[10px] font-black text-primary uppercase tracking-widest">Portal Público</p></CardHeader>
-                            <CardContent className="flex items-center justify-between">
-                                <div className="text-sm font-bold text-foreground uppercase italic">Configurado</div>
-                                <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10"><ExternalLink className="size-4" /></Button>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <Card className="bg-surface-dark border-border-dark">
-                        <CardHeader className="border-b border-white/5 bg-white/[0.02]">
-                            <div className="flex items-center justify-between">
-                                <div className="relative w-96">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-secondary" />
-                                    <Input className="pl-9 bg-background-dark border-border-dark text-xs" placeholder="Buscar aliado por nombre o NIT..." />
-                                </div>
-                                <Button variant="outline" className="border-border-dark font-bold text-[10px] uppercase tracking-widest gap-2"><RefreshCw className="size-3" /> Sincronizar SISI</Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="border-border-dark bg-white/5">
-                                        <TableHead className="text-[10px] font-black uppercase">Contratista / NIT</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase text-center">Cumplimiento (%)</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase text-center">Operativos (V / C)</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase">Estado Aprobación</TableHead>
-                                        <TableHead className="text-right"></TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {loadingContratistas ? (
-                                        <TableRow><TableCell colSpan={5} className="text-center py-10">Cargando...</TableCell></TableRow>
-                                    ) : contratistas?.length === 0 ? (
-                                        <TableRow><TableCell colSpan={5} className="text-center py-20 italic text-text-secondary">No hay contratistas vinculados.</TableCell></TableRow>
-                                    ) : (
-                                        contratistas?.map(c => (
-                                            <TableRow key={c.id} className="border-border-dark hover:bg-white/5">
-                                                <TableCell>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-bold text-foreground uppercase italic">{c.razonSocial}</span>
-                                                        <span className="text-[10px] font-bold text-text-secondary uppercase">{c.nit}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-center">
-                                                    <div className="inline-flex flex-col items-center gap-1">
-                                                        <span className="text-xs font-black text-foreground">{c.indicadorCumplimiento || 0}%</span>
-                                                        <Progress value={c.indicadorCumplimiento || 0} className="w-16 h-1 bg-white/5" indicatorClassName="bg-primary" />
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-center">
-                                                    <div className="flex justify-center items-center gap-3">
-                                                        <div className="flex items-center gap-1 text-[10px] font-bold text-text-secondary"><Car className="size-3" /> {c.numVehiculos || 0}</div>
-                                                        <div className="flex items-center gap-1 text-[10px] font-bold text-text-secondary"><Users className="size-3" /> {c.numConductores || 0}</div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {c.estadoAprobacion === 'Aprobado' ? (
-                                                        <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] uppercase tracking-widest gap-1"><CheckCircle2 className="size-3" /> Operativo</Badge>
-                                                    ) : c.estadoAprobacion === 'Bloqueado' ? (
-                                                        <Badge className="bg-destructive/10 text-destructive border-none text-[8px] uppercase tracking-widest gap-1"><AlertCircle className="size-3" /> Bloqueado</Badge>
-                                                    ) : (
-                                                        <Badge className="bg-amber-500/10 text-amber-500 border-none text-[8px] uppercase tracking-widest gap-1"><Clock className="size-3" /> En Revisión</Badge>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="ghost" size="icon" className="text-text-secondary hover:text-foreground"><MoreVertical className="size-4" /></Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="cambio" className="space-y-6">
-                    <div className="flex justify-between items-center bg-blue-500/5 border border-blue-500/20 p-6 rounded-2xl">
-                        <div className="flex gap-4">
-                            <div className="size-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500"><TrendingUp className="size-6" /></div>
-                            <div>
-                                <h4 className="text-foreground font-black uppercase italic tracking-tight">Gestión del Cambio Vial</h4>
-                                <p className="text-xs text-text-secondary mt-1">Evalúa el impacto de cambios internos/externos en el PESV antes de su ejecución.</p>
-                            </div>
-                        </div>
-                        <Dialog open={isAddChangeOpen} onOpenChange={setIsAddChangeOpen}>
-                            <DialogTrigger asChild>
-                                <Button className="bg-blue-600 font-bold uppercase text-xs h-10 px-6 shadow-lg shadow-blue-500/20">
-                                    <Plus className="size-4 mr-2" /> Evaluar Cambio
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md bg-surface-dark border-border-dark text-foreground p-0 overflow-hidden">
-                                <DialogHeader className="p-6 bg-blue-500/10 border-b border-border-dark">
-                                    <DialogTitle className="text-xl font-black uppercase italic">Evaluación de Gestión del Cambio</DialogTitle>
-                                    <DialogDescription className="text-text-secondary">Identifique riesgos asociados a nuevos procesos o legislación.</DialogDescription>
-                                </DialogHeader>
-                                <Form {...changeForm}>
-                                    <form onSubmit={changeForm.handleSubmit(onChangeSubmit)} className="p-6 space-y-4">
-                                        <FormField control={changeForm.control} name="tipoCambio" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Naturaleza del Cambio</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger className="bg-background-dark"><SelectValue /></SelectTrigger></FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="Nueva ruta">Nueva ruta</SelectItem>
-                                                        <SelectItem value="Nuevas tecnologías/vehículos">Nuevas tecnologías/vehículos</SelectItem>
-                                                        <SelectItem value="Nueva legislación">Nueva legislación</SelectItem>
-                                                        <SelectItem value="Nuevos clientes/servicios">Nuevos clientes/servicios</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )} />
-                                        <FormField control={changeForm.control} name="descripcion" render={({ field }) => (
-                                            <FormItem><FormLabel>Descripción del Cambio</FormLabel><FormControl><Input {...field} className="bg-background-dark" /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                        <FormField control={changeForm.control} name="impacto" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Impacto en la Seguridad Vial</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger className="bg-background-dark"><SelectValue /></SelectTrigger></FormControl>
-                                                    <SelectContent><SelectItem value="Alto">Alto</SelectItem><SelectItem value="Medio">Medio</SelectItem><SelectItem value="Bajo">Bajo</SelectItem></SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )} />
-                                        <Button type="submit" className="w-full bg-blue-600 font-black uppercase h-12 mt-4 shadow-xl shadow-blue-500/20">Registrar Evaluación</Button>
-                                    </form>
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {loadingCambios ? (
-                            <Skeleton className="h-40 w-full" />
-                        ) : cambios?.length === 0 ? (
-                            <Card className="md:col-span-2 bg-surface-dark border-border-dark py-20 text-center border-dashed border-2">
-                                <ArrowRightLeft className="size-12 text-foreground/5 mx-auto mb-4" />
-                                <p className="text-text-secondary italic">No se han registrado cambios viales recientes.</p>
-                            </Card>
-                        ) : (
-                            cambios?.map(cambio => (
-                                <Card key={cambio.id} className="bg-surface-dark border-border-dark overflow-hidden hover:border-blue-500/30 transition-all">
-                                    <CardHeader className="p-4 bg-white/5 flex flex-row items-center justify-between">
-                                        <Badge variant="outline" className="text-[9px] uppercase font-black border-blue-500/30 text-blue-500">{cambio.tipoCambio}</Badge>
-                                        <span className="text-[9px] font-bold text-text-secondary uppercase italic">{cambio.createdAt?.toDate().toLocaleDateString() || 'Hoy'}</span>
-                                    </CardHeader>
-                                    <CardContent className="p-4">
-                                        <h5 className="font-bold text-foreground text-sm uppercase italic mb-2 tracking-tight">{cambio.descripcion}</h5>
-                                        <div className="flex items-center gap-4 mt-4">
-                                            <div className="flex flex-col">
-                                                <span className="text-[9px] font-black text-text-secondary uppercase">Impacto Vial</span>
-                                                <Badge className={cambio.impacto === 'Alto' ? 'bg-destructive/10 text-destructive' : 'bg-amber-500/10 text-amber-500'}>{cambio.impacto}</Badge>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[9px] font-black text-text-secondary uppercase">Estado</span>
-                                                <Badge variant="outline" className="border-emerald-500/50 text-emerald-500 uppercase text-[9px]">{cambio.estado}</Badge>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))
-                        )}
-                    </div>
-                </TabsContent>
-            </Tabs>
-        </div>
+      <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] uppercase tracking-widest gap-1">
+        <CheckCircle2 className="size-3" /> Operativo
+      </Badge>
     );
+  if (estado === 'Bloqueado/Rechazado')
+    return (
+      <Badge className="bg-destructive/10 text-destructive border-none text-[8px] uppercase tracking-widest gap-1">
+        <AlertCircle className="size-3" /> Bloqueado
+      </Badge>
+    );
+  return (
+    <Badge className="bg-amber-500/10 text-amber-500 border-none text-[8px] uppercase tracking-widest gap-1">
+      <Clock className="size-3" /> En Revisión
+    </Badge>
+  );
+}
+
+function impactoBadge(impacto: string): ReactNode {
+  const cls: Record<string, string> = {
+    Crítico: 'bg-purple-500/10 text-purple-400',
+    Alto: 'bg-destructive/10 text-destructive',
+    Medio: 'bg-amber-500/10 text-amber-500',
+    Bajo: 'bg-emerald-500/10 text-emerald-500',
+  };
+  return (
+    <Badge className={cn('border-none text-[8px] uppercase tracking-widest', cls[impacto] ?? cls['Bajo'])}>
+      {impacto}
+    </Badge>
+  );
+}
+
+// ── PAGE ──────────────────────────────────────────────────────────────────
+export default function ContratistasPage() {
+  const firestore = useFirestore();
+  const { profile } = useUser();
+
+  const [search, setSearch] = useState('');
+  const [isAddContractorOpen, setIsAddContractorOpen] = useState(false);
+  const [isAddChangeOpen, setIsAddChangeOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // ── QUERIES ──────────────────────────────────────────────────────────
+  const contratistasRef = useMemoFirebase(() => {
+    if (!firestore || !profile?.empresaId) return null;
+    return query(
+      collection(firestore, 'contratistas'),
+      where('empresaId', '==', profile.empresaId),
+    );
+  }, [firestore, profile?.empresaId]);
+  const { data: rawContratistas, isLoading: loadingContratistas } = useCollection(contratistasRef);
+
+  const cambiosRef = useMemoFirebase(() => {
+    if (!firestore || !profile?.empresaId) return null;
+    return query(
+      collection(firestore, 'gestionCambiosViales'),
+      where('empresaId', '==', profile.empresaId),
+    );
+  }, [firestore, profile?.empresaId]);
+  const { data: rawCambios, isLoading: loadingCambios } = useCollection(cambiosRef);
+
+  // ── CLIENT-SIDE SORT & FILTER ─────────────────────────────────────────
+  const contratistas = useMemo(() => {
+    if (!rawContratistas) return [];
+    const sorted = [...rawContratistas].sort((a, b) =>
+      String(a.razonSocialONombre ?? '').localeCompare(String(b.razonSocialONombre ?? '')),
+    );
+    if (!search.trim()) return sorted;
+    const q = search.toLowerCase();
+    return sorted.filter(
+      c =>
+        String(c.razonSocialONombre ?? '').toLowerCase().includes(q) ||
+        String(c.nitCedula ?? '').toLowerCase().includes(q),
+    );
+  }, [rawContratistas, search]);
+
+  const cambios = useMemo(() => {
+    if (!rawCambios) return [];
+    return [...rawCambios].sort((a, b) => {
+      const ta = (a.creadoEn as { toDate?: () => Date } | null)?.toDate?.()?.getTime() ?? 0;
+      const tb = (b.creadoEn as { toDate?: () => Date } | null)?.toDate?.()?.getTime() ?? 0;
+      return tb - ta;
+    });
+  }, [rawCambios]);
+
+  // ── COMPUTED STATS ────────────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const all = rawContratistas ?? [];
+    const total = all.length;
+    const aprobados = all.filter(c => c.estadoAprobacionGeneral === 'Aprobado').length;
+    const bloqueados = all.filter(c => c.estadoAprobacionGeneral === 'Bloqueado/Rechazado').length;
+    const tasa = total > 0 ? Math.round((aprobados / total) * 100) : 0;
+    return { total, aprobados, bloqueados, revision: total - aprobados - bloqueados, tasa };
+  }, [rawContratistas]);
+
+  const kanban = useMemo(() => ({
+    pendiente: cambios.filter(c => c.estado === 'Pendiente'),
+    enCurso: cambios.filter(c => c.estado === 'En curso'),
+    cerrado: cambios.filter(c => c.estado === 'Cerrado'),
+  }), [cambios]);
+
+  // ── FORMS ─────────────────────────────────────────────────────────────
+  const contractorForm = useForm<ContractorForm>({
+    resolver: zodResolver(contractorSchema),
+    defaultValues: {
+      razonSocialONombre: '',
+      nitCedula: '',
+      tipoVinculacion: 'Flota Fidelizada',
+      obligadoImplementarPESV: false,
+    },
+  });
+
+  const changeForm = useForm<ChangeForm>({
+    resolver: zodResolver(changeSchema),
+    defaultValues: {
+      tipoDeCambio: 'Nueva ruta',
+      descripcionCambio: '',
+      impactoSeguridadVial: 'Bajo',
+      planMitigacion: '',
+      requiereActualizarMatrizRiesgos: false,
+    },
+  });
+
+  // ── ACTIONS ───────────────────────────────────────────────────────────
+  async function onContractorSubmit(values: ContractorForm) {
+    if (!firestore || !profile?.empresaId) return;
+    try {
+      const token = Math.random().toString(36).substring(2, 18);
+      await addDoc(collection(firestore, 'contratistas'), {
+        ...values,
+        empresaId: profile.empresaId,
+        estadoAprobacionGeneral: 'Pendiente de revisión',
+        indicadorCumplimiento: 0,
+        numConductores: 0,
+        numVehiculos: 0,
+        portalToken: token,
+        creadoEn: serverTimestamp(),
+        actualizadoEn: serverTimestamp(),
+      });
+      setIsAddContractorOpen(false);
+      contractorForm.reset();
+      toast({ title: 'Contratista Vinculado', description: 'El aliado ha sido registrado exitosamente.' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo vincular al contratista.' });
+    }
+  }
+
+  async function handleImport(data: Record<string, unknown>[]) {
+    if (!firestore || !profile?.empresaId) return;
+    try {
+      for (const item of data) {
+        const token = Math.random().toString(36).substring(2, 18);
+        await addDoc(collection(firestore, 'contratistas'), {
+          razonSocialONombre: String(item.razonSocialONombre ?? item.razonSocial ?? 'Sin Nombre'),
+          nitCedula: String(item.nitCedula ?? item.nit ?? ''),
+          tipoVinculacion: String(item.tipoVinculacion ?? 'Flota Fidelizada'),
+          obligadoImplementarPESV: item.obligadoImplementarPESV === 'Sí' || item.obligadoImplementarPESV === true,
+          empresaId: profile.empresaId,
+          estadoAprobacionGeneral: 'Pendiente de revisión',
+          indicadorCumplimiento: 0,
+          numConductores: 0,
+          numVehiculos: 0,
+          portalToken: token,
+          creadoEn: serverTimestamp(),
+          actualizadoEn: serverTimestamp(),
+        });
+      }
+      toast({ title: 'Carga Masiva Completada', description: `Se importaron ${data.length} contratistas.` });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error', description: 'Error en la carga masiva.' });
+    }
+  }
+
+  async function handleDeleteContratista(id: string) {
+    if (!firestore) return;
+    setDeletingId(id);
+    try {
+      await deleteDoc(doc(firestore, 'contratistas', id));
+      toast({ title: 'Contratista Eliminado' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo eliminar.' });
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleSetEstado(id: string, estado: string) {
+    if (!firestore) return;
+    try {
+      await updateDoc(doc(firestore, 'contratistas', id), {
+        estadoAprobacionGeneral: estado,
+        actualizadoEn: serverTimestamp(),
+      });
+      toast({ title: 'Estado actualizado' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error' });
+    }
+  }
+
+  function copyPortalLink(contratistaId: string, token: string) {
+    const url = `${window.location.origin}/portal/contratistas/${contratistaId}?token=${token}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: 'Enlace Copiado', description: 'Link del portal enviado al portapapeles.' });
+  }
+
+  async function onChangeSubmit(values: ChangeForm) {
+    if (!firestore || !profile?.empresaId) return;
+    try {
+      await addDoc(collection(firestore, 'gestionCambiosViales'), {
+        ...values,
+        empresaId: profile.empresaId,
+        estado: 'Pendiente',
+        creadoEn: serverTimestamp(),
+        actualizadoEn: serverTimestamp(),
+      });
+      setIsAddChangeOpen(false);
+      changeForm.reset();
+      toast({ title: 'Cambio Registrado', description: 'El impacto en la Seguridad Vial ha sido evaluado.' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo registrar el cambio.' });
+    }
+  }
+
+  async function handleAdvanceChange(id: string, currentEstado: string) {
+    if (!firestore) return;
+    const next = currentEstado === 'Pendiente' ? 'En curso' : currentEstado === 'En curso' ? 'Cerrado' : null;
+    if (!next) return;
+    try {
+      await updateDoc(doc(firestore, 'gestionCambiosViales', id), {
+        estado: next,
+        actualizadoEn: serverTimestamp(),
+      });
+      toast({ title: `Avanzado a "${next}"` });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error' });
+    }
+  }
+
+  async function handleDeleteChange(id: string) {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'gestionCambiosViales', id));
+      toast({ title: 'Cambio eliminado' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error' });
+    }
+  }
+
+  // ── RENDER ────────────────────────────────────────────────────────────
+  return (
+    <div className="space-y-6 pb-10">
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-border-dark bg-card p-6 shadow-xl">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
+        <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-primary via-primary/60 to-transparent" />
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
+              <Handshake className="size-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black uppercase italic tracking-tight text-foreground">
+                Gestión de Contratistas
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Control de terceros y evaluación de impactos viales — Paso 18
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <ExcelBulkActions
+              data={rawContratistas ?? []}
+              fileName="Contratistas_PESV"
+              templateColumns={['razonSocialONombre', 'nitCedula', 'tipoVinculacion', 'obligadoImplementarPESV']}
+              onImport={handleImport}
+            />
+            <Dialog open={isAddContractorOpen} onOpenChange={setIsAddContractorOpen}>
+              <DialogTrigger asChild>
+                <Button className="h-11 bg-primary px-6 font-black uppercase shadow-lg shadow-primary/20">
+                  <UserPlus className="mr-2 size-5" /> Vincular Aliado
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md overflow-hidden border-border-dark bg-card p-0 text-foreground">
+                <DialogHeader className="border-b border-border-dark bg-primary/10 p-6">
+                  <DialogTitle className="text-xl font-black uppercase italic">
+                    Vincular Nuevo Contratista
+                  </DialogTitle>
+                  <DialogDescription className="text-muted-foreground">
+                    Registre el aliado en el sistema para gestionar su cumplimiento.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...contractorForm}>
+                  <form onSubmit={contractorForm.handleSubmit(onContractorSubmit)} className="space-y-4 p-6">
+                    <FormField
+                      control={contractorForm.control}
+                      name="razonSocialONombre"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Razón Social / Nombre</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Ej: Transportes El Camino S.A.S." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={contractorForm.control}
+                      name="nitCedula"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>NIT / Cédula</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="900.123.456-7" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={contractorForm.control}
+                      name="tipoVinculacion"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Vinculación</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Tercerización">Tercerización</SelectItem>
+                              <SelectItem value="Subcontratación">Subcontratación</SelectItem>
+                              <SelectItem value="Outsourcing">Outsourcing</SelectItem>
+                              <SelectItem value="Intermediación laboral">Intermediación laboral</SelectItem>
+                              <SelectItem value="Flota Fidelizada">Flota Fidelizada</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={contractorForm.control}
+                      name="obligadoImplementarPESV"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>¿Obligado a implementar PESV?</FormLabel>
+                          <Select
+                            onValueChange={v => field.onChange(v === 'true')}
+                            defaultValue={String(field.value)}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="true">Sí — Obligado por ley</SelectItem>
+                              <SelectItem value="false">No — Exento</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      className="mt-4 h-12 w-full bg-primary font-black uppercase shadow-xl shadow-primary/20"
+                    >
+                      Registrar Contratista
+                    </Button>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </div>
+
+      <Tabs defaultValue="contratistas" className="w-full">
+        <TabsList className="mb-6 h-12 w-fit border border-border-dark bg-card p-1">
+          <TabsTrigger
+            value="contratistas"
+            className="px-6 text-[10px] font-bold uppercase italic tracking-widest data-[state=active]:bg-primary"
+          >
+            Semáforo de Aliados
+          </TabsTrigger>
+          <TabsTrigger
+            value="cambio"
+            className="px-6 text-[10px] font-bold uppercase italic tracking-widest data-[state=active]:bg-primary"
+          >
+            Gestión del Cambio
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ── TAB 1: SEMÁFORO DE ALIADOS ──────────────────────────────── */}
+        <TabsContent value="contratistas" className="space-y-6">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Card className="border-border-dark bg-card">
+              <CardHeader className="pb-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Total Aliados
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-black text-foreground">{stats.total}</div>
+                <p className="mt-1 text-[10px] text-muted-foreground">contratistas activos</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border-dark bg-card">
+              <CardHeader className="pb-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                  Tasa de Aprobación
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-black text-emerald-500">{stats.tasa}%</div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: `${stats.tasa}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-border-dark bg-card">
+              <CardHeader className="pb-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">
+                  En Revisión
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-black text-amber-500">{stats.revision}</div>
+                <p className="mt-1 text-[10px] text-muted-foreground">documentos pendientes</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border-dark bg-card">
+              <CardHeader className="pb-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-destructive">
+                  Bloqueados
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-black text-destructive">{stats.bloqueados}</div>
+                <p className="mt-1 text-[10px] text-muted-foreground">operación suspendida</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Table */}
+          <Card className="border-border-dark bg-card">
+            <CardHeader className="border-b border-border-dark bg-white/[0.02] p-4">
+              <div className="relative max-w-sm">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-9 text-xs"
+                  placeholder="Buscar por nombre o NIT..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border-dark bg-white/[0.03]">
+                    <TableHead className="w-6" />
+                    <TableHead className="text-[10px] font-black uppercase">Contratista / NIT</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase">Vinculación</TableHead>
+                    <TableHead className="text-center text-[10px] font-black uppercase">Flota</TableHead>
+                    <TableHead className="text-center text-[10px] font-black uppercase">PESV</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase">Estado</TableHead>
+                    <TableHead className="text-right" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loadingContratistas ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <TableRow key={i} className="border-border-dark">
+                        <TableCell colSpan={7}>
+                          <Skeleton className="h-8 w-full" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : contratistas.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="py-20 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <Handshake className="size-10 text-muted-foreground/20" />
+                          <p className="text-sm italic text-muted-foreground">
+                            No hay contratistas vinculados.
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Usa el botón &quot;Vincular Aliado&quot; para registrar el primer tercero.
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    contratistas.map(c => (
+                      <TableRow key={c.id} className="border-border-dark hover:bg-white/[0.02]">
+                        <TableCell className="pl-4">
+                          <div
+                            className={cn('size-2.5 rounded-full', semaforoDot(String(c.estadoAprobacionGeneral ?? '')))}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold uppercase italic text-foreground">
+                              {String(c.razonSocialONombre ?? '—')}
+                            </span>
+                            <span className="font-mono text-[10px] text-muted-foreground">
+                              {String(c.nitCedula ?? '—')}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground">
+                            {String(c.tipoVinculacion ?? '—')}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Car className="size-3" />
+                              {Number(c.numVehiculos) || 0}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="size-3" />
+                              {Number(c.numConductores) || 0}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {c.obligadoImplementarPESV ? (
+                            <Badge className="border-none bg-primary/10 text-[8px] uppercase text-primary">
+                              Obligado
+                            </Badge>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {estadoBadge(String(c.estadoAprobacionGeneral ?? 'Pendiente de revisión'))}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 text-muted-foreground hover:text-foreground"
+                              >
+                                <MoreVertical className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="border-border-dark bg-card">
+                              <DropdownMenuItem
+                                className="cursor-pointer gap-2"
+                                onClick={() => copyPortalLink(c.id, String(c.portalToken ?? ''))}
+                              >
+                                <Copy className="size-3.5" /> Copiar enlace portal
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-border-dark" />
+                              <DropdownMenuItem
+                                className="cursor-pointer gap-2 text-emerald-500 focus:text-emerald-500"
+                                onClick={() => handleSetEstado(c.id, 'Aprobado')}
+                              >
+                                <ShieldCheck className="size-3.5" /> Aprobar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer gap-2 text-amber-500 focus:text-amber-500"
+                                onClick={() => handleSetEstado(c.id, 'Pendiente de revisión')}
+                              >
+                                <Clock className="size-3.5" /> Poner en revisión
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                                onClick={() => handleSetEstado(c.id, 'Bloqueado/Rechazado')}
+                              >
+                                <ShieldOff className="size-3.5" /> Bloquear
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-border-dark" />
+                              <DropdownMenuItem
+                                className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                                disabled={deletingId === c.id}
+                                onClick={() => handleDeleteContratista(c.id)}
+                              >
+                                <Trash2 className="size-3.5" /> Eliminar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── TAB 2: GESTIÓN DEL CAMBIO ────────────────────────────────── */}
+        <TabsContent value="cambio" className="space-y-6">
+          <div className="flex items-center justify-between rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
+            <div className="flex items-center gap-4">
+              <div className="flex size-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
+                <TrendingUp className="size-6" />
+              </div>
+              <div>
+                <h4 className="font-black uppercase italic tracking-tight text-foreground">
+                  Kanban de Gestión del Cambio
+                </h4>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Evalúa el impacto de cambios internos o externos en el PESV antes de su ejecución.
+                </p>
+              </div>
+            </div>
+            <Dialog open={isAddChangeOpen} onOpenChange={setIsAddChangeOpen}>
+              <DialogTrigger asChild>
+                <Button className="h-10 bg-blue-600 px-6 text-xs font-bold uppercase shadow-lg shadow-blue-500/20 hover:bg-blue-500">
+                  <Plus className="mr-2 size-4" /> Registrar Cambio
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg overflow-hidden border-border-dark bg-card p-0 text-foreground">
+                <DialogHeader className="border-b border-border-dark bg-blue-500/10 p-6">
+                  <DialogTitle className="text-xl font-black uppercase italic">
+                    Evaluación de Gestión del Cambio
+                  </DialogTitle>
+                  <DialogDescription className="text-muted-foreground">
+                    Identifique riesgos asociados a nuevos procesos o legislación.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...changeForm}>
+                  <form onSubmit={changeForm.handleSubmit(onChangeSubmit)} className="space-y-4 p-6">
+                    <FormField
+                      control={changeForm.control}
+                      name="tipoDeCambio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Naturaleza del Cambio</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Nueva ruta">Nueva ruta</SelectItem>
+                              <SelectItem value="Nuevas tecnologías/vehículos">
+                                Nuevas tecnologías / vehículos
+                              </SelectItem>
+                              <SelectItem value="Nueva legislación">Nueva legislación</SelectItem>
+                              <SelectItem value="Nuevos clientes/servicios">
+                                Nuevos clientes / servicios
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={changeForm.control}
+                      name="descripcionCambio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Descripción del Cambio</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={3} placeholder="¿Qué cambió y por qué?" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={changeForm.control}
+                      name="impactoSeguridadVial"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Impacto en Seguridad Vial</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Crítico">Crítico</SelectItem>
+                              <SelectItem value="Alto">Alto</SelectItem>
+                              <SelectItem value="Medio">Medio</SelectItem>
+                              <SelectItem value="Bajo">Bajo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={changeForm.control}
+                      name="planMitigacion"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Plan de Mitigación</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              rows={3}
+                              placeholder="Acciones para prevenir riesgos derivados del cambio..."
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      className="mt-2 h-12 w-full bg-blue-600 font-black uppercase shadow-xl shadow-blue-500/20 hover:bg-blue-500"
+                    >
+                      Registrar Evaluación
+                    </Button>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Kanban Board */}
+          {loadingCambios ? (
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-40" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <KanbanColumn
+                title="Identificado"
+                color="amber"
+                items={kanban.pendiente}
+                onAdvance={handleAdvanceChange}
+                onDelete={handleDeleteChange}
+              />
+              <KanbanColumn
+                title="En Evaluación"
+                color="blue"
+                items={kanban.enCurso}
+                onAdvance={handleAdvanceChange}
+                onDelete={handleDeleteChange}
+              />
+              <KanbanColumn
+                title="Controlado"
+                color="emerald"
+                items={kanban.cerrado}
+                onAdvance={handleAdvanceChange}
+                onDelete={handleDeleteChange}
+              />
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ── KANBAN COLUMN ─────────────────────────────────────────────────────────
+type KanbanColor = 'amber' | 'blue' | 'emerald';
+
+const COLUMN_STYLES: Record<KanbanColor, { border: string; badge: string; dot: string }> = {
+  amber: { border: 'border-amber-500/30 bg-amber-500/5', badge: 'bg-amber-500/10 text-amber-500', dot: 'bg-amber-500' },
+  blue: { border: 'border-blue-500/30 bg-blue-500/5', badge: 'bg-blue-500/10 text-blue-400', dot: 'bg-blue-500' },
+  emerald: { border: 'border-emerald-500/30 bg-emerald-500/5', badge: 'bg-emerald-500/10 text-emerald-500', dot: 'bg-emerald-500' },
+};
+
+function KanbanColumn({
+  title,
+  color,
+  items,
+  onAdvance,
+  onDelete,
+}: {
+  title: string;
+  color: KanbanColor;
+  items: Record<string, unknown>[];
+  onAdvance: (id: string, estado: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const s = COLUMN_STYLES[color];
+  const isDone = color === 'emerald';
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Column header */}
+      <div className={cn('flex items-center justify-between rounded-xl border p-3', s.border)}>
+        <div className="flex items-center gap-2">
+          <div className={cn('size-2 rounded-full', s.dot)} />
+          <span className="text-xs font-black uppercase tracking-widest text-foreground">{title}</span>
+        </div>
+        <Badge className={cn('border-none text-[9px] font-bold', s.badge)}>{items.length}</Badge>
+      </div>
+
+      {/* Cards */}
+      <div className="flex min-h-[120px] flex-col gap-2">
+        {items.length === 0 ? (
+          <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-border-dark">
+            <p className="text-xs italic text-muted-foreground">Sin cambios</p>
+          </div>
+        ) : (
+          items.map(cambio => {
+            const id = String(cambio.id ?? '');
+            const tipo = String(cambio.tipoDeCambio ?? '—');
+            const descripcion = String(cambio.descripcionCambio ?? '—');
+            const impacto = String(cambio.impactoSeguridadVial ?? 'Bajo');
+            const plan = typeof cambio.planMitigacion === 'string' ? cambio.planMitigacion : null;
+            const estado = String(cambio.estado ?? 'Pendiente');
+            const fecha =
+              (cambio.creadoEn as { toDate?: () => Date } | null)?.toDate?.()?.toLocaleDateString('es-CO') ?? '—';
+
+            return (
+              <Card key={id} className="border-border-dark bg-card transition-all hover:border-blue-500/20">
+                <CardHeader className="p-3 pb-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <Badge
+                      variant="outline"
+                      className="shrink-0 border-blue-500/20 text-[8px] font-black uppercase text-blue-400"
+                    >
+                      {tipo}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => onDelete(id)}
+                    >
+                      <Trash2 className="size-3" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 p-3 pt-0">
+                  <p className="line-clamp-3 text-xs font-medium leading-relaxed text-foreground">
+                    {descripcion}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    {impactoBadge(impacto)}
+                    <span className="text-[9px] text-muted-foreground">{fecha}</span>
+                  </div>
+                  {plan && (
+                    <div className="rounded-lg bg-white/[0.03] p-2">
+                      <p className="mb-1 text-[9px] font-black uppercase text-muted-foreground">
+                        Plan de mitigación
+                      </p>
+                      <p className="line-clamp-2 text-[10px] text-foreground/70">{plan}</p>
+                    </div>
+                  )}
+                  {!isDone && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-full gap-1 border border-border-dark text-[10px] font-bold uppercase hover:bg-white/5"
+                      onClick={() => onAdvance(id, estado)}
+                    >
+                      Avanzar <ArrowRight className="size-3" />
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 }

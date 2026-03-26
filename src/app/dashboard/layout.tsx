@@ -16,12 +16,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <AuthGuard>
-      <div className="flex h-screen w-full bg-background dark:bg-background-dark overflow-hidden text-foreground">
+      <div className="flex min-h-screen w-full overflow-hidden bg-background text-foreground dark:bg-background-dark">
         <Sidebar />
-        <div className="flex flex-1 flex-col overflow-y-auto">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 p-6 bg-background dark:bg-background-dark">
-            <div className="max-w-7xl mx-auto flex flex-col min-h-full">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-4 dark:bg-background-dark sm:p-6">
+            <div className="mx-auto flex min-h-full w-full max-w-7xl min-w-0 flex-col">
               <div className="flex-1">
                 {noCompanyAccess ? (
                   <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
@@ -41,12 +41,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 ) : children}
               </div>
               
-              <footer className="mt-12 pt-8 border-t border-border-dark flex flex-col md:flex-row justify-between items-center gap-4 pb-8">
-                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+              <footer className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-border-dark pb-6 pt-6 text-center sm:mt-12 sm:pb-8 md:flex-row md:text-left">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
                   © {new Date().getFullYear()} RoadWise 360 - Todos los derechos reservados
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-text-secondary uppercase font-bold tracking-widest">Desarrollado por</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">Desarrollado por</span>
                   <a 
                     href="https://www.datenova.io" 
                     target="_blank" 

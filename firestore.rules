@@ -232,6 +232,14 @@ service cloud.firestore {
         allow delete: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
       }
 
+      // Política y Metas — Objetivos PESV con seguimiento cuantitativo
+      match /metas_pesv/{docId} {
+        allow read: if belongsToCompany(empresaId);
+        allow create: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+        allow update: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+        allow delete: if hasRoleInCompany(empresaId, ["Admin", "Lider_PESV"]) || isSuperAdmin();
+      }
+
 
       // Datos operativos — Riesgos
       match /riesgos/{docId} {
