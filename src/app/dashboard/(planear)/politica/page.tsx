@@ -697,7 +697,7 @@ export default function PoliticaMetasPage() {
                                         <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
                                             <AlertTriangle className="size-4 text-amber-400 shrink-0 mt-0.5" />
                                             <p className="text-[10px] text-amber-300 leading-relaxed">
-                                                Publica la polÃƒ­tica primero para habilitar la URL de divulgaciÃƒ³n.
+                                                Publica la política primero para habilitar la URL de divulgación.
                                             </p>
                                         </div>
                                     )}
